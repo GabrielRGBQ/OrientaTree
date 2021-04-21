@@ -1,10 +1,14 @@
 package com.smov.gabriel.orientatree;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.drawerlayout.widget.DrawerLayout;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -13,11 +17,17 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-public class HomeActivity extends AppCompatActivity {
+public class HomeActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+
+    private Toolbar toolbar;
+
+    private DrawerLayout drawerLayout;
+    private NavigationView navigationView;
 
     private Button logOut_button, delete_button;
 
@@ -40,6 +50,24 @@ public class HomeActivity extends AppCompatActivity {
 
         logOut_button = findViewById(R.id.logOut_button);
         delete_button = findViewById(R.id.delete_button);
+
+        toolbar = findViewById(R.id.home_toolbar);
+        setSupportActionBar(toolbar);
+
+        drawerLayout = findViewById(R.id.drawer_layout);
+        navigationView = findViewById(R.id.nav_view);
+
+        ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
+                this,
+                drawerLayout,
+                toolbar,
+                R.string.openNavDrawer,
+                R.string.closeNavDrawer
+        );
+
+        drawerLayout.addDrawerListener(actionBarDrawerToggle);
+        actionBarDrawerToggle.syncState();
+        navigationView.setNavigationItemSelectedListener(this);
 
         logOut_button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -75,11 +103,22 @@ public class HomeActivity extends AppCompatActivity {
                         });
             }
         });
+
     }
 
     private void updateUIIdentification() {
         Intent intent = new Intent(HomeActivity.this, IdentificationActivity.class);
         startActivity(intent);
         finish();
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        return false;
+    }
+
+    @Override
+    public void onPointerCaptureChanged(boolean hasCapture) {
+
     }
 }

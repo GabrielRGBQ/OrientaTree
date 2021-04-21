@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
         window.setStatusBarColor(ContextCompat.getColor(this,R.color.white));
         //
 
-        getSupportActionBar().hide(); // Hide action bar
+        //getSupportActionBar().hide(); // Hide action bar
 
         animationUp = AnimationUtils.loadAnimation(this, R.anim.animation_up);
         animationDown = AnimationUtils.loadAnimation(this, R.anim.animation_down);

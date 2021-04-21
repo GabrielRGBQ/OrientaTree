@@ -12,8 +12,6 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 
-import com.google.firebase.auth.FirebaseAuth;
-
 public class WelcomeActivity extends AppCompatActivity {
 
     private TextView welcome_textView, message_textView;
@@ -42,7 +40,7 @@ public class WelcomeActivity extends AppCompatActivity {
         window.setStatusBarColor(ContextCompat.getColor(this,R.color.white));
         //
 
-        getSupportActionBar().hide(); // Hide action bar
+        //getSupportActionBar().hide(); // Hide action bar
 
         Bundle bundle = this.getIntent().getExtras();
         name = bundle.getString("name");

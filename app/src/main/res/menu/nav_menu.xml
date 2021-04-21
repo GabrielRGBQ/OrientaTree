@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:title="STORAGE">
+        <menu>
+            <item android:title="My Files"
+                android:icon="@drawable/ic_menu_camera"/>
+            <item android:title="My Files"
+                android:icon="@drawable/ic_menu_camera"/>
+            <item android:title="My Files"
+                android:icon="@drawable/ic_menu_camera"/>
+        </menu>
+    </item>
+
+    <item android:title="APP">
+        <menu>
+            <item android:title="My Files"
+                android:icon="@drawable/ic_menu_camera"/>
+            <item android:title="My Files"
+                android:icon="@drawable/ic_menu_camera"/>
+            <item android:title="My Files"
+                android:icon="@drawable/ic_menu_camera"/>
+        </menu>
+    </item>
+
+</menu>
