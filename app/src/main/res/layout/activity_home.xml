@@ -21,38 +21,40 @@
                 android:layout_height="?attr/actionBarSize"
                 app:title="Actividades"
                 app:titleTextColor="@color/black">
-
             </androidx.appcompat.widget.Toolbar>
 
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tab_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/primary_color"
+                app:tabIndicatorColor="@color/secondary_color_variant">
+
+            </com.google.android.material.tabs.TabLayout>
+
         </com.google.android.material.appbar.AppBarLayout>
+
+        <androidx.viewpager.widget.ViewPager
+            android:id="@+id/view_pager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"/>
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <Button
-                android:id="@+id/logOut_button"
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/floating_action_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Log Out"
-                android:textAllCaps="true"
+                android:layout_marginEnd="28dp"
+                android:layout_marginBottom="28dp"
+                android:clickable="true"
+                android:focusable="true"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.531"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintVertical_bias="0.537" />
-
-            <Button
-                android:id="@+id/delete_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="Borrar usuario"
-                app:layout_constraintTop_toBottomOf="@id/logOut_button"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                />
+                app:srcCompat="@drawable/ic_add"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -64,6 +66,7 @@
         app:menu="@menu/nav_menu"
         android:id="@+id/nav_view"
         android:layout_gravity="start"
+        app:headerLayout="@layout/nav_header_layout"
         />
 
 </androidx.drawerlayout.widget.DrawerLayout>

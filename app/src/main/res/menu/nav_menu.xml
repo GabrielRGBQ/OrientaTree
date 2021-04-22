@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <item android:title="STORAGE">
+    <!--<item android:title="STORAGE">
         <menu>
             <item android:title="My Files"
                 android:icon="@drawable/ic_menu_camera"/>
@@ -11,7 +11,6 @@
                 android:icon="@drawable/ic_menu_camera"/>
         </menu>
     </item>
-
     <item android:title="APP">
         <menu>
             <item android:title="My Files"
@@ -21,6 +20,45 @@
             <item android:title="My Files"
                 android:icon="@drawable/ic_menu_camera"/>
         </menu>
-    </item>
+    </item>-->
+
+    <group
+        android:id="@+id/group1">
+        <item
+            android:id="@+id/subtitle1"
+            android:title="Subtitle">
+            <menu>
+                <item
+                    android:title="My Files"
+                    android:icon="@drawable/ic_menu_camera"/>
+                <item
+                    android:title="My Files"
+                    android:icon="@drawable/ic_menu_camera"/>
+
+                <item
+                    android:title="My Files"
+                    android:icon="@drawable/ic_menu_camera"/>
+            </menu>
+        </item>
+    </group>
+
+    <group
+        android:id="@+id/group2">
+        <item
+            android:id="@+id/subtitle2"
+            android:title="Subtitle">
+            <menu>
+                <item
+                    android:title="My Files"
+                    android:icon="@drawable/ic_menu_camera"/>
+                <item
+                    android:title="My Files"
+                    android:icon="@drawable/ic_menu_camera"/>
+                <item
+                    android:title="My Files"
+                    android:icon="@drawable/ic_menu_camera"/>
+            </menu>
+        </item>
+    </group>
 
 </menu>
