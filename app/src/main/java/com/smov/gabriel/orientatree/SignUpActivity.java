@@ -25,6 +25,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.smov.gabriel.orientatree.model.User;
@@ -102,17 +104,6 @@ public class SignUpActivity extends AppCompatActivity {
                         email_textfield.setErrorEnabled(false);
                     }
                 }
-                /*if(TextUtils.isEmpty(email_confirmation)) {
-                    email_confirmation_textfield.setError("confirmación e-mail obligatoria");
-                    any_error = true;
-                } else if (!email_confirmation.equals(email)) {
-                    email_confirmation_textfield.setError("e-mail introducido no coincide");
-                    any_error = true;
-                } else {
-                    if(email_confirmation_textfield.isErrorEnabled()) {
-                        email_confirmation_textfield.setErrorEnabled(false);
-                    }
-                }*/
                 if (TextUtils.isEmpty(password)) {
                     password_textfield.setError("password obligatorio");
                     any_error = true;
@@ -143,10 +134,26 @@ public class SignUpActivity extends AppCompatActivity {
                 progress_circular.setVisibility(View.VISIBLE);
                 mAuth.createUserWithEmailAndPassword(email, password)
                         .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                            // TODO: despues de un timeout quitar el listener y mostrar mensaje de que lo vuelva a intentar
                             @Override
                             public void onComplete(@NonNull Task<AuthResult> task) {
                                 if (task.isSuccessful()) {
-                                    updateUserData();
+                                    // setting display name...
+                                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                                    UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                                            .setDisplayName(name).build();
+                                    user.updateProfile(profileUpdates)
+                                            .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                // TODO: despues de un timeout quitar el listener, eliminar usuario y mostrar mensaje de que lo vuelva a intentar
+                                                @Override
+                                                public void onComplete(@NonNull Task<Void> task) {
+                                                    if (task.isSuccessful()) {
+                                                        updateUserData();
+                                                    } else {
+                                                        // TODO: eliminar usuario y mostrarle mensaje de que algo salio mal y que lo vuelva a intentar
+                                                    }
+                                                }
+                                            });
                                 } else {
                                     progress_circular.setVisibility(View.GONE);
                                     try {
@@ -161,6 +168,7 @@ public class SignUpActivity extends AppCompatActivity {
                                         email_textfield.setErrorEnabled(true);
                                         email_textfield.setError("Ya existe ese usuario");
                                     } catch (Exception e) {
+                                        // TODO: reemplazar por snackbar y mensaje mas completo
                                         Toast.makeText(SignUpActivity.this, "Algo salió mal: " + task.getException().toString(), Toast.LENGTH_SHORT).show();
                                     }
                                 }
@@ -174,12 +182,8 @@ public class SignUpActivity extends AppCompatActivity {
         userID = mAuth.getCurrentUser().getUid();
         // Adds document to the users colletion. If that collection does not exist, it creates it
         DocumentReference documentReference = db.collection("users").document(userID);
-        /*Map<String, Object> user = new HashMap<>();
-        user.put("name", name);
-        user.put("surname", surname);
-        user.put("email", email);
-        user.put("role", selectedRbText);*/
         User user = new User(name, surname, email, role);
+        // TODO: timeouts. Quitar listener, eliminar user y decirle que lo vuelva a intentar
         documentReference
                 .set(user)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -192,7 +196,7 @@ public class SignUpActivity extends AppCompatActivity {
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        // TODO: handle this exception in a better way
+                        // TODO: reemplazar por snackbar y mensaje mas completo. No cambiar de pantalla. Eliminar user y decirle que lo vuelva a intentar
                         Toast.makeText(SignUpActivity.this, "Algo salio mal: " + e.toString(), Toast.LENGTH_SHORT).show();
                         progress_circular.setVisibility(View.GONE);
                         updateUIHome();

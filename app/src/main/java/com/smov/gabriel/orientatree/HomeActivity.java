@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -19,6 +20,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -43,6 +45,10 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     private DrawerLayout drawerLayout;
     private NavigationView navigationView;
 
+    // user name and e-mail that the navigation drawer displays
+    private TextView name_textView;
+    private TextView email_textView;
+
     // to show the tabs
     private ViewPager viewPager;
     private TabLayout tabLayout;
@@ -54,7 +60,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
     private FloatingActionButton fab;
 
-    public String userID;
+    public String userID, userEmail, userName;
 
     public FirebaseAuth mAuth;
 
@@ -68,6 +74,8 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         mAuth = FirebaseAuth.getInstance();
 
         userID = mAuth.getCurrentUser().getUid();
+        userName = mAuth.getCurrentUser().getDisplayName();
+        userEmail = mAuth.getCurrentUser().getEmail();
 
         db = FirebaseFirestore.getInstance();
 
@@ -80,6 +88,12 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         // navigation drawer...
         drawerLayout = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.nav_view);
+        View hView =  navigationView.getHeaderView(0);
+        // setting navigation drawer header...
+        name_textView = hView.findViewById(R.id.name_textView);
+        email_textView = hView.findViewById(R.id.email_textView);
+        name_textView.setText(userName);
+        email_textView.setText(userEmail);
 
         ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
                 this,
