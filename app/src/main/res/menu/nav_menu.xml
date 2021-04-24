@@ -29,8 +29,9 @@
             android:title="Subtitle">
             <menu>
                 <item
-                    android:title="My Files"
-                    android:icon="@drawable/ic_menu_camera"/>
+                    android:title="Profile settings"
+                    android:icon="@drawable/ic_settings"
+                    android:id="@+id/profile_settings_item"/>
                 <item
                     android:title="My Files"
                     android:icon="@drawable/ic_menu_camera"/>

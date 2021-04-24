@@ -16,6 +16,7 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.storage.StorageReference;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -89,14 +90,28 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
-                        FirebaseUser user = homeActivity.mAuth.getCurrentUser();
-                        user.delete()
-                                .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<Void> task) {
-                                        homeActivity.updateUIIdentification();
-                                    }
-                                });
+                        // delete profile pic ...
+                        StorageReference ref = homeActivity.storageReference.child("profileImages/" + homeActivity.userID);
+                        ref.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                // finally, delete account...
+                                FirebaseUser user = homeActivity.mAuth.getCurrentUser();
+                                user.delete()
+                                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                            @Override
+                                            public void onComplete(@NonNull Task<Void> task) {
+                                                // go back to identification activity
+                                                homeActivity.updateUIIdentification();
+                                            }
+                                        });
+                            }
+                        }).addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception exception) {
+                                Toast.makeText(homeActivity, "La información no ha podido eliminarse", Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -105,26 +120,5 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
                         Toast.makeText(homeActivity, "La información no ha podido eliminarse", Toast.LENGTH_SHORT).show();
                     }
                 });
-        /*FirebaseUser user = homeActivity.mAuth.getCurrentUser();
-        user.delete()
-                .addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        homeActivity.db.collection("users").document(homeActivity.userID)
-                                .delete()
-                                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                    @Override
-                                    public void onSuccess(Void aVoid) {
-                                        homeActivity.updateUIIdentification();
-                                    }
-                                })
-                                .addOnFailureListener(new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-                                        homeActivity.updateUIIdentification();
-                                    }
-                                });
-                    }
-                });*/
     }
 }

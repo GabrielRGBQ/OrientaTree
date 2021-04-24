@@ -11,18 +11,25 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.OrientaTree">
-        <activity android:name=".HomeActivity" />
+        <activity android:name=".EditProfileActivity"
+            android:screenOrientation="portrait"></activity>
+        <activity android:name=".HomeActivity"
+            android:screenOrientation="portrait"/>
         <activity android:name=".WelcomeActivity" />
         <activity
             android:name=".LogInActivity"
             android:label="Iniciar sesión"
-            android:parentActivityName=".IdentificationActivity" />
+            android:parentActivityName=".IdentificationActivity"
+            android:screenOrientation="portrait"/>
         <activity
             android:name=".SignUpActivity"
             android:label="Registrarse"
-            android:parentActivityName=".IdentificationActivity" />
-        <activity android:name=".IdentificationActivity" />
-        <activity android:name=".MainActivity">
+            android:parentActivityName=".IdentificationActivity"
+            android:screenOrientation="portrait"/>
+        <activity android:name=".IdentificationActivity"
+            android:screenOrientation="portrait"/>
+        <activity android:name=".MainActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
