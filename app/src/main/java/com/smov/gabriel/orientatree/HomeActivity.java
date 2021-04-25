@@ -149,9 +149,9 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         // binding tabs and fragments
         tabLayout.setupWithViewPager(viewPager);
         ViewPagerAdapter viewPagerAdapter = new ViewPagerAdapter(getSupportFragmentManager(), 0);
-        viewPagerAdapter.adFragment(completedFragment, "Done");
-        viewPagerAdapter.adFragment(onGoingFragment, "Now");
-        viewPagerAdapter.adFragment(programmedFragment, "Next");
+        viewPagerAdapter.adFragment(completedFragment, "pasadas");
+        viewPagerAdapter.adFragment(onGoingFragment, "en curso");
+        viewPagerAdapter.adFragment(programmedFragment, "previstas");
         viewPager.setAdapter(viewPagerAdapter);
         tabLayout.setTabTextColors(R.color.black, R.color.black); // tab text color black, both selected and unselected
 
