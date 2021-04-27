@@ -3,7 +3,10 @@ package com.smov.gabriel.orientatree;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,7 +19,15 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.StorageReference;
+import com.smov.gabriel.orientatree.adapters.TestAdapter;
+import com.smov.gabriel.orientatree.model.Test;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -25,9 +36,13 @@ import com.google.firebase.storage.StorageReference;
  */
 public class ProgrammedFragment extends Fragment implements View.OnClickListener {
 
+    private RecyclerView programmed_recyclerView;
+    private TestAdapter testAdapter;
+    private ArrayList<Test> tests;
+
     private HomeActivity homeActivity;
 
-    private Button delete_button;
+    private ConstraintLayout no_activities_layout;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -75,50 +90,42 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_programmed, container, false);
 
-        homeActivity = (HomeActivity) getActivity();
+        homeActivity = (HomeActivity)getActivity();
 
-        delete_button = view.findViewById(R.id.delete_button);
-        delete_button.setOnClickListener(this);
+        no_activities_layout = view.findViewById(R.id.programmed_empty_layout);
+
+        tests = new ArrayList<>();
+
+        long millis=System.currentTimeMillis();
+        Date date = new Date(millis );
+
+        homeActivity.db.collection("tests")
+                .whereGreaterThan("startTime", date)
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            Test test = document.toObject(Test.class);
+                            tests.add(test);
+                        }
+                        if(tests.size() < 1) {
+                            no_activities_layout.setVisibility(View.VISIBLE);
+                        } else {
+                            no_activities_layout.setVisibility(View.GONE);
+                        }
+                        testAdapter = new TestAdapter(getContext(), tests);
+                        programmed_recyclerView = view.findViewById(R.id.programmed_recyclerView);
+                        programmed_recyclerView.setAdapter(testAdapter);
+                        programmed_recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+                    }
+                });
 
         return view;
     }
 
     @Override
     public void onClick(View v) {
-        homeActivity.db.collection("users").document(homeActivity.userID)
-                .delete()
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        // delete profile pic ...
-                        StorageReference ref = homeActivity.storageReference.child("profileImages/" + homeActivity.userID);
-                        ref.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
-                            @Override
-                            public void onSuccess(Void aVoid) {
-                                // finally, delete account...
-                                FirebaseUser user = homeActivity.mAuth.getCurrentUser();
-                                user.delete()
-                                        .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                            @Override
-                                            public void onComplete(@NonNull Task<Void> task) {
-                                                // go back to identification activity
-                                                homeActivity.updateUIIdentification();
-                                            }
-                                        });
-                            }
-                        }).addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception exception) {
-                                Toast.makeText(homeActivity, "La información no ha podido eliminarse", Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(homeActivity, "La información no ha podido eliminarse", Toast.LENGTH_SHORT).show();
-                    }
-                });
+
     }
 }

@@ -6,6 +6,7 @@ import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -15,6 +16,7 @@ import androidx.viewpager.widget.ViewPager;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Movie;
@@ -39,6 +41,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
@@ -54,6 +57,7 @@ import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
 import java.io.InputStream;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,7 +75,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     private TextView name_textView;
     private TextView email_textView;
     private CircleImageView profile_circleImageView;
-    private Uri imageUri;
 
     // to show the tabs
     private ViewPager viewPager;
@@ -83,6 +86,8 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     private ProgrammedFragment programmedFragment;
 
     private FloatingActionButton fab;
+
+    //ConstraintLayout no_activities_layout;
 
     // user data stored in Auth user
     String userID, userEmail, userName;
@@ -112,6 +117,8 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         storageReference = storage.getReference();
 
         fab = findViewById(R.id.floating_action_button);
+
+        //no_activities_layout = findViewById(R.id.no_activities_layout);
 
         toolbar = findViewById(R.id.home_toolbar);
 
@@ -155,6 +162,36 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         viewPager.setAdapter(viewPagerAdapter);
         tabLayout.setTabTextColors(R.color.black, R.color.black); // tab text color black, both selected and unselected
 
+        // perform some other actions when clicking specific tab item (like showing or hiding fab)
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                switch (tab.getPosition()) {
+                    case 0:
+                        break;
+                    case 1:
+                        fab.hide();
+                        break;
+                    case 2:
+                        break;
+                }
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+                switch (tab.getPosition()) {
+                    case 1:
+                        fab.show();
+                        break;
+                }
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+
+            }
+        });
+
         // dowloading the profile pic and show in navigation drawer...
         if(user.getPhotoUrl() != null) {
             StorageReference ref = storageReference.child("profileImages/" + userID);
@@ -166,14 +203,8 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    // upload profile pic on navigation drawer
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        /*if(requestCode == 1 && resultCode == RESULT_OK && data != null && data.getData() != null){
-            imageUri = data.getData();
-            profile_circleImageView.setImageURI(imageUri);
-            uploadPicture();
-        }*/
         super.onActivityResult(requestCode, resultCode, data);
     }
 
@@ -185,23 +216,83 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         return super.onCreateOptionsMenu(menu);
     }
 
-    public void updateUIIdentification() {
-        Intent intent = new Intent(HomeActivity.this, IdentificationActivity.class);
-        startActivity(intent);
-        finish();
-    }
-
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.profile_settings_item: {
+            case R.id.profile_settings_item: 
                 updateUIEditProfile();
                 break;
-            }
+            case R.id.log_out_item:
+                logOut();
+                break;
+            case R.id.delete_profile_item:
+                deleteAccount();
+                break;
         }
         //close navigation drawer
         drawerLayout.closeDrawer(GravityCompat.START);
         return false;
+    }
+
+    private void deleteAccount() {
+        new MaterialAlertDialogBuilder(this)
+                .setMessage("¿Realmente desea eliminar su perfil y todos sus datos de manera permanente?")
+                .setPositiveButton("Sí", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        db.collection("users").document(userID)
+                                .delete()
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+                                        // delete profile pic ...
+                                        StorageReference ref = storageReference.child("profileImages/" + userID);
+                                        ref.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                                            @Override
+                                            public void onSuccess(Void aVoid) {
+                                                // finally, delete account...
+                                                FirebaseUser user = mAuth.getCurrentUser();
+                                                user.delete()
+                                                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                            @Override
+                                                            public void onComplete(@NonNull Task<Void> task) {
+                                                                // go back to identification activity
+                                                                updateUIIdentification();
+                                                            }
+                                                        });
+                                            }
+                                        }).addOnFailureListener(new OnFailureListener() {
+                                            @Override
+                                            public void onFailure(@NonNull Exception exception) {
+                                                Toast.makeText(HomeActivity.this, "La información no ha podido eliminarse", Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                                    }
+                                })
+                                .addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        Toast.makeText(HomeActivity.this, "La información no ha podido eliminarse", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                    }
+                })
+                .setNegativeButton("No", null)
+                .show();
+    }
+
+    private void logOut() {
+        new MaterialAlertDialogBuilder(this)
+                .setMessage("¿Desea salir de su sesión?")
+                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        mAuth.signOut();
+                        updateUIIdentification();
+                    }
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
     }
 
     @Override
@@ -240,6 +331,12 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         public CharSequence getPageTitle(int position) {
             return fragmentTitles.get(position);
         }
+    }
+
+    public void updateUIIdentification() {
+        Intent intent = new Intent(HomeActivity.this, IdentificationActivity.class);
+        startActivity(intent);
+        finish();
     }
 
     private void updateUIEditProfile() {

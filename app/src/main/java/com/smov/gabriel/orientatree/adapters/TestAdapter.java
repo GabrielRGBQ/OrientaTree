@@ -1,6 +1,8 @@
 package com.smov.gabriel.orientatree.adapters;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,15 +42,33 @@ public class TestAdapter extends RecyclerView.Adapter<TestAdapter.MyViewHolder> 
         return new MyViewHolder(view);
     }
 
+
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         this.position = position ;
-        holder.title_textView.setText(String.valueOf(tests.get(position).getTitle()));
-        holder.subtitle_textView.setText(String.valueOf(tests.get(position).getType()));
-        holder.resume_textView.setText(tests.get(position).getResume());
+        Test test = tests.get(position);
+
+        holder.title_textView.setText(test.getTitle());
+        holder.subtitle_textView.setText(test.getType());
+        holder.resume_textView.setText(test.getResume());
+
+        if(test.getColor() != null) {
+            switch (test.getColor()) {
+                case "Naranja":
+                    holder.color_textView.setText("naranja");
+                    holder.color_textView.setTextColor(Color.parseColor("#FFA233"));
+                    break;
+                case "Morado":
+                    holder.color_textView.setText("morada");
+                    holder.color_textView.setTextColor(Color.parseColor("#760EC3"));
+                    break;
+                default:
+                    break;
+            }
+        }
 
         // get and set the activity picture
-        StorageReference ref = holder.storageReference.child("activityImages/" + tests.get(position).getId() + ".jpg");
+        StorageReference ref = holder.storageReference.child("activityImages/" + test.getId() + ".jpg");
         Glide.with(context)
                 .load(ref)
                 .diskCacheStrategy(DiskCacheStrategy.NONE ) // prevent caching
@@ -67,7 +87,7 @@ public class TestAdapter extends RecyclerView.Adapter<TestAdapter.MyViewHolder> 
         StorageReference storageReference;
 
         LinearLayout row_activity_layout; // not sure if needed
-        TextView title_textView, subtitle_textView, resume_textView;
+        TextView title_textView, subtitle_textView, resume_textView, color_textView;
         ImageView rowImage_imageView;
 
         public MyViewHolder(@NonNull View itemView) {
@@ -76,6 +96,7 @@ public class TestAdapter extends RecyclerView.Adapter<TestAdapter.MyViewHolder> 
             title_textView = itemView.findViewById(R.id.title_textView);
             subtitle_textView = itemView.findViewById(R.id.subtitle_textView);
             resume_textView = itemView.findViewById(R.id.resume_textView);
+            color_textView = itemView.findViewById(R.id.color_textView);
             row_activity_layout = itemView.findViewById(R.id.row_activity_layout);
             rowImage_imageView = itemView.findViewById(R.id.rowImage_imageView);
 

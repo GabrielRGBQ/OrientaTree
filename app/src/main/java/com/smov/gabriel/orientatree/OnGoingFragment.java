@@ -1,24 +1,26 @@
 package com.smov.gabriel.orientatree;
 
-import android.app.Activity;
-import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.smov.gabriel.orientatree.adapters.TestAdapter;
+import com.smov.gabriel.orientatree.model.Test;
+
+import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -27,9 +29,15 @@ import com.google.firebase.auth.FirebaseUser;
  */
 public class OnGoingFragment extends Fragment implements View.OnClickListener {
 
+    private RecyclerView onGoing_recyclerView;
+    private TestAdapter testAdapter;
+    private ArrayList<Test> first_selection;
+    private ArrayList<Test> ultimate_selection;
+
+
     private HomeActivity homeActivity;
 
-    private Button logOut_button;
+    private ConstraintLayout no_activities_layout;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -78,18 +86,54 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_on_going, container, false);
 
-        homeActivity = (HomeActivity) getActivity();
+        homeActivity = (HomeActivity)getActivity();
 
-        logOut_button = view.findViewById(R.id.logOut_button);
-        logOut_button.setOnClickListener(this);
+        no_activities_layout = view.findViewById(R.id.onGoing_empty_layout);
+
+        // as I don't know how to query to Firestore within a range of Dates... I provisionally implement
+        // that logic on the client... that's why I need two ArrayLists
+        first_selection = new ArrayList<>(); // this one stores a first selection
+        ultimate_selection = new ArrayList<>(); // and this one stores the ultimate one
+
+        long millis=System.currentTimeMillis();
+        Date date = new Date(millis );
+
+        homeActivity.db.collection("tests")
+                .whereGreaterThanOrEqualTo("finishTime", date)
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            // here we have all the activities that did not finish yet in the first array
+                            Test test = document.toObject(Test.class);
+                            first_selection.add(test);
+                        }
+                        for (Test test : first_selection) {
+                            // and here we polish the selection by not choosing those that have not started neither, and
+                            // henceforth, they are future activities
+                            if(date.after(test.getStartTime())) {
+                                ultimate_selection.add(test);
+                            }
+                        }
+                        if(ultimate_selection.size() < 1) {
+                            no_activities_layout.setVisibility(View.VISIBLE);
+                        } else {
+                            no_activities_layout.setVisibility(View.GONE);
+                        }
+                        testAdapter = new TestAdapter(getContext(), ultimate_selection);
+                        onGoing_recyclerView = view.findViewById(R.id.onGoing_recyclerView);
+                        onGoing_recyclerView.setAdapter(testAdapter);
+                        onGoing_recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+                    }
+                });
 
         return view;
     }
 
     @Override
     public void onClick(View v) {
-        homeActivity.mAuth.signOut();
-        homeActivity.updateUIIdentification();
+
     }
 
 }

@@ -38,7 +38,8 @@
             android:id="@+id/view_pager"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"/>
+            app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
+        </androidx.viewpager.widget.ViewPager>
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -57,6 +58,12 @@
                 app:srcCompat="@drawable/ic_add"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <include
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            layout="@layout/no_activities"
+            android:visibility="gone"/>
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

@@ -3,6 +3,7 @@ package com.smov.gabriel.orientatree;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -18,7 +19,9 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.smov.gabriel.orientatree.adapters.TestAdapter;
 import com.smov.gabriel.orientatree.model.Test;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -32,6 +35,8 @@ public class CompletedFragment extends Fragment {
     private ArrayList<Test> tests;
 
     private HomeActivity homeActivity;
+
+    private ConstraintLayout no_activities_layout;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -81,9 +86,16 @@ public class CompletedFragment extends Fragment {
 
         homeActivity = (HomeActivity)getActivity();
 
+        no_activities_layout = view.findViewById(R.id.completed_empty_layout);
+
         tests = new ArrayList<>();
 
+        long millis=System.currentTimeMillis();
+        Date date = new Date(millis );
+
         homeActivity.db.collection("tests")
+                //.whereEqualTo("year", 2020)
+                .whereLessThan("finishTime", date)
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
@@ -91,6 +103,11 @@ public class CompletedFragment extends Fragment {
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             Test test = document.toObject(Test.class);
                             tests.add(test);
+                        }
+                        if(tests.size() < 1) {
+                            no_activities_layout.setVisibility(View.VISIBLE);
+                        } else {
+                            no_activities_layout.setVisibility(View.GONE);
                         }
                         testAdapter = new TestAdapter(getContext(), tests);
                         completed_recyclerView = view.findViewById(R.id.completed_recyclerView);

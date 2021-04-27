@@ -5,12 +5,15 @@
     android:layout_height="match_parent"
     tools:context=".ProgrammedFragment">
 
-    <Button
-        android:id="@+id/delete_button"
+    <include
+        android:id="@+id/programmed_empty_layout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Borrar usuario"
-        android:layout_gravity="center_vertical"
-        />
+        android:layout_height="match_parent"
+        layout="@layout/no_activities"
+        android:visibility="gone"/>
 
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/programmed_recyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 </FrameLayout>

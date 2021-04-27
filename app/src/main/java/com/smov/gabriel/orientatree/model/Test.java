@@ -1,5 +1,8 @@
 package com.smov.gabriel.orientatree.model;
 
+import java.sql.Timestamp;
+import java.util.Date;
+
 public class Test {
 
     private String id;
@@ -7,15 +10,21 @@ public class Test {
     private String type;
     private String color;
 
+    private Date startTime;
+    private Date finishTime;
+
     public Test () {
 
     }
 
-    public Test(String id, String title, String type, String color) {
+    public Test(String id, String title, String type, String color,
+                Date startTime, Date finishTime) {
         this.id = id;
         this.title = title;
         this.type = type;
         this.color = color;
+        this.startTime = startTime;
+        this.finishTime = finishTime;
     }
 
     public String getId() {
@@ -48,6 +57,22 @@ public class Test {
 
     public void setColor(String color) {
         this.color = color;
+    }
+
+    public Date getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(Date date) {
+        this.startTime = date;
+    }
+
+    public Date getFinishTime() {
+        return finishTime;
+    }
+
+    public void setFinishTime(Date finishTime) {
+        this.finishTime = finishTime;
     }
 
     public String getResume() {

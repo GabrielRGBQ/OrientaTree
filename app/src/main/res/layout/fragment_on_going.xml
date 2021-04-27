@@ -5,21 +5,16 @@
     android:layout_height="match_parent"
     tools:context=".OnGoingFragment">
 
-    <Button
-        android:id="@+id/logOut_button"
+    <include
+        android:id="@+id/onGoing_empty_layout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Log Out"
-        android:textAllCaps="true"
-        android:layout_gravity="center_vertical"
-        />
+        android:layout_height="match_parent"
+        layout="@layout/no_activities"
+        android:visibility="gone"/>
 
-    <!--<Button
-        android:id="@+id/delete_button"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/onGoing_recyclerView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Borrar usuario"
-        android:layout_gravity="center_vertical"
-        />-->
+        android:layout_height="wrap_content" />
 
 </FrameLayout>
