@@ -7,25 +7,19 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.adapters.TestAdapter;
-import com.smov.gabriel.orientatree.model.Test;
+import com.smov.gabriel.orientatree.model.Activity;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -38,7 +32,9 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
 
     private RecyclerView programmed_recyclerView;
     private TestAdapter testAdapter;
-    private ArrayList<Test> tests;
+    private ArrayList<Activity> activities;
+
+    private SwipeRefreshLayout programmed_pull_layout;
 
     private HomeActivity homeActivity;
 
@@ -92,9 +88,24 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
 
         homeActivity = (HomeActivity)getActivity();
 
+        programmed_pull_layout = view.findViewById(R.id.programmed_pull_layout);
+        programmed_pull_layout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                getActivities(view);
+                programmed_pull_layout.setRefreshing(false);
+            }
+        });
+
         no_activities_layout = view.findViewById(R.id.programmed_empty_layout);
 
-        tests = new ArrayList<>();
+        getActivities(view);
+
+        return view;
+    }
+
+    private void getActivities(View view) {
+        activities = new ArrayList<>();
 
         long millis=System.currentTimeMillis();
         Date date = new Date(millis );
@@ -106,22 +117,20 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
                     @Override
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         for (QueryDocumentSnapshot document : task.getResult()) {
-                            Test test = document.toObject(Test.class);
-                            tests.add(test);
+                            Activity activity = document.toObject(Activity.class);
+                            activities.add(activity);
                         }
-                        if(tests.size() < 1) {
+                        if(activities.size() < 1) {
                             no_activities_layout.setVisibility(View.VISIBLE);
                         } else {
                             no_activities_layout.setVisibility(View.GONE);
                         }
-                        testAdapter = new TestAdapter(getContext(), tests);
+                        testAdapter = new TestAdapter(getContext(), activities);
                         programmed_recyclerView = view.findViewById(R.id.programmed_recyclerView);
                         programmed_recyclerView.setAdapter(testAdapter);
                         programmed_recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
                     }
                 });
-
-        return view;
     }
 
     @Override

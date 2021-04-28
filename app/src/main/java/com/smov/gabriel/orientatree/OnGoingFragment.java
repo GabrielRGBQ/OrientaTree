@@ -7,6 +7,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,7 +18,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.smov.gabriel.orientatree.adapters.TestAdapter;
-import com.smov.gabriel.orientatree.model.Test;
+import com.smov.gabriel.orientatree.model.Activity;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -31,9 +32,11 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
 
     private RecyclerView onGoing_recyclerView;
     private TestAdapter testAdapter;
-    private ArrayList<Test> first_selection;
-    private ArrayList<Test> ultimate_selection;
 
+    private SwipeRefreshLayout onGoing_pull_layout;
+
+    private ArrayList<Activity> first_selection;
+    private ArrayList<Activity> ultimate_selection;
 
     private HomeActivity homeActivity;
 
@@ -88,7 +91,24 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
 
         homeActivity = (HomeActivity)getActivity();
 
+        onGoing_pull_layout = view.findViewById(R.id.onGoing_pull_layout);
+
+        onGoing_pull_layout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                getActivities(view);
+                onGoing_pull_layout.setRefreshing(false);
+            }
+        });
+
         no_activities_layout = view.findViewById(R.id.onGoing_empty_layout);
+
+        getActivities(view);
+
+        return view;
+    }
+
+    private void getActivities(View view) {
 
         // as I don't know how to query to Firestore within a range of Dates... I provisionally implement
         // that logic on the client... that's why I need two ArrayLists
@@ -106,14 +126,14 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             // here we have all the activities that did not finish yet in the first array
-                            Test test = document.toObject(Test.class);
-                            first_selection.add(test);
+                            Activity activity = document.toObject(Activity.class);
+                            first_selection.add(activity);
                         }
-                        for (Test test : first_selection) {
+                        for (Activity activity : first_selection) {
                             // and here we polish the selection by not choosing those that have not started neither, and
                             // henceforth, they are future activities
-                            if(date.after(test.getStartTime())) {
-                                ultimate_selection.add(test);
+                            if(date.after(activity.getStartTime())) {
+                                ultimate_selection.add(activity);
                             }
                         }
                         if(ultimate_selection.size() < 1) {
@@ -127,8 +147,6 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
                         onGoing_recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
                     }
                 });
-
-        return view;
     }
 
     @Override

@@ -1,49 +1,38 @@
 package com.smov.gabriel.orientatree.model;
 
+import java.sql.Timestamp;
+import java.util.Date;
+
 public class Activity {
 
-    // general attributes
-    private String activity_id;
+    private String id;
     private String title;
     private String type;
-    private String organizer;
+    private String color;
 
-    // date attributes
-    private int year;
-    private int month;
-    private int day;
+    private Date startTime;
+    private Date finishTime;
 
-    // start time attributes
-    private int s_hour;
-    private int s_minute;
+    public Activity() {
 
-    // finish time attributes
-    private int e_hour;
-    private int e_minute;
-
-    public Activity () {
     }
 
-    public Activity(String activity_id, String title, String type, String organizer, int year, int month, int day, int s_hour, int s_minute, int e_hour, int e_minute) {
-        this.activity_id = activity_id;
+    public Activity(String id, String title, String type, String color,
+                    Date startTime, Date finishTime) {
+        this.id = id;
         this.title = title;
         this.type = type;
-        this.organizer = organizer;
-        this.year = year;
-        this.month = month;
-        this.day = day;
-        this.s_hour = s_hour;
-        this.s_minute = s_minute;
-        this.e_hour = e_hour;
-        this.e_minute = e_minute;
+        this.color = color;
+        this.startTime = startTime;
+        this.finishTime = finishTime;
     }
 
-    public String getActivity_id() {
-        return activity_id;
+    public String getId() {
+        return id;
     }
 
-    public void setActivity_id(String activity_id) {
-        this.activity_id = activity_id;
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getTitle() {
@@ -62,67 +51,31 @@ public class Activity {
         this.type = type;
     }
 
-    public String getOrganizer() {
-        return organizer;
+    public String getColor() {
+        return color;
     }
 
-    public void setOrganizer(String organizer) {
-        this.organizer = organizer;
+    public void setColor(String color) {
+        this.color = color;
     }
 
-    public int getYear() {
-        return year;
+    public Date getStartTime() {
+        return startTime;
     }
 
-    public void setYear(int year) {
-        this.year = year;
+    public void setStartTime(Date date) {
+        this.startTime = date;
     }
 
-    public int getMonth() {
-        return month;
+    public Date getFinishTime() {
+        return finishTime;
     }
 
-    public void setMonth(int month) {
-        this.month = month;
+    public void setFinishTime(Date finishTime) {
+        this.finishTime = finishTime;
     }
 
-    public int getDay() {
-        return day;
-    }
-
-    public void setDay(int day) {
-        this.day = day;
-    }
-
-    public int getS_hour() {
-        return s_hour;
-    }
-
-    public void setS_hour(int s_hour) {
-        this.s_hour = s_hour;
-    }
-
-    public int getS_minute() {
-        return s_minute;
-    }
-
-    public void setS_minute(int s_minute) {
-        this.s_minute = s_minute;
-    }
-
-    public int getE_hour() {
-        return e_hour;
-    }
-
-    public void setE_hour(int e_hour) {
-        this.e_hour = e_hour;
-    }
-
-    public int getE_minute() {
-        return e_minute;
-    }
-
-    public void setE_minute(int e_minute) {
-        this.e_minute = e_minute;
+    public String getResume() {
+        return "Lorem ipsum dolor sit amet consectetur adipiscing elit enim laoreet suscipit, urna...";
     }
 }

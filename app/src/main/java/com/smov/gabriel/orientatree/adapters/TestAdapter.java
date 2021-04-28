@@ -1,6 +1,5 @@
 package com.smov.gabriel.orientatree.adapters;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
 import android.view.LayoutInflater;
@@ -18,7 +17,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.R;
-import com.smov.gabriel.orientatree.model.Test;
+import com.smov.gabriel.orientatree.model.Activity;
 
 import java.util.ArrayList;
 
@@ -26,12 +25,12 @@ public class TestAdapter extends RecyclerView.Adapter<TestAdapter.MyViewHolder> 
 
     private Context context;
 
-    private ArrayList<Test> tests;
+    private ArrayList<Activity> activities;
     private int position;
 
-    public TestAdapter(Context context, ArrayList<Test> tests) {
+    public TestAdapter(Context context, ArrayList<Activity> activities) {
         this.context = context;
-        this.tests = tests;
+        this.activities = activities;
     }
 
     @NonNull
@@ -46,14 +45,14 @@ public class TestAdapter extends RecyclerView.Adapter<TestAdapter.MyViewHolder> 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         this.position = position ;
-        Test test = tests.get(position);
+        Activity activity = activities.get(position);
 
-        holder.title_textView.setText(test.getTitle());
-        holder.subtitle_textView.setText(test.getType());
-        holder.resume_textView.setText(test.getResume());
+        holder.title_textView.setText(activity.getTitle());
+        holder.subtitle_textView.setText(activity.getType());
+        holder.resume_textView.setText(activity.getResume());
 
-        if(test.getColor() != null) {
-            switch (test.getColor()) {
+        if(activity.getColor() != null) {
+            switch (activity.getColor()) {
                 case "Naranja":
                     holder.color_textView.setText("naranja");
                     holder.color_textView.setTextColor(Color.parseColor("#FFA233"));
@@ -68,7 +67,7 @@ public class TestAdapter extends RecyclerView.Adapter<TestAdapter.MyViewHolder> 
         }
 
         // get and set the activity picture
-        StorageReference ref = holder.storageReference.child("activityImages/" + test.getId() + ".jpg");
+        StorageReference ref = holder.storageReference.child("activityImages/" + activity.getId() + ".jpg");
         Glide.with(context)
                 .load(ref)
                 .diskCacheStrategy(DiskCacheStrategy.NONE ) // prevent caching
@@ -78,7 +77,7 @@ public class TestAdapter extends RecyclerView.Adapter<TestAdapter.MyViewHolder> 
 
     @Override
     public int getItemCount() {
-        return tests.size();
+        return activities.size();
     }
 
     public class MyViewHolder extends RecyclerView.ViewHolder {

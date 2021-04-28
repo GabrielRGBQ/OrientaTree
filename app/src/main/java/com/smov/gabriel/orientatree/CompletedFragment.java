@@ -7,6 +7,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,9 +18,8 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.smov.gabriel.orientatree.adapters.TestAdapter;
-import com.smov.gabriel.orientatree.model.Test;
+import com.smov.gabriel.orientatree.model.Activity;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -32,7 +32,9 @@ public class CompletedFragment extends Fragment {
 
     private RecyclerView completed_recyclerView;
     private TestAdapter testAdapter;
-    private ArrayList<Test> tests;
+    private ArrayList<Activity> activities;
+
+    private SwipeRefreshLayout completed_pull_layout;
 
     private HomeActivity homeActivity;
 
@@ -86,9 +88,24 @@ public class CompletedFragment extends Fragment {
 
         homeActivity = (HomeActivity)getActivity();
 
+        completed_pull_layout = view.findViewById(R.id.completed_pull_layout);
+        completed_pull_layout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                getActivities(view);
+                completed_pull_layout.setRefreshing(false);
+            }
+        });
+
         no_activities_layout = view.findViewById(R.id.completed_empty_layout);
 
-        tests = new ArrayList<>();
+        getActivities(view);
+
+        return view;
+    }
+
+    private void getActivities(View view) {
+        activities = new ArrayList<>();
 
         long millis=System.currentTimeMillis();
         Date date = new Date(millis );
@@ -101,21 +118,19 @@ public class CompletedFragment extends Fragment {
                     @Override
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         for (QueryDocumentSnapshot document : task.getResult()) {
-                            Test test = document.toObject(Test.class);
-                            tests.add(test);
+                            Activity activity = document.toObject(Activity.class);
+                            activities.add(activity);
                         }
-                        if(tests.size() < 1) {
+                        if(activities.size() < 1) {
                             no_activities_layout.setVisibility(View.VISIBLE);
                         } else {
                             no_activities_layout.setVisibility(View.GONE);
                         }
-                        testAdapter = new TestAdapter(getContext(), tests);
+                        testAdapter = new TestAdapter(getContext(), activities);
                         completed_recyclerView = view.findViewById(R.id.completed_recyclerView);
                         completed_recyclerView.setAdapter(testAdapter);
                         completed_recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
                     }
                 });
-
-        return view;
     }
 }
