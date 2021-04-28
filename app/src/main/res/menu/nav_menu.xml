@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--<item android:title="STORAGE">
+        <menu>
+            <item android:title="My Files"
+                android:icon="@drawable/ic_menu_camera"/>
+            <item android:title="My Files"
+                android:icon="@drawable/ic_menu_camera"/>
+            <item android:title="My Files"
+                android:icon="@drawable/ic_menu_camera"/>
+        </menu>
+    </item>
+    <item android:title="APP">
+        <menu>
+            <item android:title="My Files"
+                android:icon="@drawable/ic_menu_camera"/>
+            <item android:title="My Files"
+                android:icon="@drawable/ic_menu_camera"/>
+            <item android:title="My Files"
+                android:icon="@drawable/ic_menu_camera"/>
+        </menu>
+    </item>-->
+
+    <group
+        android:id="@+id/group1">
+        <item
+            android:id="@+id/subtitle1"
+            android:title="Subtitle">
+            <menu>
+                <item
+                    android:title="Profile settings"
+                    android:icon="@drawable/ic_settings"
+                    android:id="@+id/profile_settings_item"/>
+                <item
+                    android:title="My Files"
+                    android:icon="@drawable/ic_menu_camera"/>
+
+                <item
+                    android:title="My Files"
+                    android:icon="@drawable/ic_menu_camera"/>
+            </menu>
+        </item>
+    </group>
+
+    <group
+        android:id="@+id/group2">
+        <item
+            android:id="@+id/subtitle2"
+            android:title="Session management">
+            <menu>
+                <item
+                    android:title="Log Out"
+                    android:icon="@drawable/ic_log_out"
+                    android:id="@+id/log_out_item"/>
+                <item
+                    android:title="Delete account"
+                    android:icon="@drawable/ic_delete"
+                    android:id="@+id/delete_profile_item"/>
+            </menu>
+        </item>
+    </group>
+
+</menu>
