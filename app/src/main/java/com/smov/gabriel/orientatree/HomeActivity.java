@@ -118,6 +118,13 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
         fab = findViewById(R.id.floating_action_button);
 
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updateUIFindTemplate();
+            }
+        });
+
         //no_activities_layout = findViewById(R.id.no_activities_layout);
 
         toolbar = findViewById(R.id.home_toolbar);
@@ -201,6 +208,11 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                     .skipMemoryCache(true) // prevent caching
                     .into(profile_circleImageView);
         }
+    }
+
+    private void updateUIFindTemplate() {
+        Intent intent = new Intent(HomeActivity.this, FindTemplate.class);
+        startActivity(intent);
     }
 
     @Override

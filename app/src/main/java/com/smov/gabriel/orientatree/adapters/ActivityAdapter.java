@@ -21,14 +21,14 @@ import com.smov.gabriel.orientatree.model.Activity;
 
 import java.util.ArrayList;
 
-public class TestAdapter extends RecyclerView.Adapter<TestAdapter.MyViewHolder> {
+public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyViewHolder> {
 
     private Context context;
 
     private ArrayList<Activity> activities;
     private int position;
 
-    public TestAdapter(Context context, ArrayList<Activity> activities) {
+    public ActivityAdapter(Context context, ArrayList<Activity> activities) {
         this.context = context;
         this.activities = activities;
     }

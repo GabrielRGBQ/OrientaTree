@@ -17,7 +17,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.smov.gabriel.orientatree.adapters.TestAdapter;
+import com.smov.gabriel.orientatree.adapters.ActivityAdapter;
 import com.smov.gabriel.orientatree.model.Activity;
 
 import java.util.ArrayList;
@@ -31,7 +31,7 @@ import java.util.Date;
 public class ProgrammedFragment extends Fragment implements View.OnClickListener {
 
     private RecyclerView programmed_recyclerView;
-    private TestAdapter testAdapter;
+    private ActivityAdapter activityAdapter;
     private ArrayList<Activity> activities;
 
     private SwipeRefreshLayout programmed_pull_layout;
@@ -125,9 +125,9 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
                         } else {
                             no_activities_layout.setVisibility(View.GONE);
                         }
-                        testAdapter = new TestAdapter(getContext(), activities);
+                        activityAdapter = new ActivityAdapter(getContext(), activities);
                         programmed_recyclerView = view.findViewById(R.id.programmed_recyclerView);
-                        programmed_recyclerView.setAdapter(testAdapter);
+                        programmed_recyclerView.setAdapter(activityAdapter);
                         programmed_recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
                     }
                 });
