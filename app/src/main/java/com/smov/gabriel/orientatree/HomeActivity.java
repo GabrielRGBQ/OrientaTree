@@ -87,8 +87,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
     private FloatingActionButton fab;
 
-    //ConstraintLayout no_activities_layout;
-
     // user data stored in Auth user
     String userID, userEmail, userName;
 
@@ -124,8 +122,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                 updateUIFindTemplate();
             }
         });
-
-        //no_activities_layout = findViewById(R.id.no_activities_layout);
 
         toolbar = findViewById(R.id.home_toolbar);
 
@@ -208,11 +204,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                     .skipMemoryCache(true) // prevent caching
                     .into(profile_circleImageView);
         }
-    }
-
-    private void updateUIFindTemplate() {
-        Intent intent = new Intent(HomeActivity.this, FindTemplate.class);
-        startActivity(intent);
     }
 
     @Override
@@ -353,6 +344,11 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
     private void updateUIEditProfile() {
         Intent intent = new Intent(HomeActivity.this, EditProfileActivity.class);
+        startActivity(intent);
+    }
+
+    private void updateUIFindTemplate() {
+        Intent intent = new Intent(HomeActivity.this, FindTemplate.class);
         startActivity(intent);
     }
 }

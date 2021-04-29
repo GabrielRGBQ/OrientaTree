@@ -7,8 +7,7 @@ public class Activity {
 
     private String id;
     private String title;
-    private String type;
-    private String color;
+    private String template;
 
     private Date startTime;
     private Date finishTime;
@@ -17,12 +16,11 @@ public class Activity {
 
     }
 
-    public Activity(String id, String title, String type, String color,
+    public Activity(String id, String title, String template,
                     Date startTime, Date finishTime) {
         this.id = id;
         this.title = title;
-        this.type = type;
-        this.color = color;
+        this.template = template;
         this.startTime = startTime;
         this.finishTime = finishTime;
     }
@@ -43,20 +41,12 @@ public class Activity {
         this.title = title;
     }
 
-    public String getType() {
-        return type;
+    public String getTemplate() {
+        return template;
     }
 
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getColor() {
-        return color;
-    }
-
-    public void setColor(String color) {
-        this.color = color;
+    public void setTemplate(String template) {
+        this.template = template;
     }
 
     public Date getStartTime() {
@@ -73,9 +63,5 @@ public class Activity {
 
     public void setFinishTime(Date finishTime) {
         this.finishTime = finishTime;
-    }
-
-    public String getResume() {
-        return "Lorem ipsum dolor sit amet consectetur adipiscing elit enim laoreet suscipit, urna...";
     }
 }
