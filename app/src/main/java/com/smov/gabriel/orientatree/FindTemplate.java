@@ -60,7 +60,7 @@ public class FindTemplate extends AppCompatActivity {
                             Template template = document.toObject(Template.class);
                             templates.add(template);
                         }
-                        templateAdapter = new TemplateAdapter(FindTemplate.this, templates);
+                        templateAdapter = new TemplateAdapter(FindTemplate.this,FindTemplate.this, templates);
                         template_recyclerview = findViewById(R.id.template_recyclerview);
                         template_recyclerview.setAdapter(templateAdapter);
                         template_recyclerview.setLayoutManager(new GridLayoutManager(FindTemplate.this, 2));

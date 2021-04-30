@@ -1,7 +1,10 @@
 package com.smov.gabriel.orientatree.adapters;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +23,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.R;
+import com.smov.gabriel.orientatree.SelectedTemplateActivity;
 import com.smov.gabriel.orientatree.model.Template;
 
 import java.util.ArrayList;
@@ -28,11 +32,13 @@ import java.util.List;
 public class TemplateAdapter extends RecyclerView.Adapter<TemplateAdapter.MyViewHolder> implements Filterable {
 
     private Context context;
+    private Activity findActivity;
     private ArrayList<Template> templates;
     private ArrayList<Template> templates_full; // needed to restore when we relax search filters
     private int position;
 
-    public TemplateAdapter(Context context, ArrayList<Template> templates) {
+    public TemplateAdapter(Activity findActivity, Context context, ArrayList<Template> templates) {
+        this.findActivity = findActivity;
         this.context = context;
         this.templates = templates;
         this.templates_full = new ArrayList<>(templates); // this is a COPY, it does not point to the exact same data, but to a copy
@@ -59,7 +65,7 @@ public class TemplateAdapter extends RecyclerView.Adapter<TemplateAdapter.MyView
         holder.row_template_layout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(context, "Card pulsada: " + position, Toast.LENGTH_SHORT).show();
+                updateUISelectedTemplate(template);
             }
         });
 
@@ -83,6 +89,12 @@ public class TemplateAdapter extends RecyclerView.Adapter<TemplateAdapter.MyView
                 .skipMemoryCache(true) // prevent caching
                 .into(holder.row_template_imageview);
 
+    }
+
+    private void updateUISelectedTemplate(Template template) {
+        Intent intent = new Intent(context, SelectedTemplateActivity.class);
+        intent.putExtra("template_id", template.getName_id());
+        findActivity.startActivityForResult(intent, 1); // this is to allow us to come back from the activity
     }
 
     @Override

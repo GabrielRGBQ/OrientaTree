@@ -21,5 +21,6 @@
 
     <!-- other colors -->
     <color name="grey_waiting">#C4BFC8</color>
+    <color name="error_red">#EB7E6F</color>
 
 </resources>

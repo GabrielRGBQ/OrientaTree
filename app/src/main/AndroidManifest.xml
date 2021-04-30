@@ -11,9 +11,13 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.OrientaTree">
-        <activity android:name=".FindTemplate"
+        <activity android:name=".SelectedTemplateActivity"
             android:screenOrientation="portrait"
-            android:parentActivityName=".HomeActivity"></activity>
+            android:parentActivityName=".FindTemplate"></activity>
+        <activity
+            android:name=".FindTemplate"
+            android:parentActivityName=".HomeActivity"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".EditProfileActivity"
             android:screenOrientation="portrait" />
