@@ -110,9 +110,9 @@ public class CompletedFragment extends Fragment {
         long millis=System.currentTimeMillis();
         Date date = new Date(millis );
 
-        homeActivity.db.collection("tests")
-                //.whereEqualTo("year", 2020)
+        homeActivity.db.collection("activities")
                 .whereLessThan("finishTime", date)
+                .whereEqualTo("planner_id", homeActivity.userID)
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override

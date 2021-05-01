@@ -118,8 +118,9 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
         long millis=System.currentTimeMillis();
         Date date = new Date(millis );
 
-        homeActivity.db.collection("tests")
+        homeActivity.db.collection("activities")
                 .whereGreaterThanOrEqualTo("finishTime", date)
+                .whereEqualTo("planner_id", homeActivity.userID)
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override

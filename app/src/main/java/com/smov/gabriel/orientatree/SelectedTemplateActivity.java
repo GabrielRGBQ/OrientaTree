@@ -1,5 +1,6 @@
 package com.smov.gabriel.orientatree;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
@@ -16,6 +17,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.datepicker.CalendarConstraints;
@@ -23,6 +25,7 @@ import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.timepicker.MaterialTimePicker;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -35,6 +38,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.UUID;
 
 public class SelectedTemplateActivity extends AppCompatActivity {
 
@@ -51,12 +55,15 @@ public class SelectedTemplateActivity extends AppCompatActivity {
 
     private FirebaseFirestore db;
 
+    private FirebaseAuth mAuth;
+
     private FirebaseStorage storage;
     private StorageReference storageReference;
 
-    private Date chosen_date; // date that the user chooses for the activity
-    private Date start;
-    private Date finish;
+    private Date chosen_day; // date that the user chooses for the activity
+    private Date start_date; // date representing the start time chosen
+    private Date finish_date; // date representing the finish time chosen
+    // all of the following are aux variables...
     private int start_hour;
     private int start_minute;
     private int finish_hour;
@@ -88,14 +95,18 @@ public class SelectedTemplateActivity extends AppCompatActivity {
         chip_finish = findViewById(R.id.chip_finish);
         program_button = findViewById(R.id.program_button);
 
-        // need this to display the choosen date on the chip
-        String pattern = "MM/dd/yyyy";
-        DateFormat df = new SimpleDateFormat(pattern);
+        // need this to display the chosen date and hour on the chips
+        String pattern_date = "dd/MM/yyyy";
+        String pattern_hour = "HH:mm";
+        DateFormat df_date = new SimpleDateFormat(pattern_date);
+        DateFormat df_hour = new SimpleDateFormat(pattern_hour);
 
         // allow description to scroll
         description_textView.setMovementMethod(new ScrollingMovementMethod());
 
         db = FirebaseFirestore.getInstance();
+
+        mAuth = FirebaseAuth.getInstance();
 
         storage = FirebaseStorage.getInstance();
         storageReference = storage.getReference();
@@ -171,8 +182,8 @@ public class SelectedTemplateActivity extends AppCompatActivity {
         materialDatePicker.addOnPositiveButtonClickListener(new MaterialPickerOnPositiveButtonClickListener() {
             @Override
             public void onPositiveButtonClick(Object selection) {
-                chosen_date = new Date((long)selection);
-                String dateAsString = df.format(chosen_date);
+                chosen_day = new Date((long)selection);
+                String dateAsString = df_date.format(chosen_day);
                 chip_date.setText(dateAsString);
             }
         });
@@ -187,7 +198,7 @@ public class SelectedTemplateActivity extends AppCompatActivity {
         chip_start.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(chosen_date != null) {
+                if(chosen_day != null) {
                     MaterialTimePicker materialTimePicker = new MaterialTimePicker.Builder()
                             .setTitleText("Elige la hora de inicio")
                             .build();
@@ -198,32 +209,28 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                             start_minute = materialTimePicker.getMinute();
                             // obtaining Date object that is stored in FireStore document
                             Calendar cal = Calendar.getInstance();
-                            cal.setTime(chosen_date);
+                            cal.setTime(chosen_day);
                             cal.add(Calendar.HOUR_OF_DAY, start_hour - 2);
                             cal.add(Calendar.MINUTE, start_minute);
                             Date start_check = cal.getTime();
-                            if(finish != null) {
-                                if(finish.after(start_check)) {
-                                    start = cal.getTime(); // this is the Date object
-                                    chip_start.setText(start_hour + ":" + start_minute);
+                            if(finish_date != null) {
+                                if(finish_date.after(start_check)) {
+                                    start_date = cal.getTime(); // this is the Date object
+                                    String startHourAsString = df_hour.format(start_date);
+                                    chip_start.setText(startHourAsString);
                                 } else {
                                     showSnackBar("La hora de inicio no puede ser posterior a la hora de fin");
                                 }
                             } else {
-                                start = cal.getTime(); // this is the Date object
-                                /*String pattern2 = "MM/dd/yyyy HH:mm:ss";
-                                DateFormat df2 = new SimpleDateFormat(pattern2);
-                                String start_date = df2.format(start);
-                                Toast.makeText(SelectedTemplateActivity.this, start_date, Toast.LENGTH_SHORT).show();*/
-                                chip_start.setText(start_hour + ":" + start_minute);
+                                start_date = cal.getTime(); // this is the Date object
+                                String startHourAsString = df_hour.format(start_date);
+                                chip_start.setText(startHourAsString);
                             }
                         }
                     });
                     materialTimePicker.show(getSupportFragmentManager(), "TIME_PICKER");
                 } else {
-                    // TODO: error message
                     showSnackBar("Primero debes seleccionar el día");
-                    //chip_date.setChipBackgroundColorResource(R.color.error_red);
                 }
             }
         });
@@ -231,7 +238,7 @@ public class SelectedTemplateActivity extends AppCompatActivity {
         chip_finish.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(start != null) {
+                if(start_date != null) {
                     MaterialTimePicker materialTimePicker = new MaterialTimePicker.Builder()
                             .setTitleText("Elige la hora de fin")
                             .build();
@@ -242,14 +249,15 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                             finish_minute = materialTimePicker.getMinute();
                             // obtaining Date object that is stored in FireStore document
                             Calendar cal = Calendar.getInstance();
-                            cal.setTime(chosen_date);
+                            cal.setTime(chosen_day);
                             cal.add(Calendar.HOUR_OF_DAY, finish_hour - 2);
                             cal.add(Calendar.MINUTE, finish_minute);
                             // checking that the activity finish time is after its start time
                             Date finish_check = cal.getTime();
-                            if(finish_check.after(start)) {
-                                finish = cal.getTime(); // this is the Date object
-                                chip_finish.setText(finish_hour + ":" + finish_minute);
+                            if(finish_check.after(start_date)) {
+                                finish_date = cal.getTime(); // this is the Date object
+                                String finishHourAsString = df_hour.format(finish_date);
+                                chip_finish.setText(finishHourAsString);
                             } else {
                                 showSnackBar("La hora de fin debe ser posterior a la hora de inicio");
                             }
@@ -257,7 +265,7 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                     });
                     materialTimePicker.show(getSupportFragmentManager(), "TIME_PICKER");
                 } else {
-                    if(chosen_date == null) {
+                    if(chosen_day == null) {
                         showSnackBar("Primero debes seleccionar el día");
                     } else {
                         showSnackBar("Primero debes seleccionar la hora de inicio");
@@ -266,27 +274,45 @@ public class SelectedTemplateActivity extends AppCompatActivity {
             }
         });
 
-        /*program_button.setOnClickListener(new View.OnClickListener() {
+        program_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(chosen_date != null) {
-                    if(start != null) {
-                        if(finish != null) {
-                            new_activity = new Activity();
-                            new_activity.setTemplate(template_id);
-                            new_activity.setStartTime(start);
-                            new_activity.setFinishTime(finish);
+                if(chosen_day != null) {
+                    if(start_date != null) {
+                        if(finish_date != null) {
+                            String activity_title = "Actividad Gabriel";
+                            String aux_activity_id, aux_activity_key, activity_id, activity_key;
+                            aux_activity_id = UUID.randomUUID().toString();
+                            aux_activity_key = UUID.randomUUID().toString();
+                            activity_id = aux_activity_id.substring(0, Math.min(aux_activity_id.length(), 8));
+                            activity_key = aux_activity_key.substring(0, Math.min(aux_activity_key.length(), 6));
+                            new_activity = new Activity(activity_id, activity_key, activity_title, template_id,
+                                    mAuth.getCurrentUser().getUid(), start_date, finish_date);
+                            db.collection("activities").document(activity_id)
+                                    .set(new_activity)
+                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                        @Override
+                                        public void onSuccess(Void aVoid) {
+                                            Toast.makeText(SelectedTemplateActivity.this, "Actividad creada", Toast.LENGTH_SHORT).show();
+                                        }
+                                    })
+                                    .addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+                                            Toast.makeText(SelectedTemplateActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
                         } else {
-
+                            showSnackBar("Primero debes seleccionar la hora de finalización");
                         }
                     } else {
-
+                        showSnackBar("Primero debes seleccionar la hora de inicio");
                     }
                 } else {
-
+                    showSnackBar("Primero debes seleccionar el día");
                 }
             }
-        });*/
+        });
 
     }
 
@@ -294,7 +320,7 @@ public class SelectedTemplateActivity extends AppCompatActivity {
         if(getIntent().hasExtra("template_id")) {
             template_id = getIntent().getStringExtra("template_id");
         } else {
-            //Toast.makeText(this, "No data", Toast.LENGTH_SHORT).show();
+
         }
     }
 

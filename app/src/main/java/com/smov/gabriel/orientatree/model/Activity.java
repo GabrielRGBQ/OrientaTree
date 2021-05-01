@@ -6,8 +6,10 @@ import java.util.Date;
 public class Activity {
 
     private String id;
+    private String key;
     private String title;
     private String template;
+    private String planner_id;
 
     private Date startTime;
     private Date finishTime;
@@ -16,11 +18,13 @@ public class Activity {
 
     }
 
-    public Activity(String id, String title, String template,
+    public Activity(String id, String key, String title, String template, String planner_id,
                     Date startTime, Date finishTime) {
         this.id = id;
+        this.key = key;
         this.title = title;
         this.template = template;
+        this.planner_id = planner_id;
         this.startTime = startTime;
         this.finishTime = finishTime;
     }
@@ -33,6 +37,14 @@ public class Activity {
         this.id = id;
     }
 
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
+    }
+
     public String getTitle() {
         return title;
     }
@@ -43,6 +55,14 @@ public class Activity {
 
     public String getTemplate() {
         return template;
+    }
+
+    public String getPlanner_id() {
+        return planner_id;
+    }
+
+    public void setPlanner_id(String planner_id) {
+        this.planner_id = planner_id;
     }
 
     public void setTemplate(String template) {

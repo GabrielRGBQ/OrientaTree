@@ -51,7 +51,7 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
         Activity activity = activities.get(position);
 
         // formatting date in order to display it on card
-        String pattern = "MM/dd/yyyy";
+        String pattern = "dd/MM/yyyy";
         DateFormat df = new SimpleDateFormat(pattern);
         Date date = activity.getStartTime();
         String dateAsString = df.format(date);
