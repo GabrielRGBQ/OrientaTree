@@ -87,8 +87,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
     private FloatingActionButton fab;
 
-    //ConstraintLayout no_activities_layout;
-
     // user data stored in Auth user
     String userID, userEmail, userName;
 
@@ -118,7 +116,12 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
         fab = findViewById(R.id.floating_action_button);
 
-        //no_activities_layout = findViewById(R.id.no_activities_layout);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updateUIFindTemplate();
+            }
+        });
 
         toolbar = findViewById(R.id.home_toolbar);
 
@@ -166,7 +169,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                switch (tab.getPosition()) {
+                /*switch (tab.getPosition()) {
                     case 0:
                         break;
                     case 1:
@@ -174,16 +177,16 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                         break;
                     case 2:
                         break;
-                }
+                }*/
             }
 
             @Override
             public void onTabUnselected(TabLayout.Tab tab) {
-                switch (tab.getPosition()) {
+                /*switch (tab.getPosition()) {
                     case 1:
                         fab.show();
                         break;
-                }
+                }*/
             }
 
             @Override
@@ -341,6 +344,11 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
     private void updateUIEditProfile() {
         Intent intent = new Intent(HomeActivity.this, EditProfileActivity.class);
+        startActivity(intent);
+    }
+
+    private void updateUIFindTemplate() {
+        Intent intent = new Intent(HomeActivity.this, FindTemplate.class);
         startActivity(intent);
     }
 }

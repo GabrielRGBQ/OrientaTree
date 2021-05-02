@@ -11,24 +11,35 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.OrientaTree">
-        <activity android:name=".EditProfileActivity"
-            android:screenOrientation="portrait"></activity>
-        <activity android:name=".HomeActivity"
-            android:screenOrientation="portrait"/>
+        <activity android:name=".SelectedTemplateActivity"
+            android:screenOrientation="portrait"
+            android:parentActivityName=".FindTemplate"></activity>
+        <activity
+            android:name=".FindTemplate"
+            android:parentActivityName=".HomeActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".EditProfileActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".HomeActivity"
+            android:screenOrientation="portrait" />
         <activity android:name=".WelcomeActivity" />
         <activity
             android:name=".LogInActivity"
             android:label="Iniciar sesión"
             android:parentActivityName=".IdentificationActivity"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait" />
         <activity
             android:name=".SignUpActivity"
             android:label="Registrarse"
             android:parentActivityName=".IdentificationActivity"
-            android:screenOrientation="portrait"/>
-        <activity android:name=".IdentificationActivity"
-            android:screenOrientation="portrait"/>
-        <activity android:name=".MainActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".IdentificationActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".MainActivity"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

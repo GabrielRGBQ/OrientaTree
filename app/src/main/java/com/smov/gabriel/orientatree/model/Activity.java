@@ -6,9 +6,11 @@ import java.util.Date;
 public class Activity {
 
     private String id;
+    private String visible_id;
+    private String key;
     private String title;
-    private String type;
-    private String color;
+    private String template;
+    private String planner_id;
 
     private Date startTime;
     private Date finishTime;
@@ -17,12 +19,14 @@ public class Activity {
 
     }
 
-    public Activity(String id, String title, String type, String color,
+    public Activity(String id, String key, String title, String template, String planner_id,
                     Date startTime, Date finishTime) {
         this.id = id;
+        this.visible_id = id.substring(0, Math.min(id.length(), 8));
+        this.key = key;
         this.title = title;
-        this.type = type;
-        this.color = color;
+        this.template = template;
+        this.planner_id = planner_id;
         this.startTime = startTime;
         this.finishTime = finishTime;
     }
@@ -35,6 +39,22 @@ public class Activity {
         this.id = id;
     }
 
+    public String getVisible_id() {
+        return visible_id;
+    }
+
+    public void setVisible_id(String visible_id) {
+        this.visible_id = visible_id;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
+    }
+
     public String getTitle() {
         return title;
     }
@@ -43,20 +63,20 @@ public class Activity {
         this.title = title;
     }
 
-    public String getType() {
-        return type;
+    public String getTemplate() {
+        return template;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public String getPlanner_id() {
+        return planner_id;
     }
 
-    public String getColor() {
-        return color;
+    public void setPlanner_id(String planner_id) {
+        this.planner_id = planner_id;
     }
 
-    public void setColor(String color) {
-        this.color = color;
+    public void setTemplate(String template) {
+        this.template = template;
     }
 
     public Date getStartTime() {
@@ -73,9 +93,5 @@ public class Activity {
 
     public void setFinishTime(Date finishTime) {
         this.finishTime = finishTime;
-    }
-
-    public String getResume() {
-        return "Lorem ipsum dolor sit amet consectetur adipiscing elit enim laoreet suscipit, urna...";
     }
 }

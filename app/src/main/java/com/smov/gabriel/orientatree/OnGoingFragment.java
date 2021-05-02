@@ -17,7 +17,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.smov.gabriel.orientatree.adapters.TestAdapter;
+import com.smov.gabriel.orientatree.adapters.ActivityAdapter;
 import com.smov.gabriel.orientatree.model.Activity;
 
 import java.util.ArrayList;
@@ -31,7 +31,7 @@ import java.util.Date;
 public class OnGoingFragment extends Fragment implements View.OnClickListener {
 
     private RecyclerView onGoing_recyclerView;
-    private TestAdapter testAdapter;
+    private ActivityAdapter activityAdapter;
 
     private SwipeRefreshLayout onGoing_pull_layout;
 
@@ -118,8 +118,9 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
         long millis=System.currentTimeMillis();
         Date date = new Date(millis );
 
-        homeActivity.db.collection("tests")
+        homeActivity.db.collection("activities")
                 .whereGreaterThanOrEqualTo("finishTime", date)
+                .whereEqualTo("planner_id", homeActivity.userID)
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
@@ -141,9 +142,9 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
                         } else {
                             no_activities_layout.setVisibility(View.GONE);
                         }
-                        testAdapter = new TestAdapter(getContext(), ultimate_selection);
+                        activityAdapter = new ActivityAdapter(getContext(), ultimate_selection);
                         onGoing_recyclerView = view.findViewById(R.id.onGoing_recyclerView);
-                        onGoing_recyclerView.setAdapter(testAdapter);
+                        onGoing_recyclerView.setAdapter(activityAdapter);
                         onGoing_recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
                     }
                 });

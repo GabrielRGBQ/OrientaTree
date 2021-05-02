@@ -17,7 +17,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.smov.gabriel.orientatree.adapters.TestAdapter;
+import com.smov.gabriel.orientatree.adapters.ActivityAdapter;
 import com.smov.gabriel.orientatree.model.Activity;
 
 import java.util.ArrayList;
@@ -31,7 +31,7 @@ import java.util.Date;
 public class CompletedFragment extends Fragment {
 
     private RecyclerView completed_recyclerView;
-    private TestAdapter testAdapter;
+    private ActivityAdapter activityAdapter;
     private ArrayList<Activity> activities;
 
     private SwipeRefreshLayout completed_pull_layout;
@@ -110,9 +110,9 @@ public class CompletedFragment extends Fragment {
         long millis=System.currentTimeMillis();
         Date date = new Date(millis );
 
-        homeActivity.db.collection("tests")
-                //.whereEqualTo("year", 2020)
+        homeActivity.db.collection("activities")
                 .whereLessThan("finishTime", date)
+                .whereEqualTo("planner_id", homeActivity.userID)
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
@@ -126,9 +126,9 @@ public class CompletedFragment extends Fragment {
                         } else {
                             no_activities_layout.setVisibility(View.GONE);
                         }
-                        testAdapter = new TestAdapter(getContext(), activities);
+                        activityAdapter = new ActivityAdapter(getContext(), activities);
                         completed_recyclerView = view.findViewById(R.id.completed_recyclerView);
-                        completed_recyclerView.setAdapter(testAdapter);
+                        completed_recyclerView.setAdapter(activityAdapter);
                         completed_recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
                     }
                 });
