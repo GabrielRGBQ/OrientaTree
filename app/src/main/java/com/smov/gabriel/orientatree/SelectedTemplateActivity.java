@@ -4,12 +4,14 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.text.method.ScrollingMovementMethod;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -23,7 +25,10 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.datepicker.CalendarConstraints;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.timepicker.MaterialTimePicker;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
@@ -71,6 +76,9 @@ public class SelectedTemplateActivity extends AppCompatActivity {
 
     private Activity new_activity;
 
+    private DateFormat df_date;
+    private DateFormat df_hour;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -83,7 +91,7 @@ public class SelectedTemplateActivity extends AppCompatActivity {
         toolbar = findViewById(R.id.selected_toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle(template_id);
-        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close);
+        //getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         selected_imageView = findViewById(R.id.selected_imageView);
@@ -98,8 +106,8 @@ public class SelectedTemplateActivity extends AppCompatActivity {
         // need this to display the chosen date and hour on the chips
         String pattern_date = "dd/MM/yyyy";
         String pattern_hour = "HH:mm";
-        DateFormat df_date = new SimpleDateFormat(pattern_date);
-        DateFormat df_hour = new SimpleDateFormat(pattern_hour);
+        df_date = new SimpleDateFormat(pattern_date);
+        df_hour = new SimpleDateFormat(pattern_hour);
 
         // allow description to scroll
         description_textView.setMovementMethod(new ScrollingMovementMethod());
@@ -177,7 +185,7 @@ public class SelectedTemplateActivity extends AppCompatActivity {
         CalendarConstraints.Builder constraintsBuilder = new CalendarConstraints.Builder();
         constraintsBuilder.setValidator(dateValidator);
         CalendarConstraints calendarConstraints = constraintsBuilder.build();
-        date_builder.setCalendarConstraints(calendarConstraints);
+        //date_builder.setCalendarConstraints(calendarConstraints);
         MaterialDatePicker materialDatePicker = date_builder.build();
         materialDatePicker.addOnPositiveButtonClickListener(new MaterialPickerOnPositiveButtonClickListener() {
             @Override
@@ -280,28 +288,7 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                 if(chosen_day != null) {
                     if(start_date != null) {
                         if(finish_date != null) {
-                            String activity_title = "Actividad Gabriel";
-                            String aux_activity_id, aux_activity_key, activity_id, activity_key;
-                            aux_activity_id = UUID.randomUUID().toString();
-                            aux_activity_key = UUID.randomUUID().toString();
-                            activity_id = aux_activity_id.substring(0, Math.min(aux_activity_id.length(), 8));
-                            activity_key = aux_activity_key.substring(0, Math.min(aux_activity_key.length(), 6));
-                            new_activity = new Activity(activity_id, activity_key, activity_title, template_id,
-                                    mAuth.getCurrentUser().getUid(), start_date, finish_date);
-                            db.collection("activities").document(activity_id)
-                                    .set(new_activity)
-                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                        @Override
-                                        public void onSuccess(Void aVoid) {
-                                            Toast.makeText(SelectedTemplateActivity.this, "Actividad creada", Toast.LENGTH_SHORT).show();
-                                        }
-                                    })
-                                    .addOnFailureListener(new OnFailureListener() {
-                                        @Override
-                                        public void onFailure(@NonNull Exception e) {
-                                            Toast.makeText(SelectedTemplateActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                        }
-                                    });
+                            showTitleDialog();
                         } else {
                             showSnackBar("Primero debes seleccionar la hora de finalización");
                         }
@@ -314,6 +301,68 @@ public class SelectedTemplateActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    private void showTitleDialog() {
+        final EditText input = new EditText(SelectedTemplateActivity.this);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT);
+        input.setLayoutParams(lp);
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Introduzca un título para su nueva actividad")
+                .setMessage("Día: " + df_date.format(chosen_day) + "\n" +
+                        "\nHora de inicio: " + df_hour.format(start_date) + "\n" +
+                        "\nHora de fin: " + df_hour.format(finish_date) + "\n")
+                .setView(input)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String activity_title = input.getText().toString().trim();
+                        if(activity_title.length() == 0) {
+                            activity_title = "Actividad " + mAuth.getCurrentUser().getDisplayName();
+                        }
+                        String aux_activity_key, activity_id, activity_key;
+                        activity_id = UUID.randomUUID().toString();
+                        aux_activity_key = UUID.randomUUID().toString();
+                        activity_key = aux_activity_key.substring(0, Math.min(aux_activity_key.length(), 6));
+                        new_activity = new Activity(activity_id, activity_key, activity_title, template_id,
+                                mAuth.getCurrentUser().getUid(), start_date, finish_date);
+                        db.collection("activities").document(activity_id)
+                                .set(new_activity)
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+                                        //Toast.makeText(SelectedTemplateActivity.this, "Actividad creada", Toast.LENGTH_SHORT).show();
+                                        showConfirmationDialog();
+                                    }
+                                })
+                                .addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        showSnackBar("Algo salió mal al crear la actividad. Vuelva a intentarlo.");
+                                    }
+                                });
+                    }
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void showConfirmationDialog() {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Actividad programada")
+                .setMessage("Las claves para participar en ella son: \n" +
+                        "\nID-> " + new_activity.getVisible_id() + "\n" +
+                        "\nKey-> " + new_activity.getKey() + "\n" +
+                        "\nPodrá volver a consultar estos datos cuando desee buscando en sus actividades programadas.")
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                })
+                .show();
     }
 
     void getIntentData() {

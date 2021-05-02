@@ -59,6 +59,7 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
         holder.template_textView.setText(activity.getTemplate());
         holder.title_textView.setText(activity.getTitle());
         holder.date_textView.setText("Fecha: " + dateAsString);
+        holder.visibleId_textView.setText("ID: " + activity.getVisible_id());
 
         // get and set the activity picture
         StorageReference ref = holder.storageReference.child("templateImages/" + activity.getTemplate() + ".jpg");
@@ -80,7 +81,7 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
         StorageReference storageReference;
 
         LinearLayout row_activity_layout; // not sure if needed
-        TextView title_textView, date_textView, template_textView;
+        TextView title_textView, date_textView, template_textView, visibleId_textView;
         ImageView rowImage_imageView;
 
         public MyViewHolder(@NonNull View itemView) {
@@ -89,6 +90,7 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
             title_textView = itemView.findViewById(R.id.title_textView);
             date_textView = itemView.findViewById(R.id.date_textView);
             template_textView = itemView.findViewById(R.id.template_textView);
+            visibleId_textView = itemView.findViewById(R.id.visibleId_textView);
             row_activity_layout = itemView.findViewById(R.id.row_activity_layout);
             rowImage_imageView = itemView.findViewById(R.id.rowImage_imageView);
 

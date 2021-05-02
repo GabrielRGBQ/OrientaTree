@@ -6,6 +6,7 @@ import java.util.Date;
 public class Activity {
 
     private String id;
+    private String visible_id;
     private String key;
     private String title;
     private String template;
@@ -21,6 +22,7 @@ public class Activity {
     public Activity(String id, String key, String title, String template, String planner_id,
                     Date startTime, Date finishTime) {
         this.id = id;
+        this.visible_id = id.substring(0, Math.min(id.length(), 8));
         this.key = key;
         this.title = title;
         this.template = template;
@@ -35,6 +37,14 @@ public class Activity {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getVisible_id() {
+        return visible_id;
+    }
+
+    public void setVisible_id(String visible_id) {
+        this.visible_id = visible_id;
     }
 
     public String getKey() {

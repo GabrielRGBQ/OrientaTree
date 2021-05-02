@@ -72,8 +72,8 @@
 
             <ImageView
                 android:id="@+id/rowImage_imageView"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
+                android:layout_width="132dp"
+                android:layout_height="132dp"
                 android:scaleType="centerCrop" />
 
             <LinearLayout
@@ -94,6 +94,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Title"
+                    android:maxLines = "1"
+                    android:ellipsize = "end"
                     android:textAppearance="?attr/textAppearanceHeadline6" />
 
                 <TextView
@@ -102,7 +104,15 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:text="Subtitle"
-                    android:textAppearance="?attr/textAppearanceBody2" />
+                    android:textAppearance="?attr/textAppearanceSubtitle1" />
+
+                <TextView
+                    android:id="@+id/visibleId_textView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Subtitle"
+                    android:textAppearance="?attr/textAppearanceSubtitle2" />
 
             </LinearLayout>
 

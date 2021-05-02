@@ -169,7 +169,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                switch (tab.getPosition()) {
+                /*switch (tab.getPosition()) {
                     case 0:
                         break;
                     case 1:
@@ -177,16 +177,16 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                         break;
                     case 2:
                         break;
-                }
+                }*/
             }
 
             @Override
             public void onTabUnselected(TabLayout.Tab tab) {
-                switch (tab.getPosition()) {
+                /*switch (tab.getPosition()) {
                     case 1:
                         fab.show();
                         break;
-                }
+                }*/
             }
 
             @Override
