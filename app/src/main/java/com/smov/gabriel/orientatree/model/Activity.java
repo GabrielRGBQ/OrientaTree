@@ -1,9 +1,10 @@
 package com.smov.gabriel.orientatree.model;
 
 import java.sql.Timestamp;
+import java.util.Comparator;
 import java.util.Date;
 
-public class Activity {
+public class Activity implements Comparator<Activity> {
 
     private String id;
     private String visible_id;
@@ -93,5 +94,10 @@ public class Activity {
 
     public void setFinishTime(Date finishTime) {
         this.finishTime = finishTime;
+    }
+
+    @Override
+    public int compare(Activity o1, Activity o2) {
+        return o1.getStartTime().compareTo(o2.startTime);
     }
 }

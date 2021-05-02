@@ -21,6 +21,7 @@ import com.smov.gabriel.orientatree.adapters.ActivityAdapter;
 import com.smov.gabriel.orientatree.model.Activity;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 
 /**
@@ -121,6 +122,7 @@ public class CompletedFragment extends Fragment {
                             Activity activity = document.toObject(Activity.class);
                             activities.add(activity);
                         }
+                        Collections.sort(activities, new Activity());
                         if(activities.size() < 1) {
                             no_activities_layout.setVisibility(View.VISIBLE);
                         } else {

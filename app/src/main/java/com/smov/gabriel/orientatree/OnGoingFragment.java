@@ -21,6 +21,7 @@ import com.smov.gabriel.orientatree.adapters.ActivityAdapter;
 import com.smov.gabriel.orientatree.model.Activity;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 
 /**
@@ -137,6 +138,7 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
                                 ultimate_selection.add(activity);
                             }
                         }
+                        Collections.sort(ultimate_selection, new Activity());
                         if(ultimate_selection.size() < 1) {
                             no_activities_layout.setVisibility(View.VISIBLE);
                         } else {
