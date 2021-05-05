@@ -45,9 +45,9 @@ public class FindTemplate extends AppCompatActivity {
 
         toolbar = findViewById(R.id.new_activity_toolbar);
         setSupportActionBar(toolbar);
-        ab = getSupportActionBar();
+        //ab = getSupportActionBar();
         //ab.setHomeAsUpIndicator(R.drawable.ic_close);
-        ab.setDisplayHomeAsUpEnabled(true);
+        //ab.setDisplayHomeAsUpEnabled(true);
 
         templates = new ArrayList<>();
 

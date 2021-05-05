@@ -1,6 +1,7 @@
 package com.smov.gabriel.orientatree.adapters;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,25 +14,30 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.smov.gabriel.orientatree.HomeActivity;
+import com.smov.gabriel.orientatree.InfoActivityActivity;
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.model.Activity;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 
 public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyViewHolder> {
 
     private Context context;
+    private android.app.Activity homeActivity;
 
     private ArrayList<Activity> activities;
     private int position;
 
-    public ActivityAdapter(Context context, ArrayList<Activity> activities) {
+    public ActivityAdapter(android.app.Activity homeActivity, Context context, ArrayList<Activity> activities) {
+        this.homeActivity = homeActivity;
         this.context = context;
         this.activities = activities;
     }
@@ -50,6 +56,9 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
         this.position = position ;
         Activity activity = activities.get(position);
 
+        String planner_id = activity.getPlanner_id();
+        String user_id = holder.mAuth.getCurrentUser().getUid();
+
         // formatting date in order to display it on card
         String pattern = "dd/MM/yyyy";
         DateFormat df = new SimpleDateFormat(pattern);
@@ -59,7 +68,34 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
         holder.template_textView.setText(activity.getTemplate());
         holder.title_textView.setText(activity.getTitle());
         holder.date_textView.setText("Fecha: " + dateAsString);
-        holder.visibleId_textView.setText("ID: " + activity.getVisible_id());
+
+        // set whether the current user is the activity organizer, a participant, or both
+        if(activity.getParticipants() != null) {
+            if((user_id.equals(planner_id)) &&
+                    (activity.getParticipants().contains(user_id))) {
+                holder.role_textView.setText("Organizador + Participante");
+            } else if (activity.getParticipants().contains(user_id)) {
+                holder.role_textView.setText("Participante");
+            } else if(user_id.equals(planner_id)) {
+                holder.role_textView.setText("Organizador");
+            }
+            else {
+                holder.role_textView.setText("");
+            }
+        } else {
+            if(user_id.equals(planner_id)) {
+                holder.role_textView.setText("Organizador");
+            } else {
+                holder.role_textView.setText("");
+            }
+        }
+
+        holder.row_activity_layout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updateUIInfoActivity(activity);
+            }
+        });
 
         // get and set the activity picture
         StorageReference ref = holder.storageReference.child("templateImages/" + activity.getTemplate() + ".jpg");
@@ -80,8 +116,10 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
         FirebaseStorage storage;
         StorageReference storageReference;
 
+        FirebaseAuth mAuth;
+
         LinearLayout row_activity_layout; // not sure if needed
-        TextView title_textView, date_textView, template_textView, visibleId_textView;
+        TextView title_textView, date_textView, template_textView, role_textView;
         ImageView rowImage_imageView;
 
         public MyViewHolder(@NonNull View itemView) {
@@ -90,12 +128,20 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
             title_textView = itemView.findViewById(R.id.title_textView);
             date_textView = itemView.findViewById(R.id.date_textView);
             template_textView = itemView.findViewById(R.id.template_textView);
-            visibleId_textView = itemView.findViewById(R.id.visibleId_textView);
+            role_textView = itemView.findViewById(R.id.role_textView);
             row_activity_layout = itemView.findViewById(R.id.row_activity_layout);
             rowImage_imageView = itemView.findViewById(R.id.rowImage_imageView);
 
             storage = FirebaseStorage.getInstance();
             storageReference = storage.getReference();
+
+            mAuth = FirebaseAuth.getInstance();
         }
+    }
+
+    private void updateUIInfoActivity(Activity activity) {
+        Intent intent = new Intent(context, InfoActivityActivity.class);
+        intent.putExtra("activity_id", activity.getId());
+        homeActivity.startActivityForResult(intent, 1); // this is to allow us to come back from the activity
     }
 }

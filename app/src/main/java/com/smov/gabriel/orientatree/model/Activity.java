@@ -1,6 +1,9 @@
 package com.smov.gabriel.orientatree.model;
 
+import androidx.annotation.Nullable;
+
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 
@@ -16,6 +19,8 @@ public class Activity implements Comparator<Activity> {
     private Date startTime;
     private Date finishTime;
 
+    private ArrayList<String> participants;
+
     public Activity() {
 
     }
@@ -30,6 +35,7 @@ public class Activity implements Comparator<Activity> {
         this.planner_id = planner_id;
         this.startTime = startTime;
         this.finishTime = finishTime;
+        this.participants = new ArrayList<>();
     }
 
     public String getId() {
@@ -96,8 +102,42 @@ public class Activity implements Comparator<Activity> {
         this.finishTime = finishTime;
     }
 
+    public ArrayList<String> getParticipants() {
+        return participants;
+    }
+
+    public void setParticipants(ArrayList<String> participants) {
+        this.participants = participants;
+    }
+
+    public void addParticipant(String participant_id) {
+        if(participants == null) {
+            participants = new ArrayList<>();
+        }
+        participants.add(participant_id);
+    }
+
+    public void removeParticipant(String participant_id) {
+        if(participants == null) {
+            participants = new ArrayList<>();
+        }
+        participants.remove(participant_id);
+    }
+
     @Override
     public int compare(Activity o1, Activity o2) {
         return o1.getStartTime().compareTo(o2.startTime);
+    }
+
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof Activity)) {
+            return false;
+        }
+        Activity activity = (Activity) obj;
+        return this.id.equals(activity.getId());
     }
 }

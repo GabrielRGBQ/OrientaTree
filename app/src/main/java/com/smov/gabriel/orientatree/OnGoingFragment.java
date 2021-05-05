@@ -38,6 +38,7 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
 
     private ArrayList<Activity> first_selection;
     private ArrayList<Activity> ultimate_selection;
+    private ArrayList<Activity> no_duplicates_activities; // to remove duplicates due to being both organizer and participant
 
     private HomeActivity homeActivity;
 
@@ -115,6 +116,7 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
         // that logic on the client... that's why I need two ArrayLists
         first_selection = new ArrayList<>(); // this one stores a first selection
         ultimate_selection = new ArrayList<>(); // and this one stores the ultimate one
+        no_duplicates_activities = new ArrayList<>();
 
         long millis=System.currentTimeMillis();
         Date date = new Date(millis );
@@ -131,23 +133,47 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
                             Activity activity = document.toObject(Activity.class);
                             first_selection.add(activity);
                         }
-                        for (Activity activity : first_selection) {
-                            // and here we polish the selection by not choosing those that have not started neither, and
-                            // henceforth, they are future activities
-                            if(date.after(activity.getStartTime())) {
-                                ultimate_selection.add(activity);
-                            }
-                        }
-                        Collections.sort(ultimate_selection, new Activity());
-                        if(ultimate_selection.size() < 1) {
-                            no_activities_layout.setVisibility(View.VISIBLE);
-                        } else {
-                            no_activities_layout.setVisibility(View.GONE);
-                        }
-                        activityAdapter = new ActivityAdapter(getContext(), ultimate_selection);
-                        onGoing_recyclerView = view.findViewById(R.id.onGoing_recyclerView);
-                        onGoing_recyclerView.setAdapter(activityAdapter);
-                        onGoing_recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+                        homeActivity.db.collection("activities")
+                                .whereGreaterThanOrEqualTo("finishTime", date)
+                                .whereArrayContains("participants", homeActivity.userID)
+                                .get()
+                                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                                        for (QueryDocumentSnapshot document : task.getResult()) {
+                                            Activity activity = document.toObject(Activity.class);
+                                            first_selection.add(activity);
+                                        }
+                                        for (Activity activity : first_selection) {
+                                            // and here we polish the selection by not choosing those that have not started neither, and
+                                            // henceforth, they are future activities
+                                            if(date.after(activity.getStartTime())) {
+                                                ultimate_selection.add(activity);
+                                            }
+                                        }
+                                        // removing duplicates due to being both organizer and participant
+                                        for(Activity a : ultimate_selection) {
+                                            boolean isFound = false;
+                                            for (Activity b : no_duplicates_activities) {
+                                                if(b.equals(a)) {
+                                                    isFound = true;
+                                                    break;
+                                                }
+                                            }
+                                            if(!isFound) no_duplicates_activities.add(a);
+                                        }
+                                        Collections.sort(no_duplicates_activities, new Activity());
+                                        if(no_duplicates_activities.size() < 1) {
+                                            no_activities_layout.setVisibility(View.VISIBLE);
+                                        } else {
+                                            no_activities_layout.setVisibility(View.GONE);
+                                        }
+                                        activityAdapter = new ActivityAdapter(homeActivity, getContext(), no_duplicates_activities);
+                                        onGoing_recyclerView = view.findViewById(R.id.onGoing_recyclerView);
+                                        onGoing_recyclerView.setAdapter(activityAdapter);
+                                        onGoing_recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+                                    }
+                                });
                     }
                 });
     }
