@@ -1,10 +1,12 @@
 package com.smov.gabriel.orientatree.adapters;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -16,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
@@ -90,19 +93,7 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
         holder.subscribe_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                holder.circularProgressIndicator.setVisibility(View.VISIBLE);
-                activity.addParticipant(holder.mAuth.getCurrentUser().getUid());
-                holder.db.collection("activities").document(activity.getId())
-                        .set(activity)
-                        .addOnSuccessListener(new OnSuccessListener<Void>() {
-                            @Override
-                            public void onSuccess(Void aVoid) {
-                                holder.circularProgressIndicator.setVisibility(View.INVISIBLE);
-                                holder.find_subscribed_textView.setText("Inscrito");
-                                holder.subscribe_button.setEnabled(false);
-                                holder.unsubscribe_button.setEnabled(true);
-                            }
-                        });
+                checkKeyDialog(activity, holder);
             }
         });
 
@@ -167,4 +158,45 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
         }
     }
 
+    private void checkKeyDialog(Activity activity, @NonNull FindActivityAdapter.MyViewHolder holder) {
+        final EditText input = new EditText(context);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT);
+        input.setLayoutParams(lp);
+        new MaterialAlertDialogBuilder(context)
+                .setTitle("Introduzca la clave de acceso (6 caracteres)")
+                .setView(input)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        holder.circularProgressIndicator.setVisibility(View.VISIBLE);
+                        String input_key = input.getText().toString().trim();
+                        if(input_key.equals(activity.getKey())) {
+                            //Toast.makeText(context, "Clave correcta!!", Toast.LENGTH_SHORT).show();
+                            activity.addParticipant(holder.mAuth.getCurrentUser().getUid());
+                            holder.db.collection("activities").document(activity.getId())
+                                    .set(activity)
+                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                        @Override
+                                        public void onSuccess(Void aVoid) {
+                                            holder.circularProgressIndicator.setVisibility(View.INVISIBLE);
+                                            holder.find_subscribed_textView.setText("Inscrito");
+                                            holder.subscribe_button.setEnabled(false);
+                                            holder.unsubscribe_button.setEnabled(true);
+                                        }
+                                    });
+                        } else {
+                            holder.circularProgressIndicator.setVisibility(View.INVISIBLE);
+                            new MaterialAlertDialogBuilder(context)
+                                    .setTitle("Clave incorrecta")
+                                    .setMessage("La clave introducida para esa actividad es incorrecta")
+                                    .setPositiveButton("OK", null)
+                                    .show();
+                        }
+                    }
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
 }

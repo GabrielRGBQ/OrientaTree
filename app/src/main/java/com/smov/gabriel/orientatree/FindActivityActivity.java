@@ -91,7 +91,7 @@ public class FindActivityActivity extends AppCompatActivity {
                         .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                             @Override
                             public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                                progressIndicator.setVisibility(View.INVISIBLE);
+                                progressIndicator.setVisibility(View.GONE);
                                 for (QueryDocumentSnapshot document : task.getResult()) {
                                     Activity activity = document.toObject(Activity.class);
                                     activities.add(activity);

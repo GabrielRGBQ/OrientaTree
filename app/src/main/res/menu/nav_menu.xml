@@ -8,17 +8,17 @@
             android:title="Acciones">
             <menu>
                 <item
-                    android:title="Configuración"
-                    android:icon="@drawable/ic_settings"
-                    android:id="@+id/profile_settings_item"/>
+                    android:title="Mis actividades"
+                    android:icon="@drawable/ic_home"
+                    android:id="@+id/my_activities_item"/>
                 <item
                     android:title="Organizar actividad"
                     android:icon="@drawable/ic_map"
                     android:id="@+id/organize_activity_item"/>
-
-                <!--<item
-                    android:title="Acción 2"
-                    android:icon="@drawable/ic_schedule"/>-->
+                <item
+                    android:title="Configuración"
+                    android:icon="@drawable/ic_settings"
+                    android:id="@+id/profile_settings_item"/>
             </menu>
         </item>
     </group>

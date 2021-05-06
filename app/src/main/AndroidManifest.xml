@@ -17,7 +17,8 @@
         <activity
             android:name=".FindActivityActivity"
             android:parentActivityName=".HomeActivity"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustNothing"/>
         <activity
             android:name=".SelectedTemplateActivity"
             android:parentActivityName=".FindTemplate"
