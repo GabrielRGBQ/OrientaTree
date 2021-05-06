@@ -26,6 +26,7 @@ import com.google.android.material.datepicker.CalendarConstraints;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -50,6 +51,8 @@ public class SelectedTemplateActivity extends AppCompatActivity {
     private LinearLayout selected_linear_layout; // needed to show snackbar
 
     private Toolbar toolbar;
+
+    private CircularProgressIndicator progressIndicator;
 
     private ImageView selected_imageView;
     private TextView selected_overline_textView, selected_title_textView, description_textView;
@@ -93,6 +96,8 @@ public class SelectedTemplateActivity extends AppCompatActivity {
         getSupportActionBar().setTitle(template_id);
         //getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        progressIndicator = findViewById(R.id.programmed_progressBar);
 
         selected_imageView = findViewById(R.id.selected_imageView);
         selected_overline_textView = findViewById(R.id.selected_overline_textView);
@@ -318,6 +323,7 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        progressIndicator.setVisibility(View.VISIBLE);
                         String activity_title = input.getText().toString().trim();
                         if(activity_title.length() == 0) {
                             activity_title = "Actividad " + mAuth.getCurrentUser().getDisplayName();
@@ -333,13 +339,14 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
                                     public void onSuccess(Void aVoid) {
-                                        //Toast.makeText(SelectedTemplateActivity.this, "Actividad creada", Toast.LENGTH_SHORT).show();
+                                        progressIndicator.setVisibility(View.INVISIBLE);
                                         showConfirmationDialog();
                                     }
                                 })
                                 .addOnFailureListener(new OnFailureListener() {
                                     @Override
                                     public void onFailure(@NonNull Exception e) {
+                                        progressIndicator.setVisibility(View.INVISIBLE);
                                         showSnackBar("Algo salió mal al crear la actividad. Vuelva a intentarlo.");
                                     }
                                 });
@@ -352,10 +359,10 @@ public class SelectedTemplateActivity extends AppCompatActivity {
     private void showConfirmationDialog() {
         new MaterialAlertDialogBuilder(this)
                 .setTitle("Actividad programada")
-                .setMessage("Las claves para participar en ella son: \n" +
-                        "\nID-> " + new_activity.getVisible_id() + "\n" +
-                        "\nKey-> " + new_activity.getKey() + "\n" +
-                        "\nPodrá volver a consultar estos datos cuando desee buscando en sus actividades programadas.")
+                .setMessage(new_activity.getTitle() + "\nlas claves para participar son: \n" +
+                        "\nID -> " + new_activity.getVisible_id() + "\n" +
+                        "\nKey -> " + new_activity.getKey() + "\n" +
+                        "\nPodrá volver a consultar estos datos cuando desee consultando sus actividades programadas.")
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {

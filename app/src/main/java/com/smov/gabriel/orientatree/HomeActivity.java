@@ -119,7 +119,8 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                updateUIFindTemplate();
+                //updateUIFindTemplate();
+                updateUIFindActivity();
             }
         });
 
@@ -224,6 +225,9 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         switch (item.getItemId()) {
             case R.id.profile_settings_item: 
                 updateUIEditProfile();
+                break;
+            case R.id.organize_activity_item:
+                updateUIFindTemplate();
                 break;
             case R.id.log_out_item:
                 logOut();
@@ -349,6 +353,11 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
     private void updateUIFindTemplate() {
         Intent intent = new Intent(HomeActivity.this, FindTemplate.class);
+        startActivity(intent);
+    }
+
+    private void updateUIFindActivity() {
+        Intent intent = new Intent(HomeActivity.this, FindActivityActivity.class);
         startActivity(intent);
     }
 }

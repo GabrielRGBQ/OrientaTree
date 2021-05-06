@@ -12,6 +12,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -33,7 +34,8 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
 
     private RecyclerView programmed_recyclerView;
     private ActivityAdapter activityAdapter;
-    private ArrayList<Activity> activities;
+    private ArrayList<Activity> all_activities;
+    private  ArrayList<Activity> no_duplicates_activities; // to remove duplicates due to being both organizer and participant
 
     private SwipeRefreshLayout programmed_pull_layout;
 
@@ -106,7 +108,8 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
     }
 
     private void getActivities(View view) {
-        activities = new ArrayList<>();
+        all_activities = new ArrayList<>();
+        no_duplicates_activities = new ArrayList<>();
 
         long millis=System.currentTimeMillis();
         Date date = new Date(millis );
@@ -120,18 +123,42 @@ public class ProgrammedFragment extends Fragment implements View.OnClickListener
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             Activity activity = document.toObject(Activity.class);
-                            activities.add(activity);
+                            all_activities.add(activity);
                         }
-                        Collections.sort(activities, new Activity());
-                        if(activities.size() < 1) {
-                            no_activities_layout.setVisibility(View.VISIBLE);
-                        } else {
-                            no_activities_layout.setVisibility(View.GONE);
-                        }
-                        activityAdapter = new ActivityAdapter(getContext(), activities);
-                        programmed_recyclerView = view.findViewById(R.id.programmed_recyclerView);
-                        programmed_recyclerView.setAdapter(activityAdapter);
-                        programmed_recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+                        homeActivity.db.collection("activities")
+                                .whereGreaterThan("startTime", date)
+                                .whereArrayContains("participants", homeActivity.userID)
+                                .get()
+                                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                                        for (QueryDocumentSnapshot document : task.getResult()) {
+                                            Activity activity = document.toObject(Activity.class);
+                                            all_activities.add(activity);
+                                        }
+                                        // removing duplicates due to being both organizer and participant
+                                        for(Activity a : all_activities) {
+                                            boolean isFound = false;
+                                            for (Activity b : no_duplicates_activities) {
+                                                if(b.equals(a)) {
+                                                    isFound = true;
+                                                    break;
+                                                }
+                                            }
+                                            if(!isFound) no_duplicates_activities.add(a);
+                                        }
+                                        Collections.sort(no_duplicates_activities, new Activity());
+                                        if(no_duplicates_activities.size() < 1) {
+                                            no_activities_layout.setVisibility(View.VISIBLE);
+                                        } else {
+                                            no_activities_layout.setVisibility(View.GONE);
+                                        }
+                                        activityAdapter = new ActivityAdapter(homeActivity, getContext(), no_duplicates_activities);
+                                        programmed_recyclerView = view.findViewById(R.id.programmed_recyclerView);
+                                        programmed_recyclerView.setAdapter(activityAdapter);
+                                        programmed_recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+                                    }
+                                });
                     }
                 });
     }
