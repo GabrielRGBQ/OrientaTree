@@ -2,39 +2,66 @@ package com.smov.gabriel.orientatree;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.adapters.TemplateAdapter;
 import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Template;
 
 import java.util.ArrayList;
 
-public class FindTemplate extends AppCompatActivity {
+import de.hdodenhof.circleimageview.CircleImageView;
+
+public class FindTemplate extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
 
     private Toolbar toolbar;
     private ActionBar ab;
+
+    // to show the navigation drawer
+    private DrawerLayout drawerLayout;
+    private NavigationView navigationView;
+    // user name, e-mail and image that the navigation drawer displays
+    private TextView name_textView;
+    private TextView email_textView;
+    private CircleImageView profile_circleImageView;
+    // user data stored in Auth user, and that is shown in the navigation drawer
+    String userID, userEmail, userName;
 
     private RecyclerView template_recyclerview;
     private TemplateAdapter templateAdapter;
     private ArrayList<Template> templates;
 
     private FirebaseFirestore db;
+    private FirebaseAuth mAuth;
+    FirebaseStorage storage;
+    StorageReference storageReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +69,13 @@ public class FindTemplate extends AppCompatActivity {
         setContentView(R.layout.activity_find_template);
 
         db = FirebaseFirestore.getInstance();
+        mAuth = FirebaseAuth.getInstance();
+        storage = FirebaseStorage.getInstance();
+        storageReference = storage.getReference();
+
+        userID = mAuth.getCurrentUser().getUid();
+        userEmail = mAuth.getCurrentUser().getEmail();
+        userName = mAuth.getCurrentUser().getDisplayName();
 
         toolbar = findViewById(R.id.new_activity_toolbar);
         setSupportActionBar(toolbar);
@@ -49,8 +83,39 @@ public class FindTemplate extends AppCompatActivity {
         //ab.setHomeAsUpIndicator(R.drawable.ic_close);
         //ab.setDisplayHomeAsUpEnabled(true);
 
+        // setting the navigation drawer...
+        drawerLayout = findViewById(R.id.drawer_layout_template);
+        navigationView = findViewById(R.id.nav_view_template);
+        // setting the navigation drawer's heading
+        View hView =  navigationView.getHeaderView(0);
+        name_textView = hView.findViewById(R.id.name_textView);
+        email_textView = hView.findViewById(R.id.email_textView);
+        profile_circleImageView = hView.findViewById(R.id.profile_circleImageView);
+        name_textView.setText(userName);
+        email_textView.setText(userEmail);
+        // dowloading the profile pic and show in navigation drawer...
+        if(mAuth.getCurrentUser().getPhotoUrl() != null) {
+            StorageReference ref = storageReference.child("profileImages/" + userID);
+            Glide.with(this)
+                    .load(ref)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE ) // prevent caching
+                    .skipMemoryCache(true) // prevent caching
+                    .into(profile_circleImageView);
+        }
+        ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
+                this,
+                drawerLayout,
+                toolbar,
+                R.string.openNavDrawer,
+                R.string.closeNavDrawer
+        );
+        drawerLayout.addDrawerListener(actionBarDrawerToggle);
+        actionBarDrawerToggle.syncState();
+        navigationView.setNavigationItemSelectedListener(this);
+
         templates = new ArrayList<>();
 
+        // get the templates...
         db.collection("templates")
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
@@ -88,5 +153,39 @@ public class FindTemplate extends AppCompatActivity {
             }
         });
         return true;
+    }
+
+    // navigation drawer actions...
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.my_activities_item:
+                updateUIHome();
+                break;
+            case R.id.organize_activity_item:
+                break;
+            case R.id.profile_settings_item:
+                updateUIEditProfile();
+                break;
+            case R.id.log_out_item:
+                //logOut();
+                break;
+            case R.id.delete_profile_item:
+                //deleteAccount();
+                break;
+        }
+        //close navigation drawer
+        drawerLayout.closeDrawer(GravityCompat.START);
+        return false;
+    }
+
+    private void updateUIEditProfile() {
+        Intent intent = new Intent(FindTemplate.this, EditProfileActivity.class);
+        startActivity(intent);
+    }
+
+    private void updateUIHome() {
+        Intent intent = new Intent(FindTemplate.this, HomeActivity.class);
+        startActivity(intent);
     }
 }
