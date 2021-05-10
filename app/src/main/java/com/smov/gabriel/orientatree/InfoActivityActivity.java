@@ -1,27 +1,34 @@
 package com.smov.gabriel.orientatree;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 
+import android.Manifest;
+import android.app.Notification;
+import android.app.PendingIntent;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
-import android.widget.TextView;
+import android.view.View;
+import android.widget.Button;
+import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.smov.gabriel.orientatree.model.Activity;
-
-import java.util.ArrayList;
+import com.smov.gabriel.orientatree.services.LocationService;
 
 public class InfoActivityActivity extends AppCompatActivity {
 
-    private TextView sampleParticipant_textView;
+    private FusedLocationProviderClient fusedLocationClient;
 
-    private String activity_id;
+    private static final int FINE_LOCATION_ACCESS_REQUEST_CODE = 1001;
 
-    private Activity selected_activity;
-
-    private ArrayList<String> participants;
+    private Button stopButton, startButton;
 
     private FirebaseFirestore db;
 
@@ -30,32 +37,70 @@ public class InfoActivityActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_info_activity);
 
-        getIntentData();
+        //fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        Intent intent = new Intent(this, LocationService.class);
 
         db = FirebaseFirestore.getInstance();
 
-        sampleParticipant_textView = findViewById(R.id.sampleParticipant_textView);
+        stopButton = findViewById(R.id.stop_button);
+        startButton = findViewById(R.id.start_button);
 
-        DocumentReference docRef = db.collection("activities").document(activity_id);
-        docRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+        // we have to check if we have at least one of the following permissions...
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // if we don't...
+            Toast.makeText(this, "We have to ask for the permissions...", Toast.LENGTH_SHORT).show();
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_ACCESS_REQUEST_CODE);
+        } else {
+            // if we do...
+            //getLastLocation();
+            // place here button listeners
+        }
+
+        startButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onSuccess(DocumentSnapshot documentSnapshot) {
-                selected_activity = documentSnapshot.toObject(Activity.class);
-                participants = selected_activity.getParticipants();
-                if(participants != null && participants.size() >= 1) {
-                    sampleParticipant_textView.setText(participants.get(0));
-                } else {
-                    sampleParticipant_textView.setText(selected_activity.getTitle());
-                }
+            public void onClick(View v) {
+                startService(intent);
             }
         });
+
+        stopButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                stopService(intent);
+            }
+        });
+
     }
 
-    void getIntentData() {
-        if(getIntent().hasExtra("activity_id")) {
-            activity_id = getIntent().getStringExtra("activity_id");
-        } else {
+    /*public void getLastLocation() {
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        // Got last known location. In some rare situations this can be null.
+                        if (location != null) {
+                            // Logic to handle location object
+                            Toast.makeText(InfoActivityActivity.this, "" + location.getLatitude() + location.getLongitude(), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+    }*/
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode){
+            case FINE_LOCATION_ACCESS_REQUEST_CODE:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // user gave us the permission...
+                    Toast.makeText(this, "User gave permissions...", Toast.LENGTH_SHORT).show();
+                    //getLastLocation();
+                    // button listeners
+                } else {
+                    // user didn't give us the permission...
+                    Toast.makeText(this, "User didn't give permissions", Toast.LENGTH_SHORT).show();
+                }
         }
     }
 }

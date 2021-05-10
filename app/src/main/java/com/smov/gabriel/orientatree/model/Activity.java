@@ -2,12 +2,13 @@ package com.smov.gabriel.orientatree.model;
 
 import androidx.annotation.Nullable;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 
-public class Activity implements Comparator<Activity> {
+public class Activity implements Comparator<Activity>, Serializable {
 
     private String id;
     private String visible_id;
