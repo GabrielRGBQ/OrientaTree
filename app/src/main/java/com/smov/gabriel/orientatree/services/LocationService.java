@@ -132,6 +132,7 @@ public class LocationService extends Service {
                             .setContentTitle("Título")
                             .setContentText("Descripción")
                             .setSmallIcon(R.drawable.ic_map)
+                            .setColor(getResources().getColor(R.color.primary_color))
                             //.setContentIntent(pendingIntent)
                             .build();
             startForeground(1, notification);
@@ -165,6 +166,7 @@ public class LocationService extends Service {
     }
 
     private void onNewLocation(Location location) {
+        Toast.makeText(this, "New location: " + location.getLatitude() + " " + location.getLongitude(), Toast.LENGTH_SHORT).show();
         Log.d(TAG, "New location: " + location.getLatitude() + " " + location.getLongitude());
         mLocation = location;
     }

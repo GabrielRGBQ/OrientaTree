@@ -39,6 +39,10 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.smov.gabriel.orientatree.helpers.GeofenceHelper;
 import com.smov.gabriel.orientatree.model.Activity;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+
 public class MapActivity extends FragmentActivity implements OnMapReadyCallback/*, GoogleMap.OnMapLongClickListener*/ {
 
     private static final String TAG = "MapsActivity";
@@ -46,18 +50,21 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
     private GoogleMap mMap;
 
     // current activity
-    private Activity activity;
+    //private Activity activity;
 
-    private GeofencingClient geofencingClient;
+    // file containing the map
+    private File mapFile;
 
-    private GeofenceHelper geofenceHelper;
+    //private GeofencingClient geofencingClient;
 
-    private final int FINE_LOCATION_ACCESS_REQUEST_CODE = 1001;
-    private final int BACKGROUND_LOCATION_ACCESS_REQUEST_CODE = 1002;
+    //private GeofenceHelper geofenceHelper;
 
-    private float GEOFENCE_RADIUS = 20;
+    //private final int FINE_LOCATION_ACCESS_REQUEST_CODE = 1001;
+    //private final int BACKGROUND_LOCATION_ACCESS_REQUEST_CODE = 1002;
 
-    private String GEOFENCE_ID = "SOME_GEOFENCE_ID"; // provisional... later on this will depend on the beacon
+    //private float GEOFENCE_RADIUS = 20;
+
+    //private String GEOFENCE_ID = "SOME_GEOFENCE_ID"; // provisional... later on this will depend on the beacon
     // if the id is the same for the different geofences, they will override one another
 
     @Override
@@ -70,8 +77,12 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
         mapFragment.getMapAsync(this);
 
         // get the current activity
+        //Intent intent = getIntent();
+        //Activity activity = (Activity) intent.getSerializableExtra("activity");
+
+        //get map file
         Intent intent = getIntent();
-        Activity activity = (Activity) intent.getSerializableExtra("activity");
+        mapFile = (File) intent.getSerializableExtra("map");
 
         //geofencingClient = LocationServices.getGeofencingClient(this);
         //geofenceHelper = new GeofenceHelper(this);
@@ -118,7 +129,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
         LatLng center_map = new LatLng(41.6457, -4.73006);
 
         // setting styles...
-        /*try {
+        try {
             boolean success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style));
             if (!success) {
                 // TODO: handle this
@@ -127,11 +138,10 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
         } catch (Resources.NotFoundException e) {
             // TODO: handle this
             Toast.makeText(this, "Can't find parsing file", Toast.LENGTH_SHORT).show();
-        }*/
+        }
 
-        // get the map image and reduce its size
-        Bitmap image_bitmap = decodeSampledBitmapFromResource(getResources(),
-                R.drawable.map_v01, 540, 960); // TODO: find optimum numbers here
+        // get the map image from a file and reduce its size
+        Bitmap image_bitmap = decodeFile(mapFile, 540, 960);
         BitmapDescriptor image = BitmapDescriptorFactory.fromBitmap(image_bitmap);
 
         // position of the image
@@ -147,14 +157,12 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
         // set the overlay on the map
         mMap.addGroundOverlay(newarkMap);
 
-        //mMap.addMarker(new MarkerOptions().position(center_map).title("Campo Grande"));
-
         // initial camera position
         mMap.moveCamera(CameraUpdateFactory.newLatLng(center_map));
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(center_map, 17.0f));
 
         // setting maximum and minimum zoom the user can perform on the map
-        /*mMap.setMinZoomPreference(16.0f);
+        mMap.setMinZoomPreference(16.0f);
         mMap.setMaxZoomPreference(20.0f);
 
         // setting bounds for the map so that user can not navigate other places
@@ -163,7 +171,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
                 new LatLng(41.648523, -4.727066)  // NE bounds
         );
 
-        mMap.setLatLngBoundsForCameraTarget(map_bounds);*/
+        mMap.setLatLngBoundsForCameraTarget(map_bounds);
 
         //enableUserLocation();
 
@@ -193,23 +201,27 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
         return inSampleSize;
     }
 
-    public static Bitmap decodeSampledBitmapFromResource(Resources res, int resId,
-                                                         int reqWidth, int reqHeight) {
+    // decode image from file
+    private Bitmap decodeFile(File f, int width, int height) {
+        try {
+            // Decode image size
+            BitmapFactory.Options o = new BitmapFactory.Options();
+            o.inJustDecodeBounds = true;
+            BitmapFactory.decodeStream(new FileInputStream(f), null, o);
 
-        // First decode with inJustDecodeBounds=true to check dimensions
-        final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeResource(res, resId, options);
+            int scale = calculateInSampleSize(o, width, height);
 
-        // Calculate inSampleSize
-        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
-
-        // Decode bitmap with inSampleSize set
-        options.inJustDecodeBounds = false;
-        return BitmapFactory.decodeResource(res, resId, options);
+            // Decode with inSampleSize
+            BitmapFactory.Options o2 = new BitmapFactory.Options();
+            o2.inSampleSize = scale;
+            return BitmapFactory.decodeStream(new FileInputStream(f), null, o2);
+        } catch (FileNotFoundException e) {
+            // TODO: handle the exception
+        }
+        return null;
     }
 
-    private void enableUserLocation() {
+    /*private void enableUserLocation() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             mMap.setMyLocationEnabled(true);
@@ -225,7 +237,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
                         FINE_LOCATION_ACCESS_REQUEST_CODE);
             }
         }
-    }
+    }*/
 
     // here we decide what to do depending on what the user did and whether he accepted the permission or not
     @Override
@@ -284,7 +296,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
         }
     }*/
 
-    private void tryAddingGeofence(LatLng latLng) {
+    /*private void tryAddingGeofence(LatLng latLng) {
         mMap.clear();
         addMarker(latLng);
         addCircle(latLng, GEOFENCE_RADIUS);
@@ -350,5 +362,5 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
                         Log.d(TAG, "onFailure: " + errorMesage);
                     }
                 });
-    }
+    }*/
 }
