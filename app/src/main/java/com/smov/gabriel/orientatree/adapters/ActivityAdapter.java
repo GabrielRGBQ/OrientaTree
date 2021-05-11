@@ -20,6 +20,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.HomeActivity;
 import com.smov.gabriel.orientatree.InfoActivityActivity;
+import com.smov.gabriel.orientatree.MapActivity;
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.model.Activity;
 
@@ -94,6 +95,7 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
             @Override
             public void onClick(View v) {
                 updateUIInfoActivity(activity);
+                //updateUIMapActivity(activity);
             }
         });
 
@@ -141,7 +143,13 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
 
     private void updateUIInfoActivity(Activity activity) {
         Intent intent = new Intent(context, InfoActivityActivity.class);
-        intent.putExtra("activity_id", activity.getId());
+        //intent.putExtra("activity_id", activity.getId());
+        homeActivity.startActivityForResult(intent, 1); // this is to allow us to come back from the activity
+    }
+
+    private void updateUIMapActivity(Activity activity) {
+        Intent intent = new Intent(context, MapActivity.class);
+        intent.putExtra("activity", activity);
         homeActivity.startActivityForResult(intent, 1); // this is to allow us to come back from the activity
     }
 }
