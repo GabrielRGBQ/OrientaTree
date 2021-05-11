@@ -29,7 +29,7 @@ public class Activity implements Comparator<Activity>, Serializable {
     public Activity(String id, String key, String title, String template, String planner_id,
                     Date startTime, Date finishTime) {
         this.id = id;
-        this.visible_id = id.substring(0, Math.min(id.length(), 8));
+        this.visible_id = id.substring(0, Math.min(id.length(), 4));
         this.key = key;
         this.title = title;
         this.template = template;

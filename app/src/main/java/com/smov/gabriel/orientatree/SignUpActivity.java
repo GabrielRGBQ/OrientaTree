@@ -2,6 +2,7 @@ package com.smov.gabriel.orientatree;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import android.content.Intent;
@@ -9,8 +10,6 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -36,14 +35,13 @@ public class SignUpActivity extends AppCompatActivity {
     private TextInputLayout name_textfield, surname_textfield, email_textfield, password_textfield;
     private Button signUp_button;
     private CircularProgressIndicator progress_circular;
-    private RadioGroup radioGroup;
-    private RadioButton selectedRadioButton;
+
+    private Toolbar toolbar;
 
     private ConstraintLayout signUp_layout;
 
     private String name, surname, email, password, role;
     private String userID;
-    private int selectedRadioButtonId;
 
     private FirebaseAuth mAuth;
 
@@ -68,7 +66,10 @@ public class SignUpActivity extends AppCompatActivity {
         password_textfield = findViewById(R.id.password_textfield);
         signUp_button = findViewById(R.id.signUp_button);
         progress_circular = findViewById(R.id.progress_circular);
-        radioGroup = findViewById(R.id.radioGroup);
+
+        toolbar = findViewById(R.id.signUp_toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         signUp_layout = findViewById(R.id.signUp_layout);
 
@@ -120,21 +121,12 @@ public class SignUpActivity extends AppCompatActivity {
                         password_textfield.setErrorEnabled(false);
                     }
                 }
-                selectedRadioButtonId = radioGroup.getCheckedRadioButtonId();
-                if (selectedRadioButtonId != -1) {
-                    selectedRadioButton = findViewById(selectedRadioButtonId);
-                    role = selectedRadioButton.getText().toString();
-                } else {
-                    any_error = true;
-                    showSnackBar();
-                }
                 if (any_error == true) {
                     return;
                 }
                 progress_circular.setVisibility(View.VISIBLE);
                 mAuth.createUserWithEmailAndPassword(email, password)
                         .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                            // TODO: despues de un timeout quitar el listener y mostrar mensaje de que lo vuelva a intentar
                             @Override
                             public void onComplete(@NonNull Task<AuthResult> task) {
                                 if (task.isSuccessful()) {
@@ -144,13 +136,11 @@ public class SignUpActivity extends AppCompatActivity {
                                             .setDisplayName(name).build();
                                     user.updateProfile(profileUpdates)
                                             .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                                // TODO: despues de un timeout quitar el listener, eliminar usuario y mostrar mensaje de que lo vuelva a intentar
                                                 @Override
                                                 public void onComplete(@NonNull Task<Void> task) {
                                                     if (task.isSuccessful()) {
                                                         updateUserData();
                                                     } else {
-                                                        // TODO: eliminar usuario y mostrarle mensaje de que algo salio mal y que lo vuelva a intentar
                                                     }
                                                 }
                                             });
@@ -168,8 +158,8 @@ public class SignUpActivity extends AppCompatActivity {
                                         email_textfield.setErrorEnabled(true);
                                         email_textfield.setError("Ya existe ese usuario");
                                     } catch (Exception e) {
-                                        // TODO: reemplazar por snackbar y mensaje mas completo
-                                        Toast.makeText(SignUpActivity.this, "Algo salió mal: " + task.getException().toString(), Toast.LENGTH_SHORT).show();
+                                        String error_msg = "Algo salió mal: " + task.getException().toString();
+                                        showSnackBar(error_msg);
                                     }
                                 }
                             }
@@ -180,10 +170,9 @@ public class SignUpActivity extends AppCompatActivity {
 
     private void updateUserData() {
         userID = mAuth.getCurrentUser().getUid();
-        // Adds document to the users colletion. If that collection does not exist, it creates it
+        // Adds document to the users collection. If that collection does not exist, it creates it
         DocumentReference documentReference = db.collection("users").document(userID);
-        User user = new User(name, surname, email, role);
-        // TODO: timeouts. Quitar listener, eliminar user y decirle que lo vuelva a intentar
+        User user = new User(name, surname, email);
         documentReference
                 .set(user)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -196,8 +185,6 @@ public class SignUpActivity extends AppCompatActivity {
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        // TODO: reemplazar por snackbar y mensaje mas completo. No cambiar de pantalla. Eliminar user y decirle que lo vuelva a intentar
-                        Toast.makeText(SignUpActivity.this, "Algo salio mal: " + e.toString(), Toast.LENGTH_SHORT).show();
                         progress_circular.setVisibility(View.GONE);
                         updateUIHome();
                     }
@@ -215,8 +202,8 @@ public class SignUpActivity extends AppCompatActivity {
         finish();
     }
 
-    private void showSnackBar() {
-        Snackbar.make(signUp_layout, "Seleccionar Estudiante o Docente", Snackbar.LENGTH_LONG)
+    private void showSnackBar(String msg) {
+        Snackbar.make(signUp_layout, msg, Snackbar.LENGTH_LONG)
                 .setAction("OK", new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {

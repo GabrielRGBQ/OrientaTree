@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Parcel;
@@ -331,7 +332,7 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                         String aux_activity_key, activity_id, activity_key;
                         activity_id = UUID.randomUUID().toString();
                         aux_activity_key = UUID.randomUUID().toString();
-                        activity_key = aux_activity_key.substring(0, Math.min(aux_activity_key.length(), 6));
+                        activity_key = aux_activity_key.substring(0, Math.min(aux_activity_key.length(), 4));
                         new_activity = new Activity(activity_id, activity_key, activity_title, template_id,
                                 mAuth.getCurrentUser().getUid(), start_date, finish_date);
                         db.collection("activities").document(activity_id)
@@ -366,7 +367,7 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-
+                        updateUIFindTemplate();
                     }
                 })
                 .show();
@@ -390,5 +391,10 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                 })
                 .setDuration(8000)
                 .show();
+    }
+
+    private void updateUIFindTemplate() {
+        Intent intent = new Intent(SelectedTemplateActivity.this, FindTemplate.class);
+        startActivity(intent);
     }
 }

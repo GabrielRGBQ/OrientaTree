@@ -165,7 +165,7 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
                 LinearLayout.LayoutParams.MATCH_PARENT);
         input.setLayoutParams(lp);
         new MaterialAlertDialogBuilder(context)
-                .setTitle("Introduzca la clave de acceso (6 caracteres)")
+                .setTitle("Introduzca la clave de acceso (4 caracteres)")
                 .setView(input)
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override

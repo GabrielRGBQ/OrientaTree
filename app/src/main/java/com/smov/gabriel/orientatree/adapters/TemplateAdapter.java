@@ -72,12 +72,15 @@ public class TemplateAdapter extends RecyclerView.Adapter<TemplateAdapter.MyView
         if(template.getColor() != null) {
             switch (template.getColor()) {
                 case "Naranja":
+                    holder.typeTemplate_textview.setText(template.getType() + " " + template.getColor());
                     holder.typeTemplate_textview.setTextColor(Color.parseColor("#FFA233"));
                     break;
                 case "Roja":
+                    holder.typeTemplate_textview.setText(template.getType() + " " + template.getColor());
                     holder.typeTemplate_textview.setTextColor(Color.parseColor("#E32A10"));
                     break;
                 default:
+                    holder.typeTemplate_textview.setText(template.getType() + " " + template.getColor());
                     break;
             }
         }
