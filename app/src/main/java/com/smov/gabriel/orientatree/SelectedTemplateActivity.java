@@ -199,6 +199,12 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                 chosen_day = new Date((long)selection);
                 String dateAsString = df_date.format(chosen_day);
                 chip_date.setText(dateAsString);
+                if(start_date != null) {
+                    start_date = null;
+                    finish_date = null;
+                    chip_start.setText("Inicio");
+                    chip_finish.setText("Fin");
+                }
             }
         });
 
@@ -219,6 +225,9 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                     materialTimePicker.addOnPositiveButtonClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
+                            // obtaining current date
+                            long millis=System.currentTimeMillis();
+                            Date date = new Date(millis );
                             start_hour = materialTimePicker.getHour();
                             start_minute = materialTimePicker.getMinute();
                             // obtaining Date object that is stored in FireStore document
@@ -227,18 +236,22 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                             cal.add(Calendar.HOUR_OF_DAY, start_hour - 2);
                             cal.add(Calendar.MINUTE, start_minute);
                             Date start_check = cal.getTime();
-                            if(finish_date != null) {
-                                if(finish_date.after(start_check)) {
+                            if(start_check.after(date)) {
+                                if(finish_date != null) {
+                                    if(finish_date.after(start_check)) {
+                                        start_date = cal.getTime(); // this is the Date object
+                                        String startHourAsString = df_hour.format(start_date);
+                                        chip_start.setText(startHourAsString);
+                                    } else {
+                                        showSnackBar("La hora de inicio no puede ser posterior a la hora de fin");
+                                    }
+                                } else {
                                     start_date = cal.getTime(); // this is the Date object
                                     String startHourAsString = df_hour.format(start_date);
                                     chip_start.setText(startHourAsString);
-                                } else {
-                                    showSnackBar("La hora de inicio no puede ser posterior a la hora de fin");
                                 }
                             } else {
-                                start_date = cal.getTime(); // this is the Date object
-                                String startHourAsString = df_hour.format(start_date);
-                                chip_start.setText(startHourAsString);
+                                showSnackBar("Esa fecha ya ha pasado. La actividad debe programarse para una hora/fecha futura");
                             }
                         }
                     });

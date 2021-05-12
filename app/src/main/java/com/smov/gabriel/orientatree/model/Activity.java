@@ -127,7 +127,15 @@ public class Activity implements Comparator<Activity>, Serializable {
 
     @Override
     public int compare(Activity o1, Activity o2) {
-        return o1.getStartTime().compareTo(o2.startTime);
+        // order's going to be different for past and for future activities
+        // so, first we need the current time
+        long millis=System.currentTimeMillis();
+        Date date = new Date(millis );
+        if(o1.getStartTime().after(date) && o2.getStartTime().after(date)) {
+            return o1.getStartTime().compareTo(o2.getStartTime());
+        } else {
+            return o2.getStartTime().compareTo(o1.getStartTime());
+        }
     }
 
     @Override
