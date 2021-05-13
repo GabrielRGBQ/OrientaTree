@@ -2,6 +2,7 @@ package com.smov.gabriel.orientatree;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import android.content.Intent;
@@ -32,6 +33,8 @@ public class LogInActivity extends AppCompatActivity {
     private Button logIn_button;
     private CircularProgressIndicator progress_circular;
 
+    private Toolbar toolbar;
+
     private ConstraintLayout logIn_layout;
 
     private String email, password;
@@ -55,6 +58,10 @@ public class LogInActivity extends AppCompatActivity {
         password_textfield = findViewById(R.id.password_textfield);
         logIn_button = findViewById(R.id.logIn_button);
         progress_circular = findViewById(R.id.progress_circular);
+
+        toolbar = findViewById(R.id.logIn_toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         logIn_layout = findViewById(R.id.logIn_layout);
 

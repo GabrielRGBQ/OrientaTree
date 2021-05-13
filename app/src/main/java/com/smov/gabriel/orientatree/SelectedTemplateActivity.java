@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Parcel;
@@ -198,6 +199,12 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                 chosen_day = new Date((long)selection);
                 String dateAsString = df_date.format(chosen_day);
                 chip_date.setText(dateAsString);
+                if(start_date != null) {
+                    start_date = null;
+                    finish_date = null;
+                    chip_start.setText("Inicio");
+                    chip_finish.setText("Fin");
+                }
             }
         });
 
@@ -218,6 +225,9 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                     materialTimePicker.addOnPositiveButtonClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
+                            // obtaining current date
+                            long millis=System.currentTimeMillis();
+                            Date date = new Date(millis );
                             start_hour = materialTimePicker.getHour();
                             start_minute = materialTimePicker.getMinute();
                             // obtaining Date object that is stored in FireStore document
@@ -226,18 +236,22 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                             cal.add(Calendar.HOUR_OF_DAY, start_hour - 2);
                             cal.add(Calendar.MINUTE, start_minute);
                             Date start_check = cal.getTime();
-                            if(finish_date != null) {
-                                if(finish_date.after(start_check)) {
+                            if(start_check.after(date)) {
+                                if(finish_date != null) {
+                                    if(finish_date.after(start_check)) {
+                                        start_date = cal.getTime(); // this is the Date object
+                                        String startHourAsString = df_hour.format(start_date);
+                                        chip_start.setText(startHourAsString);
+                                    } else {
+                                        showSnackBar("La hora de inicio no puede ser posterior a la hora de fin");
+                                    }
+                                } else {
                                     start_date = cal.getTime(); // this is the Date object
                                     String startHourAsString = df_hour.format(start_date);
                                     chip_start.setText(startHourAsString);
-                                } else {
-                                    showSnackBar("La hora de inicio no puede ser posterior a la hora de fin");
                                 }
                             } else {
-                                start_date = cal.getTime(); // this is the Date object
-                                String startHourAsString = df_hour.format(start_date);
-                                chip_start.setText(startHourAsString);
+                                showSnackBar("Esa fecha ya ha pasado. La actividad debe programarse para una hora/fecha futura");
                             }
                         }
                     });
@@ -331,7 +345,7 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                         String aux_activity_key, activity_id, activity_key;
                         activity_id = UUID.randomUUID().toString();
                         aux_activity_key = UUID.randomUUID().toString();
-                        activity_key = aux_activity_key.substring(0, Math.min(aux_activity_key.length(), 6));
+                        activity_key = aux_activity_key.substring(0, Math.min(aux_activity_key.length(), 4));
                         new_activity = new Activity(activity_id, activity_key, activity_title, template_id,
                                 mAuth.getCurrentUser().getUid(), start_date, finish_date);
                         db.collection("activities").document(activity_id)
@@ -366,7 +380,7 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-
+                        updateUIFindTemplate();
                     }
                 })
                 .show();
@@ -390,5 +404,10 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                 })
                 .setDuration(8000)
                 .show();
+    }
+
+    private void updateUIFindTemplate() {
+        Intent intent = new Intent(SelectedTemplateActivity.this, FindTemplate.class);
+        startActivity(intent);
     }
 }

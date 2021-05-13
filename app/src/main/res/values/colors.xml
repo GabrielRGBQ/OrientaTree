@@ -18,6 +18,7 @@
     <!-- colors for educational activities -->
     <color name="orange_activity">#FFA233</color>
     <color name="purple_activity">#760EC3</color>
+    <color name="red_activity">#E32A10</color>
 
     <!-- other colors -->
     <color name="grey_waiting">#C4BFC8</color>

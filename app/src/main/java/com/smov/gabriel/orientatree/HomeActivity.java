@@ -87,6 +87,9 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
     private FloatingActionButton fab;
 
+    // needed to show snackbar
+    private ConstraintLayout home_constraintLayout;
+
     // user data stored in Auth user
     String userID, userEmail, userName;
 
@@ -116,6 +119,8 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
         fab = findViewById(R.id.floating_action_button);
 
+        home_constraintLayout = findViewById(R.id.home_constraintLayout);
+
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -131,7 +136,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         // navigation drawer...
         drawerLayout = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.nav_view);
-        View hView =  navigationView.getHeaderView(0);
+        View hView = navigationView.getHeaderView(0);
         // setting navigation drawer header...
         name_textView = hView.findViewById(R.id.name_textView);
         email_textView = hView.findViewById(R.id.email_textView);
@@ -197,11 +202,11 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         });
 
         // dowloading the profile pic and show in navigation drawer...
-        if(user.getPhotoUrl() != null) {
+        if (user.getPhotoUrl() != null) {
             StorageReference ref = storageReference.child("profileImages/" + userID);
             Glide.with(this)
                     .load(ref)
-                    .diskCacheStrategy(DiskCacheStrategy.NONE ) // prevent caching
+                    .diskCacheStrategy(DiskCacheStrategy.NONE) // prevent caching
                     .skipMemoryCache(true) // prevent caching
                     .into(profile_circleImageView);
         }
@@ -212,18 +217,10 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    // show search menu
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.search_menu, menu);
-        return super.onCreateOptionsMenu(menu);
-    }
-
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.profile_settings_item: 
+            case R.id.profile_settings_item:
                 updateUIEditProfile();
                 break;
             case R.id.organize_activity_item:
@@ -247,45 +244,58 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                 .setPositiveButton("Sí", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        db.collection("users").document(userID)
-                                .delete()
-                                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                    @Override
-                                    public void onSuccess(Void aVoid) {
-                                        // delete profile pic ...
-                                        StorageReference ref = storageReference.child("profileImages/" + userID);
-                                        ref.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
-                                            @Override
-                                            public void onSuccess(Void aVoid) {
-                                                // finally, delete account...
-                                                FirebaseUser user = mAuth.getCurrentUser();
-                                                user.delete()
-                                                        .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                                            @Override
-                                                            public void onComplete(@NonNull Task<Void> task) {
-                                                                // go back to identification activity
-                                                                updateUIIdentification();
-                                                            }
-                                                        });
-                                            }
-                                        }).addOnFailureListener(new OnFailureListener() {
-                                            @Override
-                                            public void onFailure(@NonNull Exception exception) {
-                                                Toast.makeText(HomeActivity.this, "La información no ha podido eliminarse", Toast.LENGTH_SHORT).show();
-                                            }
-                                        });
-                                    }
-                                })
-                                .addOnFailureListener(new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-                                        Toast.makeText(HomeActivity.this, "La información no ha podido eliminarse", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
+                        deleteProfilePicture();
                     }
                 })
                 .setNegativeButton("No", null)
                 .show();
+    }
+
+    private void deleteProfilePicture() {
+        StorageReference ref = storageReference.child("profileImages/" + userID);
+        ref.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                deleteUserData();
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        deleteUserData();
+                    }
+                });
+    }
+
+    private void deleteUserData() {
+        db.collection("users").document(userID)
+                .delete()
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        deleteAuth();
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        deleteAuth();
+                    }
+                });
+    }
+
+    private void deleteAuth() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        user.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                updateUIIdentification();
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                showSnackBar("Su cuenta no ha podido eliminarse. Pruebe de nuevo.");
+            }
+        });
     }
 
     private void logOut() {
@@ -359,5 +369,17 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     private void updateUIFindActivity() {
         Intent intent = new Intent(HomeActivity.this, FindActivityActivity.class);
         startActivity(intent);
+    }
+
+    private void showSnackBar(String msg) {
+        Snackbar.make(home_constraintLayout, msg, Snackbar.LENGTH_LONG)
+                .setAction("OK", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                    }
+                })
+                .setDuration(8000)
+                .show();
     }
 }

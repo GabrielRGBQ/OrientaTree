@@ -21,6 +21,7 @@ import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.HomeActivity;
 import com.smov.gabriel.orientatree.InfoActivityActivity;
 import com.smov.gabriel.orientatree.MapActivity;
+import com.smov.gabriel.orientatree.OnGoingActivity;
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.model.Activity;
 
@@ -70,8 +71,18 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
         holder.title_textView.setText(activity.getTitle());
         holder.date_textView.setText("Fecha: " + dateAsString);
 
+        if(activity.getPlanner_id().equals(user_id)) {
+            holder.role_textView.setText("Organizador/a");
+        } else if (activity.getParticipants() != null) {
+            if(activity.getParticipants().contains(user_id)) {
+                holder.role_textView.setText("Participante");
+            }
+        } else {
+            holder.role_textView.setText("");
+        }
+
         // set whether the current user is the activity organizer, a participant, or both
-        if(activity.getParticipants() != null) {
+        /*if(activity.getParticipants() != null) {
             if((user_id.equals(planner_id)) &&
                     (activity.getParticipants().contains(user_id))) {
                 holder.role_textView.setText("Organizador + Participante");
@@ -89,13 +100,23 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
             } else {
                 holder.role_textView.setText("");
             }
-        }
+        }*/
 
         holder.row_activity_layout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                updateUIInfoActivity(activity);
-                //updateUIMapActivity(activity);
+                long millis=System.currentTimeMillis();
+                Date current_time = new Date(millis );
+                if(activity.getFinishTime().before(current_time)) {
+                    // past activity
+                    updateUIInfoActivity(activity);
+                } else if (activity.getStartTime().after(current_time)) {
+                    // future activity
+                    updateUIInfoActivity(activity);
+                } else {
+                    // on going activity
+                    updateUIOnGoingActivity(activity);
+                }
             }
         });
 
@@ -143,12 +164,18 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
 
     private void updateUIInfoActivity(Activity activity) {
         Intent intent = new Intent(context, InfoActivityActivity.class);
-        //intent.putExtra("activity_id", activity.getId());
+        intent.putExtra("activity", activity);
         homeActivity.startActivityForResult(intent, 1); // this is to allow us to come back from the activity
     }
 
     private void updateUIMapActivity(Activity activity) {
         Intent intent = new Intent(context, MapActivity.class);
+        intent.putExtra("activity", activity);
+        homeActivity.startActivityForResult(intent, 1); // this is to allow us to come back from the activity
+    }
+
+    private void updateUIOnGoingActivity(Activity activity) {
+        Intent intent = new Intent(context, OnGoingActivity.class);
         intent.putExtra("activity", activity);
         homeActivity.startActivityForResult(intent, 1); // this is to allow us to come back from the activity
     }

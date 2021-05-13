@@ -20,6 +20,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.services.LocationService;
 
 import java.io.File;
@@ -40,10 +41,16 @@ public class InfoActivityActivity extends AppCompatActivity {
 
     private Intent locationServiceIntent;
 
+    private Activity activity;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_info_activity);
+
+        // get the current activity
+        Intent intent = getIntent();
+        Activity activity = (Activity) intent.getSerializableExtra("activity");
 
         locationServiceIntent = new Intent(this, LocationService.class);
 
@@ -70,7 +77,7 @@ public class InfoActivityActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 //updateUIMap();
-                StorageReference reference = storageReference.child("maps/Version 1.png");
+                StorageReference reference = storageReference.child("maps/" + activity.getTemplate() + ".png");
                 try {
                     // try to download the map into a File...
                     File localFile = File.createTempFile("images", "png");
