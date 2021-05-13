@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.smov.gabriel.orientatree">
-
     <!--
          The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
          Google Maps Android API v2, but you must specify either coarse or fine
@@ -10,7 +9,6 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <!--<uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>-->
 
     <application
         android:allowBackup="true"
@@ -19,10 +17,14 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.OrientaTree">
+        <activity android:name=".OnGoingActivity"
+            android:screenOrientation="portrait"
+            android:parentActivityName=".HomeActivity"></activity>
+
         <receiver
             android:name=".GeofenceBroadcastReceiver"
             android:enabled="true"
-            android:exported="true"></receiver>
+            android:exported="true" />
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -83,9 +85,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name=".services.LocationService"
-            android:stopWithTask="true"
-            android:foregroundServiceType="location"/>
+
+        <service
+            android:name=".services.LocationService"
+            android:foregroundServiceType="location"
+            android:stopWithTask="true" />
     </application>
 
 </manifest>

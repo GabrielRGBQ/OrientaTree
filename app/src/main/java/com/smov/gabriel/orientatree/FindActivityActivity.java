@@ -14,19 +14,16 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.smov.gabriel.orientatree.adapters.ActivityAdapter;
 import com.smov.gabriel.orientatree.adapters.FindActivityAdapter;
-import com.smov.gabriel.orientatree.adapters.TemplateAdapter;
 import com.smov.gabriel.orientatree.model.Activity;
-import com.smov.gabriel.orientatree.model.Template;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -39,7 +36,6 @@ public class FindActivityActivity extends AppCompatActivity {
     private CircularProgressIndicator progressIndicator;
 
     private RecyclerView find_activity_recyclerview;
-    //private ActivityAdapter activityAdapter;
     private FindActivityAdapter findActivityAdapter;
     private ArrayList<Activity> activities;
 

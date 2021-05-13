@@ -27,6 +27,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.model.Activity;
+import com.smov.gabriel.orientatree.model.Participation;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -69,17 +70,23 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
         holder.find_date_textView.setText("Fecha: " + dateAsString);
         holder.visibleId_textView.setText("ID: " + activity.getVisible_id());
 
-        if(activity.getParticipants() != null) {
-            if(activity.getParticipants().contains(holder.mAuth.getCurrentUser().getUid())) {
-                holder.find_subscribed_textView.setText("Inscrito");
-                holder.subscribe_button.setEnabled(false);
+        if(activity.getPlanner_id().equals(holder.userID)) {
+            holder.find_subscribed_textView.setText("Organizador");
+            holder.subscribe_button.setEnabled(false);
+            holder.unsubscribe_button.setEnabled(false);
+        } else {
+            if(activity.getParticipants() != null) {
+                if(activity.getParticipants().contains(holder.userID)) {
+                    holder.find_subscribed_textView.setText("Inscrito");
+                    holder.subscribe_button.setEnabled(false);
+                } else {
+                    holder.find_subscribed_textView.setText("No inscrito");
+                    holder.unsubscribe_button.setEnabled(false);
+                }
             } else {
                 holder.find_subscribed_textView.setText("No inscrito");
                 holder.unsubscribe_button.setEnabled(false);
             }
-        } else {
-            holder.find_subscribed_textView.setText("No inscrito");
-            holder.unsubscribe_button.setEnabled(false);
         }
 
         // get and set the activity picture
@@ -101,16 +108,24 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
             @Override
             public void onClick(View v) {
                 holder.circularProgressIndicator.setVisibility(View.VISIBLE);
-                activity.removeParticipant(holder.mAuth.getCurrentUser().getUid());
+                activity.removeParticipant(holder.userID);
                 holder.db.collection("activities").document(activity.getId())
                         .set(activity)
                         .addOnSuccessListener(new OnSuccessListener<Void>() {
                             @Override
                             public void onSuccess(Void aVoid) {
-                                holder.circularProgressIndicator.setVisibility(View.INVISIBLE);
-                                holder.find_subscribed_textView.setText("No inscrito");
-                                holder.subscribe_button.setEnabled(true);
-                                holder.unsubscribe_button.setEnabled(false);
+                                holder.db.collection("activities").document(activity.getId())
+                                        .collection("participations").document(holder.userID)
+                                        .delete()
+                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                            @Override
+                                            public void onSuccess(Void aVoid) {
+                                                holder.circularProgressIndicator.setVisibility(View.INVISIBLE);
+                                                holder.find_subscribed_textView.setText("No inscrito");
+                                                holder.subscribe_button.setEnabled(true);
+                                                holder.unsubscribe_button.setEnabled(false);
+                                            }
+                                        });
                             }
                         });
             }
@@ -125,6 +140,8 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
     public class MyViewHolder extends RecyclerView.ViewHolder {
 
         FirebaseAuth mAuth;
+
+        String userID;
 
         FirebaseStorage storage;
         StorageReference storageReference;
@@ -151,6 +168,8 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
 
             mAuth = FirebaseAuth.getInstance();
 
+            userID = mAuth.getCurrentUser().getUid();
+
             db = FirebaseFirestore.getInstance();
 
             storage = FirebaseStorage.getInstance();
@@ -173,17 +192,27 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
                         holder.circularProgressIndicator.setVisibility(View.VISIBLE);
                         String input_key = input.getText().toString().trim();
                         if(input_key.equals(activity.getKey())) {
-                            //Toast.makeText(context, "Clave correcta!!", Toast.LENGTH_SHORT).show();
-                            activity.addParticipant(holder.mAuth.getCurrentUser().getUid());
+                            activity.addParticipant(holder.userID);
                             holder.db.collection("activities").document(activity.getId())
                                     .set(activity)
                                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                                         @Override
                                         public void onSuccess(Void aVoid) {
+                                            long millis=System.currentTimeMillis();
+                                            Date current_time = new Date(millis );
+                                            Participation participation = new Participation(holder.userID, current_time);
                                             holder.circularProgressIndicator.setVisibility(View.INVISIBLE);
-                                            holder.find_subscribed_textView.setText("Inscrito");
-                                            holder.subscribe_button.setEnabled(false);
-                                            holder.unsubscribe_button.setEnabled(true);
+                                            holder.db.collection("activities").document(activity.getId())
+                                                    .collection("participations").document(holder.userID)
+                                                    .set(participation)
+                                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                        @Override
+                                                        public void onSuccess(Void aVoid) {
+                                                            holder.find_subscribed_textView.setText("Inscrito");
+                                                            holder.subscribe_button.setEnabled(false);
+                                                            holder.unsubscribe_button.setEnabled(true);
+                                                        }
+                                                    });
                                         }
                                     });
                         } else {
