@@ -34,6 +34,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Participation;
+import com.smov.gabriel.orientatree.model.ParticipationState;
 import com.smov.gabriel.orientatree.model.Template;
 import com.smov.gabriel.orientatree.services.LocationService;
 
@@ -41,6 +42,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class OnGoingActivity extends AppCompatActivity {
 
@@ -167,15 +169,19 @@ public class OnGoingActivity extends AppCompatActivity {
                                             participation = documentSnapshot.toObject(Participation.class);
                                             switch (participation.getState()) {
                                                 case NOT_YET:
+                                                    start_button.setEnabled(true);
                                                     state_textView.setText("Esperando salida");
                                                     break;
                                                 case NOW:
                                                     state_textView.setText("Participando ahora");
                                                     map_button.setEnabled(true);
+                                                    start_button.setText("Retomar");
+                                                    start_button.setEnabled(true);
                                                     break;
                                                 case FINISHED:
                                                     state_textView.setText("Actvidad terminada");
                                                     map_button.setEnabled(true);
+                                                    start_button.setEnabled(false);
                                                     break;
                                                 default:
                                                     break;
@@ -206,7 +212,6 @@ public class OnGoingActivity extends AppCompatActivity {
         } else {
             // if we do...
             havePermissions = true;
-            //setStartListener();
         }
 
         map_button.setOnClickListener(new View.OnClickListener() {
@@ -246,9 +251,34 @@ public class OnGoingActivity extends AppCompatActivity {
         start_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(havePermissions) {
+                if (havePermissions) {
                     // only if we have location permissions...
-                    startService(locationServiceIntent);
+                    // get current time
+                    long millis = System.currentTimeMillis();
+                    Date current_time = new Date(millis);
+                    // update the participation to NOW
+                    db.collection("activities").document(activity.getId())
+                            .collection("participations").document(userID)
+                            .update("state", ParticipationState.NOW,
+                                    "startTime", current_time)
+                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                @Override
+                                public void onSuccess(Void aVoid) {
+                                    // if everything's fine, map enabled, start not enabled any more and begin foreground service
+                                    map_button.setEnabled(true);
+                                    start_button.setEnabled(false);
+                                    locationServiceIntent.putExtra("activity", activity);
+                                    startService(locationServiceIntent);
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    showSnackBar("Error al comenzar la actividad. Inténtalo de nuevo.");
+                                }
+                            });
+                } else {
+                    requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_ACCESS_REQUEST_CODE);
                 }
             }
         });
@@ -263,12 +293,29 @@ public class OnGoingActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        Intent intent = getIntent(); // Here I don't really know why I have to do this again
+        Activity activity = (Activity) intent.getSerializableExtra("activity");
         switch (item.getItemId()) {
             case R.id.abandon_activity: {
-                if(havePermissions) {
-                    // only if we have location permissions...
-                    stopService(locationServiceIntent);
-                }
+                // get current time
+                long millis = System.currentTimeMillis();
+                Date current_time = new Date(millis);
+                db.collection("activities").document(activity.getId())
+                        .collection("participations").document(userID)
+                        .update("state", ParticipationState.FINISHED,
+                                "finishTime", current_time)
+                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                stopService(locationServiceIntent);
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                showSnackBar("Error al terminar la actividad. Inténtalo de nuevo.");
+                            }
+                        });
                 break;
             }
         }
@@ -295,7 +342,7 @@ public class OnGoingActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode){
+        switch (requestCode) {
             case FINE_LOCATION_ACCESS_REQUEST_CODE:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // user gave us the permission...

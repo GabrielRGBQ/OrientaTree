@@ -198,9 +198,7 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
                                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                                         @Override
                                         public void onSuccess(Void aVoid) {
-                                            long millis=System.currentTimeMillis();
-                                            Date current_time = new Date(millis );
-                                            Participation participation = new Participation(holder.userID, current_time);
+                                            Participation participation = new Participation(holder.userID);
                                             holder.circularProgressIndicator.setVisibility(View.INVISIBLE);
                                             holder.db.collection("activities").document(activity.getId())
                                                     .collection("participations").document(holder.userID)
