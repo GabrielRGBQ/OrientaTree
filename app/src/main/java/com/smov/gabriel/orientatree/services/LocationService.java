@@ -47,10 +47,8 @@ import java.util.TimerTask;
 
 public class LocationService extends Service {
 
-    /*
-      Asegurarse de que solo se llama a este servicio una vez se han comprobado y obtenido los permisos de ubicacion
-      TODO
-     */
+    // allows to know from the activity whether the service is being executed or no
+    public static boolean executing = false;
 
     private FusedLocationProviderClient fusedLocationClient;
 
@@ -82,6 +80,8 @@ public class LocationService extends Service {
     public void onCreate() {
         super.onCreate();
 
+        executing = true;
+
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         startMyOwnForeground();
@@ -103,7 +103,7 @@ public class LocationService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "service starting", Toast.LENGTH_LONG).show();
+        //Toast.makeText(this, "service starting", Toast.LENGTH_LONG).show();
 
         mAuth = FirebaseAuth.getInstance();
 
@@ -112,7 +112,7 @@ public class LocationService extends Service {
         db = FirebaseFirestore.getInstance();
 
         // get the activity on which the user is taking part
-        if(intent != null) {
+        if (intent != null) {
             Activity activityTemp = (Activity) intent.getSerializableExtra("activity");
             if (activityTemp != null) {
                 activity = activityTemp;
@@ -131,7 +131,7 @@ public class LocationService extends Service {
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        // TODO: handle this
+
                     }
                 });*/
 
@@ -140,12 +140,13 @@ public class LocationService extends Service {
 
     @Override
     public void onDestroy() {
+        executing = false;
         removeLocationUpdates();
         stopForeground(true);
-        Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
     }
 
-    private void startMyOwnForeground(){
+    private void startMyOwnForeground() {
 
         String ON_GOING_NOTIFICATION_CHANNEL_ID = "onGoing.orientatree";
 
@@ -176,8 +177,7 @@ public class LocationService extends Service {
                     .build();
 
             startForeground(2, notification);
-        }
-        else {
+        } else {
             Notification notification =
                     new Notification.Builder(this, ON_GOING_NOTIFICATION_CHANNEL_ID)
                             .setContentTitle("Título")
@@ -218,14 +218,16 @@ public class LocationService extends Service {
 
     private void onNewLocation(Location location) {
         //Toast.makeText(this, "New location: " + location.getLatitude() + " " + location.getLongitude(), Toast.LENGTH_SHORT).show();
-        if(activity != null) {
+        if (activity != null) {
             long millis = System.currentTimeMillis();
             Date current_time = new Date(millis);
-            if(current_time.after(activity.getFinishTime())) {
+            if (current_time.after(activity.getFinishTime())) { // if the activity time is finished...
+                // change the state and set the finish time to that of the activity, because it means that
+                // the user did not get to the end of the activity
                 db.collection("activities").document(activity.getId())
                         .collection("participations").document(userID)
                         .update("state", ParticipationState.FINISHED,
-                                "finishTime", current_time)
+                                "finishTime", activity.getFinishTime())
                         .addOnSuccessListener(new OnSuccessListener<Void>() {
                             @Override
                             public void onSuccess(Void aVoid) {
