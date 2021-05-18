@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -28,29 +29,46 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.smov.gabriel.orientatree.InfoActivityActivity;
 import com.smov.gabriel.orientatree.R;
+import com.smov.gabriel.orientatree.model.Activity;
+import com.smov.gabriel.orientatree.model.Participation;
+import com.smov.gabriel.orientatree.model.ParticipationState;
+
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class LocationService extends Service {
 
-    /*
-      Asegurarse de que solo se llama a este servicio una vez se han comprobado y obtenido los permisos de ubicacion
-      TODO
-     */
+    // allows to know from the activity whether the service is being executed or no
+    public static boolean executing = false;
 
     private FusedLocationProviderClient fusedLocationClient;
 
     private static final String TAG = "Location Service";
 
-    private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 5000;
+    private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 1000;
     private static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
             UPDATE_INTERVAL_IN_MILLISECONDS / 2;
 
     private Location mLocation;
     private LocationCallback mLocationCallback;
     private LocationRequest mLocationRequest;
+
+    private FirebaseFirestore db;
+
+    private FirebaseAuth mAuth;
+
+    private String userID;
+
+    private Activity activity;
 
     @Nullable
     @Override
@@ -61,6 +79,8 @@ public class LocationService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        executing = true;
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -83,18 +103,50 @@ public class LocationService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "service starting", Toast.LENGTH_LONG).show();
+
+        mAuth = FirebaseAuth.getInstance();
+
+        userID = mAuth.getCurrentUser().getUid();
+
+        db = FirebaseFirestore.getInstance();
+
+        // get the activity on which the user is taking part
+        if (intent != null) {
+            Activity activityTemp = (Activity) intent.getSerializableExtra("activity");
+            if (activityTemp != null) {
+                activity = activityTemp;
+            }
+        }
+
+        // get the Activity on which the user is taking part
+        /*db.collection("activities").document("c6c2d74a-d7bb-4e69-801c-5b604b2f701c")
+                .get()
+                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                    @Override
+                    public void onSuccess(DocumentSnapshot documentSnapshot) {
+                        activity = documentSnapshot.toObject(Activity.class);
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+
+                    }
+                });*/
+
         return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
+        executing = false;
         removeLocationUpdates();
         stopForeground(true);
-        Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
     }
 
-    private void startMyOwnForeground(){
+    private void startMyOwnForeground() {
 
         String ON_GOING_NOTIFICATION_CHANNEL_ID = "onGoing.orientatree";
 
@@ -125,8 +177,7 @@ public class LocationService extends Service {
                     .build();
 
             startForeground(2, notification);
-        }
-        else {
+        } else {
             Notification notification =
                     new Notification.Builder(this, ON_GOING_NOTIFICATION_CHANNEL_ID)
                             .setContentTitle("Título")
@@ -166,7 +217,30 @@ public class LocationService extends Service {
     }
 
     private void onNewLocation(Location location) {
-        Toast.makeText(this, "New location: " + location.getLatitude() + " " + location.getLongitude(), Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "New location: " + location.getLatitude() + " " + location.getLongitude(), Toast.LENGTH_SHORT).show();
+        if (activity != null) {
+            long millis = System.currentTimeMillis();
+            Date current_time = new Date(millis);
+            if (current_time.after(activity.getFinishTime())) { // if the activity time is finished...
+                // change the state and set the finish time to that of the activity, because it means that
+                // the user did not get to the end of the activity
+                db.collection("activities").document(activity.getId())
+                        .collection("participations").document(userID)
+                        .update("state", ParticipationState.FINISHED,
+                                "finishTime", activity.getFinishTime())
+                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                Log.d(TAG, "Actividad terminada");
+                                stopSelf();
+                            }
+                        });
+            } else {
+                Log.d(TAG, "Actividad sin terminar");
+            }
+        } else {
+            Log.d(TAG, "Actividad nula");
+        }
         Log.d(TAG, "New location: " + location.getLatitude() + " " + location.getLongitude());
         mLocation = location;
     }

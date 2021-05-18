@@ -13,9 +13,8 @@ public class Participation {
 
     }
 
-    public Participation(String participant, Date startTime) {
+    public Participation(String participant) {
         this.participant = participant;
-        this.startTime = startTime;
     }
 
     public String getParticipant() {

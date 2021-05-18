@@ -5,7 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".OnGoingActivity">
+    tools:context=".OnGoingActivity"
+    android:id="@+id/onGoing_linearLayout">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
@@ -49,10 +50,10 @@
                 android:layout_weight="1"/>
 
             <TextView
-                android:id="@+id/onGoing_beacons_textView"
+                android:id="@+id/onGoing_mode_textView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="4 balizas"
+                android:text="Score"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
                 android:layout_gravity="right"/>
 
@@ -85,7 +86,7 @@
             android:text="Campo Grande, Valladolid"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"/>
 
-        <TextView
+        <!--<TextView
             android:id="@+id/onGoing_description_textview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -94,7 +95,7 @@
             android:layout_marginTop="10dp"
             android:text="Lorem ipsum dolor sit amet consectetur adipiscing elit malesuada ut platea, felis
             Lorem ipsum dolor sit amet consectetur adipiscing elit malesuada ut platea, felis"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"/>
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"/>-->
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -107,6 +108,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
                 android:text="Ver mapa"
+                android:enabled="false"
                 android:textAllCaps="true"
                 style="?attr/borderlessButtonStyle"
                 />
@@ -118,6 +120,12 @@
                 android:textAllCaps="true"
                 style="?attr/borderlessButtonStyle"
                 />
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:id="@+id/onGoing_map_progressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:indeterminate="true"
+                android:visibility="invisible"/>
         </LinearLayout>
 
         <View
@@ -143,7 +151,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:text="Actividad en curso"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"/>
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"/>
 
                 <TextView
                     android:id="@+id/onGoing_start_textView"
@@ -161,6 +169,13 @@
                     android:text="Fin: 16:30"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"/>
 
+                <TextView
+                    android:id="@+id/onGoing_beacons_textView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"/>
+
             </LinearLayout>
 
             <LinearLayout
@@ -174,18 +189,36 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="Esperando salida"
+                    android:text="Esperando a salir"
                     android:layout_gravity="right"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"/>
 
                 <TextView
-                    android:id="@+id/onGoing_timer_textView"
+                    android:id="@+id/onGoing_reachedBeacons_textView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="right"
+                    android:layout_marginTop="8dp"
+                    android:text="Balizas alcanzadas: 3/4"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"/>
+
+                <TextView
+                    android:id="@+id/onGoing_startTime_textView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="00:00:00"
                     android:layout_gravity="right"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Headline5"/>
+                    android:text="Salida: 12:22"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"/>
+
+                <TextView
+                    android:id="@+id/onGoing_finishTime_textView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_gravity="right"
+                    android:text="Llegada: 12:22"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"/>
 
             </LinearLayout>
 
@@ -205,7 +238,19 @@
             android:text="Comenzar"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"
+            android:enabled="false"/>
+
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/onGoing_circularProgressIndicator"
+            android:layout_marginBottom="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toTopOf="@id/onGoing_start_button"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:indeterminate="true"
+            android:visibility="gone"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
