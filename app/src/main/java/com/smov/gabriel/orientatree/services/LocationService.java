@@ -3,6 +3,7 @@ package com.smov.gabriel.orientatree.services;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.location.Location;
@@ -15,6 +16,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -29,6 +31,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.smov.gabriel.orientatree.BeaconContentActivity;
+import com.smov.gabriel.orientatree.OnGoingActivity;
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Beacon;
@@ -68,10 +72,10 @@ public class LocationService extends Service {
     private String userID;
 
     private Activity activity;
-    private ArrayList<Beacon> beacons;
+    private ArrayList<Beacon> beacons; // all the beacons
 
-    private int totalBeacons;
-    private int nextBeacon = 0;
+    private int totalBeacons; // total number of beacons
+    private int nextBeacon = 0; // which one is the next beacon
 
     private boolean uploadingReach = false; // flag to signal if we are trying to upload a reach and therefore the others must wait
 
@@ -281,8 +285,9 @@ public class LocationService extends Service {
                                 @Override
                                 public void onSuccess(Void unused) {
                                     // BeaconReached added to Firestore
+                                    sendBeaconNotification(beacon, activity);
                                     uploadingReach = false; // not uploading any more
-                                    Toast.makeText(LocationService.this, "Alcanzada: " + beacon.getName(), Toast.LENGTH_SHORT).show();
+                                    //Toast.makeText(LocationService.this, "Alcanzada: " + beacon.getName(), Toast.LENGTH_SHORT).show();
                                     Log.d(TAG, "Alcanzada: " + beacon.getName());
                                     nextBeacon++; // update which the next beacon is
                                 }
@@ -295,7 +300,7 @@ public class LocationService extends Service {
                                 }
                             });
                 } else { // if we are not close to any beacon or there is one trying to be uploaded...
-                    Toast.makeText(this, "Too far away from: " + beacon.getName() + " or uploading", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(this, "Too far away from: " + beacon.getName() + " or uploading", Toast.LENGTH_SHORT).show();
                     Log.d(TAG, "Too far away from: " + beacon.getName() + " or uploading");
                 }
             } else { // if no more beacons left...
@@ -314,30 +319,58 @@ public class LocationService extends Service {
         } else { // if activity or beacons null...
             Log.d(TAG, "Couldn't read beacons and/or reaches yet");
         }
-        // first tests done...
-        /*if (beacons != null) {
-            double lat1 = location.getLatitude();
-            double lng1 = location.getLongitude();
-            boolean far = true;
-            for (Beacon beacon : beacons) {
-                double lat2 = beacon.getLocation().getLatitude();
-                double lng2 = beacon.getLocation().getLongitude();
-                float dist = getDistance(lat1, lat2, lng1, lng2);
-                if (dist <= LOCATION_PRECISION) {
-                    Toast.makeText(this, "Close to: " + beacon.getName(), Toast.LENGTH_SHORT).show();
-                    Log.d(TAG, "Close to: " + beacon.getName());
-                    far = false;
-                }
-            }
-            if (far) {
-                Toast.makeText(this, "Far from everything", Toast.LENGTH_SHORT).show();
-                Log.d(TAG, "Far from everything");
-            }
-        } else {
-            Log.d(TAG, "Balizas nulas");
-        }*/
         Log.d(TAG, "New location: " + location.getLatitude() + " " + location.getLongitude());
         mLocation = location;
+    }
+
+    private void sendBeaconNotification(Beacon beacon, Activity activity) {
+        // 1 create the channel if needed, and set the intent for the action
+        String BEACON_NOTIFICATION_CHANNEL_ID = "beacon.orientatree"; // name of the channel for beacon notifications
+
+        // Create an explicit intent for an Activity in your app
+        Intent intent = new Intent(this, BeaconContentActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        intent.putExtra("beaconID", beacon.getBeacon_id());
+        intent.putExtra("templateID", activity.getTemplate());
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "Notificaciones balizas";
+            String description = "Notificaciones que aparecen al llegar a una baliza";
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel channel = new NotificationChannel(BEACON_NOTIFICATION_CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+
+            // 2 create the notification
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, BEACON_NOTIFICATION_CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_flag)
+                    .setColor(getColor(R.color.primary_color))
+                    .setContentTitle("Baliza " + beacon.getName())
+                    .setContentIntent(pendingIntent)
+                    .setAutoCancel(true)
+                    .setContentText("Ya puedes ver el contenido de la baliza");
+
+            // 3 show the notification
+            notificationManager.notify(beacon.getNumber(), builder.build());
+        } else {
+            // 2.1 create the notification
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, BEACON_NOTIFICATION_CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_flag)
+                    .setColor(getColor(R.color.primary_color))
+                    .setContentTitle("Baliza " + beacon.getName())
+                    .setContentText("Ya puedes ver el contenido de la baliza")
+                    .setContentIntent(pendingIntent)
+                    .setAutoCancel(true)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH);
+
+            // 3.1 show the notification
+            NotificationManagerCompat nManager = NotificationManagerCompat.from(this);
+            nManager.notify(beacon.getNumber(), builder.build());
+        }
     }
 
     public void requestLocationUpdates() {
