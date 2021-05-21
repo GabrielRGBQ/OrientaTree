@@ -3,16 +3,10 @@ package com.smov.gabriel.orientatree.services;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.location.Location;
 import android.os.Build;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
@@ -21,7 +15,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -33,17 +26,21 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.smov.gabriel.orientatree.InfoActivityActivity;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.model.Activity;
-import com.smov.gabriel.orientatree.model.Participation;
+import com.smov.gabriel.orientatree.model.Beacon;
+import com.smov.gabriel.orientatree.model.BeaconReached;
 import com.smov.gabriel.orientatree.model.ParticipationState;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class LocationService extends Service {
 
@@ -54,7 +51,9 @@ public class LocationService extends Service {
 
     private static final String TAG = "Location Service";
 
-    private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 1000;
+    private static final float LOCATION_PRECISION = 20f;
+
+    private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 3000;
     private static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
             UPDATE_INTERVAL_IN_MILLISECONDS / 2;
 
@@ -69,6 +68,12 @@ public class LocationService extends Service {
     private String userID;
 
     private Activity activity;
+    private ArrayList<Beacon> beacons;
+
+    private int totalBeacons;
+    private int nextBeacon = 0;
+
+    private boolean uploadingReach = false; // flag to signal if we are trying to upload a reach and therefore the others must wait
 
     @Nullable
     @Override
@@ -111,29 +116,43 @@ public class LocationService extends Service {
 
         db = FirebaseFirestore.getInstance();
 
-        // get the activity on which the user is taking part
+        // get the activity on which the user is taking part and its beacons
         if (intent != null) {
             Activity activityTemp = (Activity) intent.getSerializableExtra("activity");
             if (activityTemp != null) {
-                activity = activityTemp;
+                activity = activityTemp; // activity gotten from intent
+                beacons = new ArrayList<>();
+                db.collection("templates").document(activity.getTemplate())
+                        .collection("beacons")
+                        .get()
+                        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                            @Override
+                            public void onComplete(@NonNull @NotNull Task<QuerySnapshot> task) {
+                                // getting beacons from Firestore
+                                for (QueryDocumentSnapshot documentSnapshot : task.getResult()) {
+                                    Beacon beacon = documentSnapshot.toObject(Beacon.class);
+                                    beacons.add(beacon);
+                                }
+                                // get the number o beacons that the activity has
+                                totalBeacons = beacons.size();
+                                // place the beacons in order
+                                Collections.sort(beacons, new Beacon());
+                            }
+                        });
+                // get the number of already reached beacons at the moment of starting the service
+                // so that we know which beacon is next
+                db.collection("activities").document(activity.getId())
+                        .collection("participations").document(userID)
+                        .collection("beaconReaches")
+                        .get()
+                        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                            @Override
+                            public void onComplete(@NonNull @NotNull Task<QuerySnapshot> task) {
+                                nextBeacon = task.getResult().size() + 1;
+                            }
+                        });
             }
         }
-
-        // get the Activity on which the user is taking part
-        /*db.collection("activities").document("c6c2d74a-d7bb-4e69-801c-5b604b2f701c")
-                .get()
-                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-                    @Override
-                    public void onSuccess(DocumentSnapshot documentSnapshot) {
-                        activity = documentSnapshot.toObject(Activity.class);
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-
-                    }
-                });*/
 
         return START_STICKY;
     }
@@ -143,7 +162,6 @@ public class LocationService extends Service {
         executing = false;
         removeLocationUpdates();
         stopForeground(true);
-        //Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
     }
 
     private void startMyOwnForeground() {
@@ -217,13 +235,70 @@ public class LocationService extends Service {
     }
 
     private void onNewLocation(Location location) {
-        //Toast.makeText(this, "New location: " + location.getLatitude() + " " + location.getLongitude(), Toast.LENGTH_SHORT).show();
-        if (activity != null) {
-            long millis = System.currentTimeMillis();
-            Date current_time = new Date(millis);
+        // get current time
+        long millis = System.currentTimeMillis();
+        Date current_time = new Date(millis);
+        // get current location
+        double lat1 = location.getLatitude();
+        double lng1 = location.getLongitude();
+        if (activity != null) { // if we already have the activity data...
             if (current_time.after(activity.getFinishTime())) { // if the activity time is finished...
                 // change the state and set the finish time to that of the activity, because it means that
                 // the user did not get to the end of the activity
+                db.collection("activities").document(activity.getId())
+                        .collection("participations").document(userID)
+                        .update("state", ParticipationState.FINISHED,
+                                "finishTime", activity.getFinishTime())
+                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                Log.d(TAG, "Ending activity...");
+                                stopSelf();
+                            }
+                        });
+            } else {
+                Log.d(TAG, "Actividad aún sin terminar");
+            }
+        } else {
+            Log.d(TAG, "Actividad nula");
+        }
+        if (beacons != null && nextBeacon > 0) { // if we already have read beacons and reaches...
+            if (nextBeacon <= totalBeacons) { // if there are still beacons left to be reached...
+                Beacon beacon = beacons.get(nextBeacon - 1); // get the beacon we are looking for now
+                // get the selected beacon's location
+                double lat2 = beacon.getLocation().getLatitude();
+                double lng2 = beacon.getLocation().getLongitude();
+                float dist = getDistance(lat1, lat2, lng1, lng2); // get the distance to the current position
+                if (dist <= LOCATION_PRECISION && !uploadingReach) { // if near enough and not already trying to upload...
+                    BeaconReached beaconReached = new BeaconReached(current_time, beacon.getBeacon_id()); // create a new BeaconReached
+                    // add the new BeaconReached to Firestore...
+                    uploadingReach = true; // uploading...
+                    db.collection("activities").document(activity.getId())
+                            .collection("participations").document(userID)
+                            .collection("beaconReaches").document(beaconReached.getBeacon_id())
+                            .set(beaconReached)
+                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                @Override
+                                public void onSuccess(Void unused) {
+                                    // BeaconReached added to Firestore
+                                    uploadingReach = false; // not uploading any more
+                                    Toast.makeText(LocationService.this, "Alcanzada: " + beacon.getName(), Toast.LENGTH_SHORT).show();
+                                    Log.d(TAG, "Alcanzada: " + beacon.getName());
+                                    nextBeacon++; // update which the next beacon is
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull @NotNull Exception e) {
+                                    uploadingReach = false; // not uploading any more
+                                    // don't update nextBeacon, so we will try it again
+                                }
+                            });
+                } else { // if we are not close to any beacon or there is one trying to be uploaded...
+                    Toast.makeText(this, "Too far away from: " + beacon.getName() + " or uploading", Toast.LENGTH_SHORT).show();
+                    Log.d(TAG, "Too far away from: " + beacon.getName() + " or uploading");
+                }
+            } else { // if no more beacons left...
                 db.collection("activities").document(activity.getId())
                         .collection("participations").document(userID)
                         .update("state", ParticipationState.FINISHED,
@@ -235,12 +310,32 @@ public class LocationService extends Service {
                                 stopSelf();
                             }
                         });
-            } else {
-                Log.d(TAG, "Actividad sin terminar");
+            }
+        } else { // if activity or beacons null...
+            Log.d(TAG, "Couldn't read beacons and/or reaches yet");
+        }
+        // first tests done...
+        /*if (beacons != null) {
+            double lat1 = location.getLatitude();
+            double lng1 = location.getLongitude();
+            boolean far = true;
+            for (Beacon beacon : beacons) {
+                double lat2 = beacon.getLocation().getLatitude();
+                double lng2 = beacon.getLocation().getLongitude();
+                float dist = getDistance(lat1, lat2, lng1, lng2);
+                if (dist <= LOCATION_PRECISION) {
+                    Toast.makeText(this, "Close to: " + beacon.getName(), Toast.LENGTH_SHORT).show();
+                    Log.d(TAG, "Close to: " + beacon.getName());
+                    far = false;
+                }
+            }
+            if (far) {
+                Toast.makeText(this, "Far from everything", Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "Far from everything");
             }
         } else {
-            Log.d(TAG, "Actividad nula");
-        }
+            Log.d(TAG, "Balizas nulas");
+        }*/
         Log.d(TAG, "New location: " + location.getLatitude() + " " + location.getLongitude());
         mLocation = location;
     }
@@ -264,6 +359,18 @@ public class LocationService extends Service {
         } catch (SecurityException unlikely) {
             Log.e(TAG, "Lost location permission. Could not remove updates. " + unlikely);
         }
+    }
+
+    private float getDistance(double lat1, double lat2, double lng1, double lng2) {
+        double earthRadius = 6371000; //meters
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLng = Math.toRadians(lng2 - lng1);
+        double p = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        double c = 2 * Math.atan2(Math.sqrt(p), Math.sqrt(1 - p));
+        float dist = (float) (earthRadius * c);
+        return dist;
     }
 
 }

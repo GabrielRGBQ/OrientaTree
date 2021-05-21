@@ -1,8 +1,9 @@
 package com.smov.gabriel.orientatree.model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Template {
+public class Template implements Serializable {
 
     private String name_id;
     private String type;
