@@ -5,11 +5,16 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.Vibrator;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -17,7 +22,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.app.TaskStackBuilder;
 
+import com.google.android.gms.common.internal.Constants;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -194,6 +201,7 @@ public class LocationService extends Service {
                     .setContentText("Algo de texto y cronómetro")
                     .setSmallIcon(R.drawable.ic_map)
                     //.setContentIntent(pendingIntent)
+                    .setColor(getColor(R.color.primary_color))
                     .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                     .setPriority(NotificationManager.IMPORTANCE_LOW)
                     .build();
@@ -205,7 +213,7 @@ public class LocationService extends Service {
                             .setContentTitle("Título")
                             .setContentText("Descripción")
                             .setSmallIcon(R.drawable.ic_map)
-                            .setColor(getResources().getColor(R.color.primary_color))
+                            .setColor(getColor(R.color.primary_color))
                             //.setContentIntent(pendingIntent)
                             .build();
             startForeground(1, notification);
@@ -332,7 +340,11 @@ public class LocationService extends Service {
         intent.putExtra("beaconID", beacon.getBeacon_id());
         intent.putExtra("templateID", activity.getTemplate());
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+        stackBuilder.addNextIntentWithParentStack(intent);
+        //PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = "Notificaciones balizas";
@@ -348,24 +360,39 @@ public class LocationService extends Service {
             // 2 create the notification
             NotificationCompat.Builder builder = new NotificationCompat.Builder(this, BEACON_NOTIFICATION_CHANNEL_ID)
                     .setSmallIcon(R.drawable.ic_flag)
-                    .setColor(getColor(R.color.primary_color))
+                    .setColor(getColor(R.color.secondary_color))
                     .setContentTitle("Baliza " + beacon.getName())
-                    .setContentIntent(pendingIntent)
+                    //.setContentIntent(pendingIntent)
                     .setAutoCancel(true)
+                    .setVibrate(new long[] { 1000, 1000, 1000, 1000, 1000 })
+                    .setLights(getColor(R.color.primary_color), 3000, 3000)
+                    .setFullScreenIntent(pendingIntent, true)
                     .setContentText("Ya puedes ver el contenido de la baliza");
+            Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            builder.setSound(alarmSound);
 
             // 3 show the notification
             notificationManager.notify(beacon.getNumber(), builder.build());
+            /*Vibrator vibrator = (Vibrator) this.getSystemService(Context.VIBRATOR_SERVICE);
+            vibrator.vibrate(new long[] {1000, 100, 1000, 100, 1000}, 1);
+            Uri uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            Ringtone ringtone = RingtoneManager.getRingtone(this, uri);
+            ringtone.play();*/
         } else {
             // 2.1 create the notification
             NotificationCompat.Builder builder = new NotificationCompat.Builder(this, BEACON_NOTIFICATION_CHANNEL_ID)
                     .setSmallIcon(R.drawable.ic_flag)
-                    .setColor(getColor(R.color.primary_color))
+                    .setColor(getColor(R.color.secondary_color))
                     .setContentTitle("Baliza " + beacon.getName())
                     .setContentText("Ya puedes ver el contenido de la baliza")
                     .setContentIntent(pendingIntent)
                     .setAutoCancel(true)
+                    .setVibrate(new long[] { 1000, 1000, 1000, 1000, 1000 })
+                    .setLights(getColor(R.color.primary_color), 3000, 3000)
+                    .setFullScreenIntent(pendingIntent, true)
                     .setPriority(NotificationCompat.PRIORITY_HIGH);
+            Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            builder.setSound(alarmSound);
 
             // 3.1 show the notification
             NotificationManagerCompat nManager = NotificationManagerCompat.from(this);

@@ -1,6 +1,7 @@
 package com.smov.gabriel.orientatree;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -15,6 +16,7 @@ import com.smov.gabriel.orientatree.model.Beacon;
 public class BeaconContentActivity extends AppCompatActivity {
 
     private TextView textView2, textView3;
+    private Toolbar toolbar;
 
     private Beacon beacon;
 
@@ -32,6 +34,10 @@ public class BeaconContentActivity extends AppCompatActivity {
 
         beaconID = getIntent().getExtras().getString("beaconID");
         templateID = getIntent().getExtras().getString("templateID");
+
+        toolbar = findViewById(R.id.content_toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         textView2 = findViewById(R.id.textView2Content);
         textView3 = findViewById(R.id.textView3Content);
