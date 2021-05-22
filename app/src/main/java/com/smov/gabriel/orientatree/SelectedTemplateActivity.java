@@ -154,9 +154,11 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                 if(template.getColor() != null) {
                     switch (template.getColor()) {
                         case "Naranja":
+                            selected_overline_textView.setText(template.getType() + " " + template.getColor());
                             selected_overline_textView.setTextColor(Color.parseColor("#FFA233"));
                             break;
                         case "Roja":
+                            selected_overline_textView.setText(template.getType() + " " + template.getColor());
                             selected_overline_textView.setTextColor(Color.parseColor("#E32A10"));
                             break;
                         default:
