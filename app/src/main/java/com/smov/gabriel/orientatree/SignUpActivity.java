@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -38,7 +39,7 @@ public class SignUpActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
 
-    private ConstraintLayout signUp_layout;
+    private LinearLayout signUp_layout;
 
     private String name, surname, email, password, role;
     private String userID;
@@ -145,7 +146,7 @@ public class SignUpActivity extends AppCompatActivity {
                                                 }
                                             });
                                 } else {
-                                    progress_circular.setVisibility(View.GONE);
+                                    progress_circular.setVisibility(View.INVISIBLE);
                                     try {
                                         throw task.getException();
                                     } catch (FirebaseAuthWeakPasswordException e) {
@@ -178,14 +179,14 @@ public class SignUpActivity extends AppCompatActivity {
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
-                        progress_circular.setVisibility(View.GONE);
+                        progress_circular.setVisibility(View.INVISIBLE);
                         updateUIHome();
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        progress_circular.setVisibility(View.GONE);
+                        progress_circular.setVisibility(View.INVISIBLE);
                         updateUIHome();
                     }
                 });

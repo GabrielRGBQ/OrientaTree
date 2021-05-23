@@ -9,10 +9,12 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -24,6 +26,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
@@ -45,10 +48,8 @@ import java.io.ByteArrayOutputStream;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class EditProfileActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
+public class EditProfileActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
-    /*private Button camera_button, galery_button;
-    private ImageView profile_imageView;*/
     private Toolbar toolbar;
     private Button updateButton;
     private MaterialButton editPicture_button;
@@ -71,13 +72,14 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
 
     private Uri galleryImageUri;
 
+    private boolean imageChanged = false;
+
     private FirebaseAuth mAuth;
     private FirebaseStorage firebaseStorage;
     private StorageReference storageReference;
     private FirebaseUser user;
     private FirebaseFirestore db;
 
-    private final int CAMERA_IMAGE_CODE = 1001;
     private final int GALLERY_IMAGE_CODE = 1002;
 
     @Override
@@ -110,22 +112,22 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
         drawerLayout = findViewById(R.id.drawer_layout_profile);
         navigationView = findViewById(R.id.nav_view_profile);
         // setting the navigation drawer's heading
-        View hView =  navigationView.getHeaderView(0);
+        View hView = navigationView.getHeaderView(0);
         name_textView = hView.findViewById(R.id.name_textView);
         email_textView = hView.findViewById(R.id.email_textView);
         profile_circleImageView = hView.findViewById(R.id.profile_circleImageView);
         name_textView.setText(userName);
         email_textView.setText(userEmail);
-        if(user.getPhotoUrl() != null) {
+        if (user.getPhotoUrl() != null) {
             StorageReference ref = storageReference.child("profileImages/" + userID);
             Glide.with(this)
                     .load(ref)
-                    .diskCacheStrategy(DiskCacheStrategy.NONE ) // prevent caching
+                    .diskCacheStrategy(DiskCacheStrategy.NONE) // prevent caching
                     .skipMemoryCache(true) // prevent caching
                     .into(profileCircleImageView); // set in the activity picture
             Glide.with(this)
                     .load(ref)
-                    .diskCacheStrategy(DiskCacheStrategy.NONE ) // prevent caching
+                    .diskCacheStrategy(DiskCacheStrategy.NONE) // prevent caching
                     .skipMemoryCache(true) // prevent caching
                     .into(profile_circleImageView); // set into drawer picture
         }
@@ -140,10 +142,6 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
         actionBarDrawerToggle.syncState();
         navigationView.setNavigationItemSelectedListener(this);
 
-        /*camera_button = findViewById(R.id.camera_button);
-        galery_button = findViewById(R.id.gallery_button);
-        profile_imageView = findViewById(R.id.profile_imageView);*/
-
         editName_editText.setText(userName);
 
         db.collection("users").document(userID)
@@ -152,7 +150,7 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
                     @Override
                     public void onSuccess(DocumentSnapshot documentSnapshot) {
                         currentUser = documentSnapshot.toObject(User.class);
-                        if(currentUser.getSurname() != null) {
+                        if (currentUser.getSurname() != null) {
                             editSurname_editText.setText(currentUser.getSurname());
                         }
                     }
@@ -164,77 +162,60 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
                     }
                 });
 
-        /*camera_button.setOnClickListener(new View.OnClickListener() {
+        editPicture_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                if(intent.resolveActivity(getPackageManager()) != null) {
-                    startActivityForResult(intent, CAMERA_IMAGE_CODE);
-                }
+                // choose picture and set it on imageViews, but not upload it yet
+                choosePicture();
             }
         });
 
-        galery_button.setOnClickListener(new View.OnClickListener() {
+        updateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                choosePicture();
+                if (imageChanged) { // if user changed the picture, upload it
+                    uploadPicture();
+                }
             }
-        });*/
+        });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.profile_overflow_menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.profile_log_out_item:
+                logOut();
+                break;
+            case R.id.delete_account_item:
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        /*if(requestCode == CAMERA_IMAGE_CODE) {
-            switch (resultCode) {
-                case RESULT_OK:
-                    Bitmap bitmap = (Bitmap)data.getExtras().get("data");
-                    profile_imageView.setImageBitmap(bitmap);
-                    handleUpload(bitmap);
-            }
-        } else if (requestCode == GALLERY_IMAGE_CODE) {
-            if(data != null && data.getData() != null) {
+        if (requestCode == GALLERY_IMAGE_CODE) {
+            if (data != null && data.getData() != null) {
                 switch (resultCode) {
                     case RESULT_OK:
                         galleryImageUri = data.getData();
-                        profile_imageView.setImageURI(galleryImageUri);
-                        uploadPicture();
+                        profileCircleImageView.setImageURI(galleryImageUri); // set image view
+                        profile_circleImageView.setImageURI(galleryImageUri); // set drawer image view
+                        imageChanged = true;
+                        // uploadPicture();
                 }
             }
-        }*/
+        }
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    // picture from camera
-    private void handleUpload(Bitmap bitmap) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-        StorageReference ref = storageReference.child("profileImages/" + userID);
-        ref.putBytes(baos.toByteArray())
-                .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                        getDownloadUrl(ref);
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(EditProfileActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
-
-    private void getDownloadUrl(StorageReference ref) {
-        ref.getDownloadUrl()
-                .addOnSuccessListener(new OnSuccessListener<Uri>() {
-                    @Override
-                    public void onSuccess(Uri uri) {
-                        //Toast.makeText(EditProfileActivity.this, uri.toString(), Toast.LENGTH_SHORT).show();
-                        setUserProfileUrl(uri);
-                    }
-                });
-    }
-
+    // update image Uri
     private void setUserProfileUrl(Uri uri) {
         UserProfileChangeRequest request = new UserProfileChangeRequest.Builder()
                 .setPhotoUri(uri)
@@ -249,12 +230,12 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(EditProfileActivity.this, "Fail at setting uri", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(EditProfileActivity.this, "No se pudo actualizar la imagen", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
 
-    // picture from galery
+    // choose picture from galery
     private void choosePicture() {
         Intent intent = new Intent();
         intent.setType("image/*");
@@ -262,7 +243,7 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
         startActivityForResult(intent, GALLERY_IMAGE_CODE);
     }
 
-
+    // upload picture to Firebase Storage
     private void uploadPicture() {
         final ProgressDialog pd = new ProgressDialog(this);
         pd.setTitle("Uploading image...");
@@ -273,7 +254,8 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                         pd.dismiss();
-                        Snackbar.make(findViewById(android.R.id.content), "Image uploaded", Snackbar.LENGTH_LONG).show();
+                        //Toast.makeText(EditProfileActivity.this, "", Toast.LENGTH_SHORT).show();
+                        //Snackbar.make(findViewById(android.R.id.content), "Image uploaded", Snackbar.LENGTH_LONG).show();
                         setUserProfileUrl(galleryImageUri);
                     }
                 })
@@ -281,14 +263,14 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         pd.dismiss();
-                        Toast.makeText(EditProfileActivity.this, "Failed to upload", Toast.LENGTH_LONG).show();
+                        Toast.makeText(EditProfileActivity.this, "No se pudo actualizar la imagen", Toast.LENGTH_LONG).show();
                     }
                 })
                 .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onProgress(@NonNull UploadTask.TaskSnapshot snapshot) {
                         double progressPercent = (100.00 * snapshot.getBytesTransferred() / snapshot.getTotalByteCount());
-                        pd.setMessage("Percentage: " + (int)progressPercent + "%");
+                        pd.setMessage("Percentage: " + (int) progressPercent + "%");
                     }
                 });
     }
@@ -297,15 +279,15 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
     public boolean onNavigationItemSelected(@NonNull @NotNull MenuItem item) {
         switch (item.getItemId()) {
             case R.id.my_activities_item:
-                //updateUIHome();
+                updateUIHome();
                 break;
             case R.id.organize_activity_item:
+                updateUIFindTemplate();
                 break;
             case R.id.profile_settings_item:
-                //updateUIEditProfile();
                 break;
             case R.id.log_out_item:
-                //logOut();
+                logOut();
                 break;
             case R.id.delete_profile_item:
                 //deleteAccount();
@@ -314,5 +296,35 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
         //close navigation drawer
         drawerLayout.closeDrawer(GravityCompat.START);
         return false;
+    }
+
+    private void logOut() {
+        new MaterialAlertDialogBuilder(this)
+                .setMessage("¿Desea salir de su sesión?")
+                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        mAuth.signOut();
+                        updateUIIdentification();
+                    }
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void updateUIFindTemplate() {
+        Intent intent = new Intent(EditProfileActivity.this, FindTemplate.class);
+        startActivity(intent);
+    }
+
+    private void updateUIHome() {
+        Intent intent = new Intent(EditProfileActivity.this, HomeActivity.class);
+        startActivity(intent);
+    }
+
+    private void updateUIIdentification() {
+        Intent intent = new Intent(EditProfileActivity.this, IdentificationActivity.class);
+        startActivity(intent);
+        finish();
     }
 }

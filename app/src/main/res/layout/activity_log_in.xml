@@ -30,7 +30,9 @@
         android:paddingLeft="40dp"
         android:paddingTop="?attr/actionBarSize"
         android:paddingRight="40dp"
-        android:id="@+id/logIn_layout">
+        android:id="@+id/logIn_layout"
+        android:focusable="true"
+        android:focusableInTouchMode="true">
 
         <ImageView
             android:id="@+id/logo"
@@ -41,6 +43,16 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="OrientaTree"
+            android:textColor="@color/secondary_color_variant"
+            app:layout_constraintTop_toBottomOf="@id/logo"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/email_textfield"
