@@ -64,7 +64,7 @@ public class LocationService extends Service {
 
     private static final String TAG = "Location Service";
 
-    private static final float LOCATION_PRECISION = 20f;
+    private static final float LOCATION_PRECISION = 20000f;
 
     private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 3000;
     private static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
@@ -82,12 +82,13 @@ public class LocationService extends Service {
 
     private Activity activity;
     private ArrayList<Beacon> beacons; // all the beacons
-    private Set<Integer> beacon_indexes; // beacon indexes (only useful in score activities)
+    private Set<String> beacon_indexes;
 
     private int totalBeacons; // total number of beacons
     private int nextBeacon = 0; // which one is the next beacon
 
     private boolean uploadingReach = false; // flag to signal if we are trying to upload a reach and therefore the others must wait
+    private boolean indexesUpdated = false; // flag to signal if we have updated the set of beacons that have not been reached yet
 
     @Nullable
     @Override
@@ -147,7 +148,7 @@ public class LocationService extends Service {
                                 for (QueryDocumentSnapshot documentSnapshot : task.getResult()) {
                                     Beacon beacon = documentSnapshot.toObject(Beacon.class);
                                     beacons.add(beacon);
-                                    beacon_indexes.add(beacon.getNumber());
+                                    beacon_indexes.add(beacon.getBeacon_id());
                                 }
                                 // get the number o beacons that the activity has
                                 totalBeacons = beacons.size();
@@ -166,6 +167,11 @@ public class LocationService extends Service {
                             @Override
                             public void onComplete(@NonNull @NotNull Task<QuerySnapshot> task) {
                                 nextBeacon = task.getResult().size() + 1;
+                                for(QueryDocumentSnapshot documentSnapshot : task.getResult()) {
+                                    BeaconReached beaconReached = documentSnapshot.toObject(BeaconReached.class);
+                                    beacon_indexes.remove(beaconReached.getBeacon_id());
+                                }
+                                indexesUpdated = true;
                             }
                         });
             }
@@ -256,10 +262,15 @@ public class LocationService extends Service {
         // get current time
         long millis = System.currentTimeMillis();
         Date current_time = new Date(millis);
+
         // get current location
         double lat1 = location.getLatitude();
         double lng1 = location.getLongitude();
+
+        // check if we already got the activity data. If we don't have it yet, we won't do anything
         if (activity != null) { // if we already have the activity data...
+
+            // check if the activity has already finished
             if (current_time.after(activity.getFinishTime())) { // if the activity time is finished...
                 // change the state and set the finish time to that of the activity, because it means that
                 // the user did not get to the end of the activity
@@ -274,23 +285,53 @@ public class LocationService extends Service {
                                 stopSelf();
                             }
                         });
-            } else {
-                if (activity.isScore()) { // if activity is score type...
-                    // score activity logic...
+            } else { // if the activity did not finish yet...
+
+                // check if it is classical or score type
+                if (activity.isScore()) { // if activity is score type... Here all the score activity logic
                     Log.d(TAG, "La actividad es score");
-                    if(beacons != null && beacon_indexes != null && nextBeacon > 0) { // if all the data is prepared already...
+                    if(beacons != null && beacon_indexes != null && nextBeacon > 0 && indexesUpdated) { // if all the data is prepared already...
                         if(beacon_indexes.size() == 0) { // no more beacons... finish participation
-                            Toast.makeText(this, "Todas alcanzadas", Toast.LENGTH_SHORT).show();
+                            db.collection("activities").document(activity.getId())
+                                    .collection("participations").document(userID)
+                                    .update("state", ParticipationState.FINISHED,
+                                            "finishTime", activity.getFinishTime())
+                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                        @Override
+                                        public void onSuccess(Void aVoid) {
+                                            Log.d(TAG, "Actividad terminada");
+                                            stopSelf();
+                                        }
+                                    });
                         } else {
                             for(Beacon beacon : beacons) {
-                                if(beacon_indexes.contains(beacon.getNumber())) { // if the beacon has not been reached yet
+                                if(beacon_indexes.contains(beacon.getBeacon_id())){
                                     // get the distance to the current position
                                     double lat2 = beacon.getLocation().getLatitude();
                                     double lng2 = beacon.getLocation().getLongitude();
                                     float dist = getDistance(lat1, lat2, lng1, lng2);
-                                    if (dist <= LOCATION_PRECISION && !uploadingReach) {
-                                        Log.d(TAG, "Removing " + beacon.getNumber());
-                                        beacon_indexes.remove(beacon.getNumber());
+                                    if (dist <= LOCATION_PRECISION && !uploadingReach) { // if it is near enough...
+                                        BeaconReached beaconReached = new BeaconReached(current_time, beacon.getBeacon_id()); // create a new BeaconReached
+                                        uploadingReach = true; // uploading...
+                                        db.collection("activities").document(activity.getId())
+                                                .collection("participations").document(userID)
+                                                .collection("beaconReaches").document(beaconReached.getBeacon_id())
+                                                .set(beaconReached)
+                                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                    @Override
+                                                    public void onSuccess(Void unused) {
+                                                        uploadingReach = false; // not uploading any more
+                                                        sendBeaconNotification(beacon, activity);
+                                                        beacon_indexes.remove(beacon.getBeacon_id());
+                                                    }
+                                                })
+                                                .addOnFailureListener(new OnFailureListener() {
+                                                    @Override
+                                                    public void onFailure(@NonNull @NotNull Exception e) {
+                                                        uploadingReach = false; // not uploading any more
+                                                        // don't update nextBeacon, so we will try it again
+                                                    }
+                                                });
                                         break;
                                     }
                                 }
