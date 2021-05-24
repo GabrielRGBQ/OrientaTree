@@ -16,6 +16,8 @@ public class Activity implements Comparator<Activity>, Serializable {
     private String title;
     private String template;
     private String planner_id;
+    private boolean score;
+    private boolean location_help;
 
     private Date startTime;
     private Date finishTime;
@@ -27,7 +29,7 @@ public class Activity implements Comparator<Activity>, Serializable {
     }
 
     public Activity(String id, String key, String title, String template, String planner_id,
-                    Date startTime, Date finishTime) {
+                    Date startTime, Date finishTime, boolean score, boolean location_help) {
         this.id = id;
         this.visible_id = id.substring(0, Math.min(id.length(), 4));
         this.key = key;
@@ -37,6 +39,8 @@ public class Activity implements Comparator<Activity>, Serializable {
         this.startTime = startTime;
         this.finishTime = finishTime;
         this.participants = new ArrayList<>();
+        this.score = score;
+        this.location_help = location_help;
     }
 
     public String getId() {
@@ -105,6 +109,22 @@ public class Activity implements Comparator<Activity>, Serializable {
 
     public ArrayList<String> getParticipants() {
         return participants;
+    }
+
+    public boolean isScore() {
+        return score;
+    }
+
+    public void setScore(boolean score) {
+        this.score = score;
+    }
+
+    public boolean isLocation_help() {
+        return location_help;
+    }
+
+    public void setLocation_help(boolean location_help) {
+        this.location_help = location_help;
     }
 
     public void setParticipants(ArrayList<String> participants) {

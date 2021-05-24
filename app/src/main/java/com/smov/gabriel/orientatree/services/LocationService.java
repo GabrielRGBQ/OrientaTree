@@ -52,6 +52,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 public class LocationService extends Service {
 
@@ -62,7 +64,7 @@ public class LocationService extends Service {
 
     private static final String TAG = "Location Service";
 
-    private static final float LOCATION_PRECISION = 20f;
+    private static final float LOCATION_PRECISION = 20000f;
 
     private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 3000;
     private static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
@@ -80,11 +82,13 @@ public class LocationService extends Service {
 
     private Activity activity;
     private ArrayList<Beacon> beacons; // all the beacons
+    private Set<String> beacon_indexes;
 
     private int totalBeacons; // total number of beacons
     private int nextBeacon = 0; // which one is the next beacon
 
     private boolean uploadingReach = false; // flag to signal if we are trying to upload a reach and therefore the others must wait
+    private boolean indexesUpdated = false; // flag to signal if we have updated the set of beacons that have not been reached yet
 
     @Nullable
     @Override
@@ -133,6 +137,7 @@ public class LocationService extends Service {
             if (activityTemp != null) {
                 activity = activityTemp; // activity gotten from intent
                 beacons = new ArrayList<>();
+                beacon_indexes = new HashSet<>();
                 db.collection("templates").document(activity.getTemplate())
                         .collection("beacons")
                         .get()
@@ -143,9 +148,11 @@ public class LocationService extends Service {
                                 for (QueryDocumentSnapshot documentSnapshot : task.getResult()) {
                                     Beacon beacon = documentSnapshot.toObject(Beacon.class);
                                     beacons.add(beacon);
+                                    beacon_indexes.add(beacon.getBeacon_id());
                                 }
                                 // get the number o beacons that the activity has
                                 totalBeacons = beacons.size();
+                                Log.d(TAG, "##################\n" + beacon_indexes.size() + "\n#################");
                                 // place the beacons in order
                                 Collections.sort(beacons, new Beacon());
                             }
@@ -160,6 +167,11 @@ public class LocationService extends Service {
                             @Override
                             public void onComplete(@NonNull @NotNull Task<QuerySnapshot> task) {
                                 nextBeacon = task.getResult().size() + 1;
+                                for(QueryDocumentSnapshot documentSnapshot : task.getResult()) {
+                                    BeaconReached beaconReached = documentSnapshot.toObject(BeaconReached.class);
+                                    beacon_indexes.remove(beaconReached.getBeacon_id());
+                                }
+                                indexesUpdated = true;
                             }
                         });
             }
@@ -250,10 +262,15 @@ public class LocationService extends Service {
         // get current time
         long millis = System.currentTimeMillis();
         Date current_time = new Date(millis);
+
         // get current location
         double lat1 = location.getLatitude();
         double lng1 = location.getLongitude();
+
+        // check if we already got the activity data. If we don't have it yet, we won't do anything
         if (activity != null) { // if we already have the activity data...
+
+            // check if the activity has already finished
             if (current_time.after(activity.getFinishTime())) { // if the activity time is finished...
                 // change the state and set the finish time to that of the activity, because it means that
                 // the user did not get to the end of the activity
@@ -268,64 +285,121 @@ public class LocationService extends Service {
                                 stopSelf();
                             }
                         });
-            } else {
-                Log.d(TAG, "Actividad aún sin terminar");
+            } else { // if the activity did not finish yet...
+
+                // check if it is classical or score type
+                if (activity.isScore()) { // if activity is score type... Here all the score activity logic
+                    Log.d(TAG, "La actividad es score");
+                    if(beacons != null && beacon_indexes != null && nextBeacon > 0 && indexesUpdated) { // if all the data is prepared already...
+                        if(beacon_indexes.size() == 0) { // no more beacons... finish participation
+                            db.collection("activities").document(activity.getId())
+                                    .collection("participations").document(userID)
+                                    .update("state", ParticipationState.FINISHED,
+                                            "finishTime", activity.getFinishTime())
+                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                        @Override
+                                        public void onSuccess(Void aVoid) {
+                                            Log.d(TAG, "Actividad terminada");
+                                            stopSelf();
+                                        }
+                                    });
+                        } else {
+                            for(Beacon beacon : beacons) {
+                                if(beacon_indexes.contains(beacon.getBeacon_id())){
+                                    // get the distance to the current position
+                                    double lat2 = beacon.getLocation().getLatitude();
+                                    double lng2 = beacon.getLocation().getLongitude();
+                                    float dist = getDistance(lat1, lat2, lng1, lng2);
+                                    if (dist <= LOCATION_PRECISION && !uploadingReach) { // if it is near enough...
+                                        BeaconReached beaconReached = new BeaconReached(current_time, beacon.getBeacon_id()); // create a new BeaconReached
+                                        uploadingReach = true; // uploading...
+                                        db.collection("activities").document(activity.getId())
+                                                .collection("participations").document(userID)
+                                                .collection("beaconReaches").document(beaconReached.getBeacon_id())
+                                                .set(beaconReached)
+                                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                    @Override
+                                                    public void onSuccess(Void unused) {
+                                                        uploadingReach = false; // not uploading any more
+                                                        sendBeaconNotification(beacon, activity);
+                                                        beacon_indexes.remove(beacon.getBeacon_id());
+                                                    }
+                                                })
+                                                .addOnFailureListener(new OnFailureListener() {
+                                                    @Override
+                                                    public void onFailure(@NonNull @NotNull Exception e) {
+                                                        uploadingReach = false; // not uploading any more
+                                                        // don't update nextBeacon, so we will try it again
+                                                    }
+                                                });
+                                        break;
+                                    }
+                                }
+                            }
+                            Toast.makeText(this, "Te quedan " + beacon_indexes.size(), Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        Log.d(TAG, "Beacons o indexes null");
+                    }
+                } else { // if activity is classical type...
+                    // classical activity logic...
+                    Log.d(TAG, "La actividad es clásica");
+                    if (beacons != null && nextBeacon > 0) { // if we already have read beacons and reaches...
+                        if (nextBeacon <= totalBeacons) { // if there are still beacons left to be reached...
+                            Beacon beacon = beacons.get(nextBeacon - 1); // get the beacon we are looking for now
+                            // get the selected beacon's location
+                            double lat2 = beacon.getLocation().getLatitude();
+                            double lng2 = beacon.getLocation().getLongitude();
+                            float dist = getDistance(lat1, lat2, lng1, lng2); // get the distance to the current position
+                            if (dist <= LOCATION_PRECISION && !uploadingReach) { // if near enough and not already trying to upload...
+                                BeaconReached beaconReached = new BeaconReached(current_time, beacon.getBeacon_id()); // create a new BeaconReached
+                                // add the new BeaconReached to Firestore...
+                                uploadingReach = true; // uploading...
+                                db.collection("activities").document(activity.getId())
+                                        .collection("participations").document(userID)
+                                        .collection("beaconReaches").document(beaconReached.getBeacon_id())
+                                        .set(beaconReached)
+                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                            @Override
+                                            public void onSuccess(Void unused) {
+                                                // BeaconReached added to Firestore
+                                                sendBeaconNotification(beacon, activity);
+                                                uploadingReach = false; // not uploading any more
+                                                Log.d(TAG, "Alcanzada: " + beacon.getName());
+                                                nextBeacon++; // update which the next beacon is
+                                            }
+                                        })
+                                        .addOnFailureListener(new OnFailureListener() {
+                                            @Override
+                                            public void onFailure(@NonNull @NotNull Exception e) {
+                                                uploadingReach = false; // not uploading any more
+                                                // don't update nextBeacon, so we will try it again
+                                            }
+                                        });
+                            } else { // if we are not close to any beacon or there is one trying to be uploaded...
+                                Toast.makeText(this, "Too far away from: " + beacon.getName() + " or uploading", Toast.LENGTH_SHORT).show();
+                                Log.d(TAG, "Too far away from: " + beacon.getName() + " or uploading");
+                            }
+                        } else { // if no more beacons left...
+                            db.collection("activities").document(activity.getId())
+                                    .collection("participations").document(userID)
+                                    .update("state", ParticipationState.FINISHED,
+                                            "finishTime", activity.getFinishTime())
+                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                        @Override
+                                        public void onSuccess(Void aVoid) {
+                                            Log.d(TAG, "Actividad terminada");
+                                            stopSelf();
+                                        }
+                                    });
+                        }
+                    } else { // if activity or beacons null...
+                        Log.d(TAG, "Couldn't read beacons and/or reaches yet");
+                    }
+                }
             }
         } else {
             Log.d(TAG, "Actividad nula");
-        }
-        if (beacons != null && nextBeacon > 0) { // if we already have read beacons and reaches...
-            if (nextBeacon <= totalBeacons) { // if there are still beacons left to be reached...
-                Beacon beacon = beacons.get(nextBeacon - 1); // get the beacon we are looking for now
-                // get the selected beacon's location
-                double lat2 = beacon.getLocation().getLatitude();
-                double lng2 = beacon.getLocation().getLongitude();
-                float dist = getDistance(lat1, lat2, lng1, lng2); // get the distance to the current position
-                if (dist <= LOCATION_PRECISION && !uploadingReach) { // if near enough and not already trying to upload...
-                    BeaconReached beaconReached = new BeaconReached(current_time, beacon.getBeacon_id()); // create a new BeaconReached
-                    // add the new BeaconReached to Firestore...
-                    uploadingReach = true; // uploading...
-                    db.collection("activities").document(activity.getId())
-                            .collection("participations").document(userID)
-                            .collection("beaconReaches").document(beaconReached.getBeacon_id())
-                            .set(beaconReached)
-                            .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                @Override
-                                public void onSuccess(Void unused) {
-                                    // BeaconReached added to Firestore
-                                    sendBeaconNotification(beacon, activity);
-                                    uploadingReach = false; // not uploading any more
-                                    //Toast.makeText(LocationService.this, "Alcanzada: " + beacon.getName(), Toast.LENGTH_SHORT).show();
-                                    Log.d(TAG, "Alcanzada: " + beacon.getName());
-                                    nextBeacon++; // update which the next beacon is
-                                }
-                            })
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull @NotNull Exception e) {
-                                    uploadingReach = false; // not uploading any more
-                                    // don't update nextBeacon, so we will try it again
-                                }
-                            });
-                } else { // if we are not close to any beacon or there is one trying to be uploaded...
-                    //Toast.makeText(this, "Too far away from: " + beacon.getName() + " or uploading", Toast.LENGTH_SHORT).show();
-                    Log.d(TAG, "Too far away from: " + beacon.getName() + " or uploading");
-                }
-            } else { // if no more beacons left...
-                db.collection("activities").document(activity.getId())
-                        .collection("participations").document(userID)
-                        .update("state", ParticipationState.FINISHED,
-                                "finishTime", activity.getFinishTime())
-                        .addOnSuccessListener(new OnSuccessListener<Void>() {
-                            @Override
-                            public void onSuccess(Void aVoid) {
-                                Log.d(TAG, "Actividad terminada");
-                                stopSelf();
-                            }
-                        });
-            }
-        } else { // if activity or beacons null...
-            Log.d(TAG, "Couldn't read beacons and/or reaches yet");
         }
         Log.d(TAG, "New location: " + location.getLatitude() + " " + location.getLongitude());
         mLocation = location;
@@ -364,7 +438,7 @@ public class LocationService extends Service {
                     .setContentTitle("Baliza " + beacon.getName())
                     //.setContentIntent(pendingIntent)
                     .setAutoCancel(true)
-                    .setVibrate(new long[] { 1000, 1000, 1000, 1000, 1000 })
+                    .setVibrate(new long[]{1000, 1000, 1000, 1000, 1000})
                     .setLights(getColor(R.color.primary_color), 3000, 3000)
                     .setFullScreenIntent(pendingIntent, true)
                     .setContentText("Ya puedes ver el contenido de la baliza");
@@ -387,7 +461,7 @@ public class LocationService extends Service {
                     .setContentText("Ya puedes ver el contenido de la baliza")
                     .setContentIntent(pendingIntent)
                     .setAutoCancel(true)
-                    .setVibrate(new long[] { 1000, 1000, 1000, 1000, 1000 })
+                    .setVibrate(new long[]{1000, 1000, 1000, 1000, 1000})
                     .setLights(getColor(R.color.primary_color), 3000, 3000)
                     .setFullScreenIntent(pendingIntent, true)
                     .setPriority(NotificationCompat.PRIORITY_HIGH);

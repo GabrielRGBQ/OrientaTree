@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
@@ -24,6 +25,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -168,7 +170,7 @@ public class FindTemplate extends AppCompatActivity implements NavigationView.On
                 updateUIEditProfile();
                 break;
             case R.id.log_out_item:
-                //logOut();
+                logOut();
                 break;
             case R.id.delete_profile_item:
                 //deleteAccount();
@@ -177,6 +179,26 @@ public class FindTemplate extends AppCompatActivity implements NavigationView.On
         //close navigation drawer
         drawerLayout.closeDrawer(GravityCompat.START);
         return false;
+    }
+
+    private void logOut() {
+        new MaterialAlertDialogBuilder(this)
+                .setMessage("¿Desea salir de su sesión?")
+                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        mAuth.signOut();
+                        updateUIIdentification();
+                    }
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void updateUIIdentification() {
+        Intent intent = new Intent(FindTemplate.this, IdentificationActivity.class);
+        startActivity(intent);
+        finish();
     }
 
     private void updateUIEditProfile() {
