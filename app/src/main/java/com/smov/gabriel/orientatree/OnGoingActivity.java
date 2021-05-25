@@ -53,11 +53,12 @@ public class OnGoingActivity extends AppCompatActivity {
     private Toolbar toolbar;
     private ImageView onGoing_imageView;
     private TextView type_textView, mode_textView, title_textView, location_textView, template_textView,
+        startAndFinish_textView/*,
             start_textView, end_textView, state_textView, beacons_textView, startTime_textView,
-            finishTime_textView, reachedBeacons_textView;
+            finishTime_textView, reachedBeacons_textView*/;
     private MaterialButton norms_button, map_button;
     private Button start_button;
-    private CircularProgressIndicator progressIndicator, generalProgressIndicator;
+    private CircularProgressIndicator progressIndicator/*, generalProgressIndicator*/;
 
     private LinearLayout linearLayout;
 
@@ -75,6 +76,9 @@ public class OnGoingActivity extends AppCompatActivity {
     // to format the way hours are displayed
     private static String pattern_hour = "HH:mm";
     private static DateFormat df_hour = new SimpleDateFormat(pattern_hour);
+    // to format the way dates are displayed
+    private static String pattern_day = "dd/MM/yyyy";
+    private static DateFormat df_date = new SimpleDateFormat(pattern_day);
 
     // constant that represents query for fine location permission
     private static final int FINE_LOCATION_ACCESS_REQUEST_CODE = 1001;
@@ -89,6 +93,13 @@ public class OnGoingActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_on_going);
+
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .setReorderingAllowed(true)
+                    .add(R.id.onGoing_fragmentContainer, ParticipantFragment.class, null)
+                    .commit();
+        }
 
         // set intent to location foreground service
         locationServiceIntent = new Intent(this, LocationService.class);
@@ -113,22 +124,22 @@ public class OnGoingActivity extends AppCompatActivity {
         // binding UI elements
         onGoing_imageView = findViewById(R.id.onGoing_imageView);
         type_textView = findViewById(R.id.onGoing_type_textView);
-        mode_textView = findViewById(R.id.onGoing_mode_textView);
         title_textView = findViewById(R.id.onGoing_title_textView);
         location_textView = findViewById(R.id.onGoing_location_textView);
         template_textView = findViewById(R.id.onGoing_template_textView);
-        start_textView = findViewById(R.id.onGoing_start_textView);
-        end_textView = findViewById(R.id.onGoing_end_textView);
-        state_textView = findViewById(R.id.onGoing_state_textView);
         norms_button = findViewById(R.id.onGoing_norms_button);
         map_button = findViewById(R.id.onGoing_map_button);
+        progressIndicator = findViewById(R.id.onGoing_map_progressBar);
         start_button = findViewById(R.id.onGoing_start_button);
+        startAndFinish_textView = findViewById(R.id.onGoing_startFinish_textView);
+        /*start_textView = findViewById(R.id.onGoing_start_textView);
+        end_textView = findViewById(R.id.onGoing_end_textView);
+        state_textView = findViewById(R.id.onGoing_state_textView);
         beacons_textView = findViewById(R.id.onGoing_beacons_textView);
         startTime_textView = findViewById(R.id.onGoing_startTime_textView);
         finishTime_textView = findViewById(R.id.onGoing_finishTime_textView);
         reachedBeacons_textView = findViewById(R.id.onGoing_reachedBeacons_textView);
-        progressIndicator = findViewById(R.id.onGoing_map_progressBar);
-        generalProgressIndicator = findViewById(R.id.onGoing_circularProgressIndicator);
+        generalProgressIndicator = findViewById(R.id.onGoing_circularProgressIndicator);*/
 
         // binding layout (needed for the snackbar to show)
         linearLayout = findViewById(R.id.onGoing_linearLayout);
@@ -137,24 +148,34 @@ public class OnGoingActivity extends AppCompatActivity {
         // data from the Activity
         template_textView.setText(activity.getTemplate());
         title_textView.setText(activity.getTitle());
-        start_textView.setText("Inicio: " + df_hour.format(activity.getStartTime()));
-        end_textView.setText("Fin: " + df_hour.format(activity.getFinishTime()));
+        String date = "Día " + df_date.format(activity.getStartTime()) +
+                ", Duración " + df_hour.format(activity.getStartTime()) +
+                "-" + df_hour.format(activity.getFinishTime());
+        startAndFinish_textView.setText(date);
+        /*start_textView.setText("Inicio: " + df_hour.format(activity.getStartTime()));
+        end_textView.setText("Fin: " + df_hour.format(activity.getFinishTime()));*/
+        String score;
+        if(activity.isScore()) {
+            score = ", score";
+        } else {
+            score = ", orientación clásica";
+        }
         // data from the Template
-        generalProgressIndicator.setVisibility(View.VISIBLE);
+        //generalProgressIndicator.setVisibility(View.VISIBLE);
         db.collection("templates").document(activity.getTemplate())
                 .get()
                 .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                     @Override
                     public void onSuccess(DocumentSnapshot documentSnapshot) {
-                        generalProgressIndicator.setVisibility(GONE);
+                        //generalProgressIndicator.setVisibility(GONE);
                         template = documentSnapshot.toObject(Template.class);
                         if (template.getColor() != null) {
-                            type_textView.setText(template.getType() + " " + template.getColor());
+                            type_textView.setText(template.getType() + " " + template.getColor() + score);
                         } else {
                             type_textView.setText(template.getType());
                         }
                         location_textView.setText(template.getLocation());
-                        beacons_textView.setText("Balizas: " + template.getBeacons().size());
+                        //beacons_textView.setText("Balizas: " + template.getBeacons().size() + score);
                         if (template.getColor() != null) {
                             switch (template.getColor()) {
                                 case "Naranja":
@@ -178,25 +199,25 @@ public class OnGoingActivity extends AppCompatActivity {
                                             participation = documentSnapshot.toObject(Participation.class);
                                             switch (participation.getState()) {
                                                 case NOT_YET:
-                                                    startTime_textView.setText("");
-                                                    finishTime_textView.setText("");
                                                     start_button.setEnabled(true);
-                                                    state_textView.setText("Esperando a salir");
+                                                    /*startTime_textView.setText("");
+                                                    finishTime_textView.setText("");
+                                                    state_textView.setText("Esperando a salir");*/
                                                     break;
                                                 case NOW:
-                                                    startTime_textView.setText("Salida a las: " + df_hour.format(participation.getStartTime()));
+                                                    /*startTime_textView.setText("Salida a las: " + df_hour.format(participation.getStartTime()));
                                                     finishTime_textView.setText("");
-                                                    state_textView.setText("Participando ahora");
+                                                    state_textView.setText("Participando ahora");*/
                                                     map_button.setEnabled(true);
                                                     if(!LocationService.executing) {
-                                                        start_button.setText("Retomar");
+                                                        start_button.setText("Continuar");
                                                         start_button.setEnabled(true);
                                                     }
                                                     break;
                                                 case FINISHED:
-                                                    startTime_textView.setText("Salida a las: " + df_hour.format(participation.getStartTime()));
+                                                    /*startTime_textView.setText("Salida a las: " + df_hour.format(participation.getStartTime()));
                                                     finishTime_textView.setText("Finalizada a las: " + df_hour.format(participation.getFinishTime()));
-                                                    state_textView.setText("Actvidad terminada");
+                                                    state_textView.setText("Actvidad terminada");*/
                                                     map_button.setEnabled(true);
                                                     start_button.setEnabled(false);
                                                     break;
@@ -281,7 +302,7 @@ public class OnGoingActivity extends AppCompatActivity {
                                     long millis = System.currentTimeMillis();
                                     Date current_time = new Date(millis);
                                     // update the participation to NOW
-                                    generalProgressIndicator.setVisibility(View.VISIBLE);
+                                    //generalProgressIndicator.setVisibility(View.VISIBLE);
                                     db.collection("activities").document(activity.getId())
                                             .collection("participations").document(userID)
                                             .update("state", ParticipationState.NOW,
@@ -289,7 +310,7 @@ public class OnGoingActivity extends AppCompatActivity {
                                             .addOnSuccessListener(new OnSuccessListener<Void>() {
                                                 @Override
                                                 public void onSuccess(Void aVoid) {
-                                                    generalProgressIndicator.setVisibility(GONE);
+                                                    //generalProgressIndicator.setVisibility(GONE);
                                                     // if everything's fine, map enabled, start not enabled any more and begin foreground service
                                                     map_button.setEnabled(true);
                                                     start_button.setEnabled(false);
@@ -301,7 +322,7 @@ public class OnGoingActivity extends AppCompatActivity {
                                             .addOnFailureListener(new OnFailureListener() {
                                                 @Override
                                                 public void onFailure(@NonNull Exception e) {
-                                                    generalProgressIndicator.setVisibility(GONE);
+                                                    //generalProgressIndicator.setVisibility(GONE);
                                                     showSnackBar("Error al comenzar la actividad. Inténtalo de nuevo.");
                                                 }
                                             });
@@ -326,14 +347,14 @@ public class OnGoingActivity extends AppCompatActivity {
     public boolean onPrepareOptionsMenu(Menu menu) {
         MenuItem abandon = menu.findItem(R.id.abandon_activity);
         MenuItem unsubscribe = menu.findItem(R.id.unsubscribe_activity);
-        generalProgressIndicator.setVisibility(View.VISIBLE);
+        //generalProgressIndicator.setVisibility(View.VISIBLE);
         db.collection("activities").document(activity.getId())
                 .collection("participations").document(userID)
                 .get()
                 .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                     @Override
                     public void onSuccess(DocumentSnapshot documentSnapshot) {
-                        generalProgressIndicator.setVisibility(GONE);
+                        //generalProgressIndicator.setVisibility(GONE);
                         Participation participation = documentSnapshot.toObject(Participation.class);
                         if (participation != null) {
                             switch (participation.getState()) {
@@ -375,7 +396,7 @@ public class OnGoingActivity extends AppCompatActivity {
                                 // get current time
                                 long millis = System.currentTimeMillis();
                                 Date current_time = new Date(millis);
-                                generalProgressIndicator.setVisibility(View.VISIBLE);
+                                //generalProgressIndicator.setVisibility(View.VISIBLE);
                                 db.collection("activities").document(activity.getId())
                                         .collection("participations").document(userID)
                                         .update("state", ParticipationState.FINISHED,
@@ -383,7 +404,7 @@ public class OnGoingActivity extends AppCompatActivity {
                                         .addOnSuccessListener(new OnSuccessListener<Void>() {
                                             @Override
                                             public void onSuccess(Void aVoid) {
-                                                generalProgressIndicator.setVisibility(GONE);
+                                                //generalProgressIndicator.setVisibility(GONE);
                                                 // after updating finish time and state...
                                                 stopService(locationServiceIntent); // stop service
                                                 start_button.setEnabled(false); // disable start
@@ -394,7 +415,7 @@ public class OnGoingActivity extends AppCompatActivity {
                                         .addOnFailureListener(new OnFailureListener() {
                                             @Override
                                             public void onFailure(@NonNull Exception e) {
-                                                generalProgressIndicator.setVisibility(GONE);
+                                                //generalProgressIndicator.setVisibility(GONE);
                                                 showSnackBar("Error al terminar la actividad. Inténtalo de nuevo.");
                                             }
                                         });
@@ -409,14 +430,14 @@ public class OnGoingActivity extends AppCompatActivity {
                         .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                generalProgressIndicator.setVisibility(View.VISIBLE);
+                                //generalProgressIndicator.setVisibility(View.VISIBLE);
                                 db.collection("activities").document(activity.getId())
                                         .collection("participations").document(userID)
                                         .get()
                                         .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                                             @Override
                                             public void onSuccess(DocumentSnapshot documentSnapshot) {
-                                                generalProgressIndicator.setVisibility(GONE);
+                                                //generalProgressIndicator.setVisibility(GONE);
                                                 Participation participation = documentSnapshot.toObject(Participation.class);
                                                 if (participation.getState() == ParticipationState.NOT_YET) {
                                                     activity.removeParticipant(userID);
@@ -440,7 +461,7 @@ public class OnGoingActivity extends AppCompatActivity {
                                                             .addOnFailureListener(new OnFailureListener() {
                                                                 @Override
                                                                 public void onFailure(@NonNull @NotNull Exception e) {
-                                                                    generalProgressIndicator.setVisibility(GONE);
+                                                                    //generalProgressIndicator.setVisibility(GONE);
                                                                     showSnackBar("Error al deshacer la inscripción. Inténtalo de nuevo");
                                                                 }
                                                             });
@@ -450,7 +471,7 @@ public class OnGoingActivity extends AppCompatActivity {
                                         .addOnFailureListener(new OnFailureListener() {
                                             @Override
                                             public void onFailure(@NonNull @NotNull Exception e) {
-                                                generalProgressIndicator.setVisibility(GONE);
+                                                //generalProgressIndicator.setVisibility(GONE);
                                                 showSnackBar("Error al deshacer la inscripción. Inténtalo de nuevo.");
                                             }
                                         });

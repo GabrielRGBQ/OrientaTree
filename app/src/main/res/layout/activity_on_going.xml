@@ -2,11 +2,11 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/onGoing_linearLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".OnGoingActivity"
-    android:id="@+id/onGoing_linearLayout">
+    tools:context=".OnGoingActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
@@ -15,218 +15,260 @@
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/onGoing_toolbar"
             android:layout_width="match_parent"
-            app:title="Actividad en curso"
             android:layout_height="?attr/actionBarSize"
+            app:title="Actividad en curso"
             app:titleTextColor="@color/black">
 
         </androidx.appcompat.widget.Toolbar>
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <ImageView
-        android:id="@+id/onGoing_imageView"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="128dp"
-        android:scaleType="centerCrop"
-        android:alpha="0.85"/>
+        android:layout_height="wrap_content">
 
-    <LinearLayout
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/onGoing_imageView"
+                android:layout_width="match_parent"
+                android:layout_height="128dp"
+                android:alpha="0.85"
+                android:scaleType="centerCrop" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp">
+
+                <TextView
+                    android:id="@+id/onGoing_type_textView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Overline"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Overline" />
+
+                <TextView
+                    android:id="@+id/onGoing_template_textView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Template"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6" />
+
+                <TextView
+                    android:id="@+id/onGoing_title_textView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="Title"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Headline4" />
+
+                <TextView
+                    android:id="@+id/onGoing_location_textView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Campo Grande, Valladolid"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+
+                <TextView
+                    android:id="@+id/onGoing_startFinish_textView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="Día 22/05/2021, Duración: 14:00-15:00"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/onGoing_map_button"
+                        style="?attr/borderlessButtonStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:enabled="false"
+                        android:text="Ver mapa"
+                        android:textAllCaps="true" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/onGoing_norms_button"
+                        style="?attr/borderlessButtonStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Ver normas"
+                        android:textAllCaps="true" />
+
+                    <com.google.android.material.progressindicator.CircularProgressIndicator
+                        android:id="@+id/onGoing_map_progressBar"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:indeterminate="true"
+                        android:visibility="invisible" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="6dp"
+                    android:background="@android:color/darker_gray" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp">
+
+                    <RelativeLayout
+                        android:layout_width="0dip"
+                        android:layout_height="fill_parent"
+                        android:layout_weight="0.10"></RelativeLayout>
+
+                    <RelativeLayout
+                        android:layout_width="0dip"
+                        android:layout_height="fill_parent"
+                        android:layout_weight="0.8">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <Button
+                                android:id="@+id/onGoing_start_button"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:layout_marginTop="6dp"
+                                android:text="Comenzar"
+                                android:textAllCaps="true"
+                                android:enabled="false"/>
+
+                        </LinearLayout>
+
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:layout_width="0dip"
+                        android:layout_height="fill_parent"
+                        android:layout_weight="0.10"></RelativeLayout>
+
+                </LinearLayout>
+
+                <androidx.fragment.app.FragmentContainerView xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:id="@+id/onGoing_fragmentContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+
+    <!--<LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:orientation="horizontal">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/onGoing_template_textView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Template"
-                android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
-                android:layout_weight="1"/>
-
-            <TextView
-                android:id="@+id/onGoing_mode_textView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Score"
-                android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
-                android:layout_gravity="right"/>
-
-        </LinearLayout>
-
-        <TextView
-            android:layout_marginTop="16dp"
-            android:id="@+id/onGoing_type_textView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Overline"
             android:layout_weight="1"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Overline"/>
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/onGoing_title_textView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:maxLines = "1"
-            android:ellipsize = "end"
-            android:text="Title"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Headline4"
-            />
-
-        <TextView
-            android:id="@+id/onGoing_location_textView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="Campo Grande, Valladolid"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"/>
-
-        <!--<TextView
-            android:id="@+id/onGoing_description_textview"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:maxLines="2"
-            android:scrollbars = "vertical"
-            android:layout_marginTop="10dp"
-            android:text="Lorem ipsum dolor sit amet consectetur adipiscing elit malesuada ut platea, felis
-            Lorem ipsum dolor sit amet consectetur adipiscing elit malesuada ut platea, felis"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"/>-->
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:orientation="horizontal">
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/onGoing_map_button"
+            <TextView
+                android:id="@+id/onGoing_subtitle_textView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:text="Ver mapa"
-                android:enabled="false"
-                android:textAllCaps="true"
-                style="?attr/borderlessButtonStyle"
-                />
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/onGoing_norms_button"
+                android:layout_marginTop="8dp"
+                android:text="Actividad en curso"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+
+            <TextView
+                android:id="@+id/onGoing_start_textView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Ver normas"
-                android:textAllCaps="true"
-                style="?attr/borderlessButtonStyle"
-                />
-            <com.google.android.material.progressindicator.CircularProgressIndicator
-                android:id="@+id/onGoing_map_progressBar"
+                android:layout_marginTop="16dp"
+                android:text="Comienzo: 12:00"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2" />
+
+            <TextView
+                android:id="@+id/onGoing_end_textView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:indeterminate="true"
-                android:visibility="invisible"/>
+                android:layout_marginTop="8dp"
+                android:text="Fin: 16:30"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2" />
+
+            <TextView
+                android:id="@+id/onGoing_beacons_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2" />
+
         </LinearLayout>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="8dp"
-            android:background="@android:color/darker_gray"/>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:layout_weight="1"
+            android:orientation="vertical">
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/onGoing_state_textView"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_weight="1">
+                android:layout_gravity="right"
+                android:layout_marginTop="8dp"
+                android:text="Esperando a salir"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2" />
 
-                <TextView
-                    android:id="@+id/onGoing_subtitle_textView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Actividad en curso"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"/>
-
-                <TextView
-                    android:id="@+id/onGoing_start_textView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="Comienzo: 12:00"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"/>
-
-                <TextView
-                    android:id="@+id/onGoing_end_textView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Fin: 16:30"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"/>
-
-                <TextView
-                    android:id="@+id/onGoing_beacons_textView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"/>
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/onGoing_reachedBeacons_textView"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_weight="1">
+                android:layout_gravity="right"
+                android:layout_marginTop="8dp"
+                android:text="Balizas alcanzadas: 3/4"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2" />
 
-                <TextView
-                    android:id="@+id/onGoing_state_textView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Esperando a salir"
-                    android:layout_gravity="right"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"/>
+            <TextView
+                android:id="@+id/onGoing_startTime_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:layout_marginTop="8dp"
+                android:text="Salida: 12:22"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2" />
 
-                <TextView
-                    android:id="@+id/onGoing_reachedBeacons_textView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="right"
-                    android:layout_marginTop="8dp"
-                    android:text="Balizas alcanzadas: 3/4"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"/>
-
-                <TextView
-                    android:id="@+id/onGoing_startTime_textView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:layout_gravity="right"
-                    android:text="Salida: 12:22"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"/>
-
-                <TextView
-                    android:id="@+id/onGoing_finishTime_textView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:layout_gravity="right"
-                    android:text="Llegada: 12:22"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"/>
-
-            </LinearLayout>
+            <TextView
+                android:id="@+id/onGoing_finishTime_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:layout_marginTop="8dp"
+                android:text="Llegada: 12:22"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2" />
 
         </LinearLayout>
 
-    </LinearLayout>
+    </LinearLayout>-->
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <!--<androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -235,23 +277,23 @@
             android:layout_width="300dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="10dp"
+            android:enabled="false"
             android:text="Comenzar"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            android:enabled="false"/>
+            app:layout_constraintStart_toStartOf="parent" />
 
         <com.google.android.material.progressindicator.CircularProgressIndicator
             android:id="@+id/onGoing_circularProgressIndicator"
-            android:layout_marginBottom="10dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:indeterminate="true"
+            android:visibility="gone"
             app:layout_constraintBottom_toTopOf="@id/onGoing_start_button"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            android:indeterminate="true"
-            android:visibility="gone"/>
+            app:layout_constraintStart_toStartOf="parent" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>-->
 
 </LinearLayout>
