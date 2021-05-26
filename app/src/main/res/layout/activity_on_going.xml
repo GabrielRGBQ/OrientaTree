@@ -23,159 +23,167 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <ScrollView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/onGoing_imageView"
+            android:layout_width="match_parent"
+            android:layout_height="128dp"
+            android:alpha="0.85"
+            android:scaleType="centerCrop" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp">
 
-            <ImageView
-                android:id="@+id/onGoing_imageView"
+            <TextView
+                android:id="@+id/onGoing_type_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Overline"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Overline" />
+
+            <TextView
+                android:id="@+id/onGoing_template_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Template"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6" />
+
+            <TextView
+                android:id="@+id/onGoing_title_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Title"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Headline4" />
+
+            <TextView
+                android:id="@+id/onGoing_location_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Campo Grande, Valladolid"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+
+            <TextView
+                android:id="@+id/onGoing_startFinish_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Día 22/05/2021, Duración: 14:00-15:00"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/onGoing_map_button"
+                    style="?attr/borderlessButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:enabled="false"
+                    android:text="Ver mapa"
+                    android:textAllCaps="true" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/onGoing_norms_button"
+                    style="?attr/borderlessButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ver normas"
+                    android:textAllCaps="true" />
+
+                <com.google.android.material.progressindicator.CircularProgressIndicator
+                    android:id="@+id/onGoing_map_progressBar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:indeterminate="true"
+                    android:visibility="invisible" />
+            </LinearLayout>
+
+            <View
                 android:layout_width="match_parent"
-                android:layout_height="128dp"
-                android:alpha="0.85"
-                android:scaleType="centerCrop" />
+                android:layout_height="1dp"
+                android:layout_marginTop="6dp"
+                android:background="@android:color/darker_gray" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingHorizontal="16dp">
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/onGoing_type_textView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Overline"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Overline" />
+                <RelativeLayout
+                    android:layout_width="0dip"
+                    android:layout_height="fill_parent"
+                    android:layout_weight="0.10"></RelativeLayout>
 
-                <TextView
-                    android:id="@+id/onGoing_template_textView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Template"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6" />
+                <RelativeLayout
+                    android:layout_width="0dip"
+                    android:layout_height="fill_parent"
+                    android:layout_weight="0.8">
 
-                <TextView
-                    android:id="@+id/onGoing_title_textView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:text="Title"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Headline4" />
-
-                <TextView
-                    android:id="@+id/onGoing_location_textView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Campo Grande, Valladolid"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
-
-                <TextView
-                    android:id="@+id/onGoing_startFinish_textView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="Día 22/05/2021, Duración: 14:00-15:00"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:orientation="horizontal">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/onGoing_map_button"
-                        style="?attr/borderlessButtonStyle"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
-                        android:enabled="false"
-                        android:text="Ver mapa"
-                        android:textAllCaps="true" />
+                        android:orientation="vertical">
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/onGoing_norms_button"
-                        style="?attr/borderlessButtonStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Ver normas"
-                        android:textAllCaps="true" />
-
-                    <com.google.android.material.progressindicator.CircularProgressIndicator
-                        android:id="@+id/onGoing_map_progressBar"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:indeterminate="true"
-                        android:visibility="invisible" />
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginTop="6dp"
-                    android:background="@android:color/darker_gray" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="8dp">
-
-                    <RelativeLayout
-                        android:layout_width="0dip"
-                        android:layout_height="fill_parent"
-                        android:layout_weight="0.10"></RelativeLayout>
-
-                    <RelativeLayout
-                        android:layout_width="0dip"
-                        android:layout_height="fill_parent"
-                        android:layout_weight="0.8">
-
-                        <LinearLayout
+                        <Button
+                            android:id="@+id/onGoing_start_button"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="vertical">
+                            android:layout_gravity="center"
+                            android:layout_marginTop="6dp"
+                            android:enabled="false"
+                            android:text="Comenzar"
+                            android:textAllCaps="true"
+                            android:visibility="gone" />
 
-                            <Button
-                                android:id="@+id/onGoing_start_button"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_gravity="center"
-                                android:layout_marginTop="6dp"
-                                android:text="Comenzar"
-                                android:textAllCaps="true"
-                                android:enabled="false"/>
+                        <Button
+                            android:id="@+id/onGoing_participants_button"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="6dp"
+                            android:enabled="false"
+                            android:text="Ver participantes"
+                            android:textAllCaps="true"
+                            android:visibility="gone" />
 
-                        </LinearLayout>
+                    </LinearLayout>
 
-                    </RelativeLayout>
+                </RelativeLayout>
 
-                    <RelativeLayout
-                        android:layout_width="0dip"
-                        android:layout_height="fill_parent"
-                        android:layout_weight="0.10"></RelativeLayout>
-
-                </LinearLayout>
-
-                <androidx.fragment.app.FragmentContainerView xmlns:android="http://schemas.android.com/apk/res/android"
-                    android:id="@+id/onGoing_fragmentContainer"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                <RelativeLayout
+                    android:layout_width="0dip"
+                    android:layout_height="fill_parent"
+                    android:layout_weight="0.10"></RelativeLayout>
 
             </LinearLayout>
 
+            <androidx.fragment.app.FragmentContainerView xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/onGoing_fragmentContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
         </LinearLayout>
 
-    </ScrollView>
+    </LinearLayout>
+
+    <!--</ScrollView>-->
 
 
     <!--<LinearLayout

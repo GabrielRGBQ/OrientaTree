@@ -57,18 +57,18 @@ public class OnGoingActivity extends AppCompatActivity {
             start_textView, end_textView, state_textView, beacons_textView, startTime_textView,
             finishTime_textView, reachedBeacons_textView*/;
     private MaterialButton norms_button, map_button;
-    private Button start_button;
+    private Button start_button, participants_button;
     private CircularProgressIndicator progressIndicator/*, generalProgressIndicator*/;
 
     private LinearLayout linearLayout;
 
-    private Activity activity;
+    Activity activity;
     private Template template;
     private Participation participation;
 
     private String userID;
 
-    private FirebaseFirestore db;
+    FirebaseFirestore db;
     private FirebaseStorage firebaseStorage;
     private StorageReference storageReference;
     private FirebaseAuth mAuth;
@@ -93,13 +93,6 @@ public class OnGoingActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_on_going);
-
-        if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .setReorderingAllowed(true)
-                    .add(R.id.onGoing_fragmentContainer, ParticipantFragment.class, null)
-                    .commit();
-        }
 
         // set intent to location foreground service
         locationServiceIntent = new Intent(this, LocationService.class);
@@ -132,6 +125,7 @@ public class OnGoingActivity extends AppCompatActivity {
         progressIndicator = findViewById(R.id.onGoing_map_progressBar);
         start_button = findViewById(R.id.onGoing_start_button);
         startAndFinish_textView = findViewById(R.id.onGoing_startFinish_textView);
+        participants_button = findViewById(R.id.onGoing_participants_button);
         /*start_textView = findViewById(R.id.onGoing_start_textView);
         end_textView = findViewById(R.id.onGoing_end_textView);
         state_textView = findViewById(R.id.onGoing_state_textView);
@@ -143,6 +137,27 @@ public class OnGoingActivity extends AppCompatActivity {
 
         // binding layout (needed for the snackbar to show)
         linearLayout = findViewById(R.id.onGoing_linearLayout);
+
+        // showing or hiding participant and organizer options
+        if (savedInstanceState == null) {
+            if(activity.getParticipants().contains(userID)) { // if current user is a participant
+                // show participants fragment and start button, hide (just in case) participants button
+                getSupportFragmentManager().beginTransaction()
+                        .setReorderingAllowed(true)
+                        .add(R.id.onGoing_fragmentContainer, ParticipantFragment.class, null)
+                        .commit();
+                start_button.setVisibility(View.VISIBLE);
+                participants_button.setVisibility(GONE);
+            } else if(activity.getPlanner_id().equals(userID)) { // current user is the organizer
+                // hide start button, don't show fragment, and show participants button
+                start_button.setVisibility(GONE);
+                //participants_button.setVisibility(View.VISIBLE);
+                getSupportFragmentManager().beginTransaction()
+                        .setReorderingAllowed(true)
+                        .add(R.id.onGoing_fragmentContainer, OrganizerFragment.class, null)
+                        .commit();
+            }
+        }
 
         // setting UI according to current data
         // data from the Activity

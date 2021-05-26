@@ -2,11 +2,24 @@ package com.smov.gabriel.orientatree;
 
 import android.os.Bundle;
 
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.smov.gabriel.orientatree.adapters.ActivityAdapter;
+import com.smov.gabriel.orientatree.adapters.ParticipantAdapter;
+import com.smov.gabriel.orientatree.model.User;
+
+import java.util.ArrayList;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -14,6 +27,11 @@ import android.view.ViewGroup;
  * create an instance of this fragment.
  */
 public class OrganizerFragment extends Fragment {
+
+    private RecyclerView organizer_recyclerView;
+    private ParticipantAdapter participantAdapter;
+    private ArrayList<User> participants;
+    private OnGoingActivity onGoingActivity;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -59,6 +77,35 @@ public class OrganizerFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_organizer, container, false);
+        View view = inflater.inflate(R.layout.fragment_organizer, container, false);
+
+        onGoingActivity = (OnGoingActivity) getActivity();
+
+        if(!onGoingActivity.activity.getParticipants().isEmpty()) {
+            onGoingActivity.db.collection("users")
+                    .whereIn("id", onGoingActivity.activity.getParticipants())
+                    .addSnapshotListener(new EventListener<QuerySnapshot>() {
+                        @Override
+                        public void onEvent(@Nullable QuerySnapshot value,
+                                            @Nullable FirebaseFirestoreException e) {
+                            if (e != null) {
+                                //Log.w(TAG, "Listen failed.", e);
+                                return;
+                            }
+
+                            participants = new ArrayList<>();
+                            for (QueryDocumentSnapshot doc : value) {
+                                User participant = doc.toObject(User.class);
+                                participants.add(participant);
+                            }
+                            participantAdapter = new ParticipantAdapter(getContext(), participants, onGoingActivity.activity);
+                            organizer_recyclerView = view.findViewById(R.id.participants_recyclerView);
+                            organizer_recyclerView.setAdapter(participantAdapter);
+                            organizer_recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+                        }
+                    });
+        }
+
+        return view;
     }
 }

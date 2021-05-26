@@ -173,7 +173,7 @@ public class SignUpActivity extends AppCompatActivity {
         userID = mAuth.getCurrentUser().getUid();
         // Adds document to the users collection. If that collection does not exist, it creates it
         DocumentReference documentReference = db.collection("users").document(userID);
-        User user = new User(name, surname, email);
+        User user = new User(name, surname, email, userID);
         documentReference
                 .set(user)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {

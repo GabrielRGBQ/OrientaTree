@@ -6,14 +6,6 @@
     android:orientation="vertical"
     tools:context=".OrganizerFragment">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="16dp"
-        android:layout_marginTop="8dp"
-        android:text="Participantes"
-        android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
-
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
