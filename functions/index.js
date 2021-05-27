@@ -30,7 +30,14 @@ exports.deleteUserDoc = functions.auth.user().onDelete((user) => {
   const deleteUserDocument = admin.firestore().collection('users').doc(userId).delete();
 });
 
-// Works but with hardcoded uid. Surely I'll need to create an uid field on the model
+// funcion para mantener consistencia entre participantes array y subcolección
+// escuchar creaciones de documentos en la subcoleccion participantes
+// cuando se cree un nuevo documento, se obtiene la actividad a la que pertenece la participacion
+// se obtiene la vieja lista de participaciones que contenia
+// se crea una nueva lista igual pero con la nueva incluida
+// se actualiza la lista en la actividad
+
+// should be working but not proved yet
 exports.updateUser = functions.firestore
     .document('users/{userId}')
     .onUpdate((change, context) => {
@@ -38,7 +45,7 @@ exports.updateUser = functions.firestore
       // access a particular field as you would any JS property
       const name = newValue.name;
       
-      const uid = "Ybb4vnbfLRjEqutSBIn7kQEUOYHI";
+      const uid = context.params.userId;
 
       // perform desired operations ...
       admin.auth().updateUser(uid, {
@@ -80,4 +87,43 @@ exports.makeUppercase = functions.firestore.document('/messages/{documentId}')
   // writing to Firestore.
   // Setting an 'uppercase' field in Firestore document returns a Promise.
   return snap.ref.set({uppercase}, {merge: true});
+});
+
+
+// WORKING... Needs to be refactorized and adapted to our production database
+exports.sanitizeParticipations = functions.firestore.document('/actividades/{actividadId}/participaciones/{participacionId}')
+.onCreate((snap, context) => {
+  // Grab the value of the id of the participation that just has been written to Firestore.
+  const participacion = snap.data().participacion_id;
+
+  // Get the activity parent of the participation
+  const actividad = admin.firestore().collection('/actividades').doc(context.params.actividadId).get();
+
+  return actividad.then(oldActivity => {
+    const idAct = oldActivity.data().actividad_id;
+    const oldArray = oldActivity.data().participaciones;
+    oldArray.push(participacion);
+    const res = admin.firestore().collection('/actividades').doc(idAct).update({participaciones: oldArray});
+  }).catch(err => {
+    console.log('Error getting document', err);
+  });
+
+});
+
+// WORKING... Needs to be refactorized and adapted to our production database
+exports.sanitizeParticipationsOnDelete = functions.firestore.document('/actividades/{actividadId}/participaciones/{participacionId}')
+.onDelete((snap, context) => {
+  const participacion = snap.data().participacion_id;
+  const actividad = admin.firestore().collection('/actividades').doc(context.params.actividadId).get();
+  return actividad.then(oldActivity => {
+    const idAct = oldActivity.data().actividad_id;
+    const oldArray = oldActivity.data().participaciones;
+    const index = oldArray.indexOf(participacion);
+    if (index > -1) {
+      oldArray.splice(index, 1);
+    }
+    const res = admin.firestore().collection('/actividades').doc(idAct).update({participaciones: oldArray});
+  }).catch(err => {
+    console.log('Error getting document', err);
+  });
 });
