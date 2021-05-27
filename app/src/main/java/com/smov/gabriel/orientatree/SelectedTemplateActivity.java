@@ -15,6 +15,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,7 +29,9 @@ import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
+import com.google.android.material.radiobutton.MaterialRadioButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.timepicker.MaterialTimePicker;
@@ -59,6 +62,8 @@ public class SelectedTemplateActivity extends AppCompatActivity {
     private TextView selected_overline_textView, selected_title_textView, description_textView;
     private Chip chip_date, chip_start, chip_finish;
     private Button program_button;
+    private SwitchMaterial switchHelp;
+    private RadioButton classic_radioButton, score_radioButton;
 
     private String template_id;
 
@@ -83,6 +88,9 @@ public class SelectedTemplateActivity extends AppCompatActivity {
     private DateFormat df_date;
     private DateFormat df_hour;
 
+    private boolean score = false;
+    private boolean help = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -95,7 +103,6 @@ public class SelectedTemplateActivity extends AppCompatActivity {
         toolbar = findViewById(R.id.selected_toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle(template_id);
-        //getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         progressIndicator = findViewById(R.id.programmed_progressBar);
@@ -108,6 +115,9 @@ public class SelectedTemplateActivity extends AppCompatActivity {
         chip_start = findViewById(R.id.chip_start);
         chip_finish = findViewById(R.id.chip_finish);
         program_button = findViewById(R.id.program_button);
+        switchHelp = findViewById(R.id.help_switch);
+        classic_radioButton = findViewById(R.id.radio_button_1);
+        score_radioButton = findViewById(R.id.radio_button_2);
 
         // need this to display the chosen date and hour on the chips
         String pattern_date = "dd/MM/yyyy";
@@ -144,9 +154,11 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                 if(template.getColor() != null) {
                     switch (template.getColor()) {
                         case "Naranja":
+                            selected_overline_textView.setText(template.getType() + " " + template.getColor());
                             selected_overline_textView.setTextColor(Color.parseColor("#FFA233"));
                             break;
                         case "Roja":
+                            selected_overline_textView.setText(template.getType() + " " + template.getColor());
                             selected_overline_textView.setTextColor(Color.parseColor("#E32A10"));
                             break;
                         default:
@@ -285,6 +297,7 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                                 finish_date = cal.getTime(); // this is the Date object
                                 String finishHourAsString = df_hour.format(finish_date);
                                 chip_finish.setText(finishHourAsString);
+                                program_button.setEnabled(true); // when the finish time is set, program button enables
                             } else {
                                 showSnackBar("La hora de fin debe ser posterior a la hora de inicio");
                             }
@@ -307,6 +320,19 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                 if(chosen_day != null) {
                     if(start_date != null) {
                         if(finish_date != null) {
+                            if(classic_radioButton.isChecked()) {
+                                score = false;
+                            }else if(score_radioButton.isChecked()) {
+                                score = true;
+                            } else {
+                                score = false;
+                                showSnackBar("Elige si la actividad es clásica o score");
+                            }
+                            if(switchHelp.isChecked()) {
+                                help = true;
+                            } else {
+                                help = false;
+                            }
                             showTitleDialog();
                         } else {
                             showSnackBar("Primero debes seleccionar la hora de finalización");
@@ -347,7 +373,7 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                         aux_activity_key = UUID.randomUUID().toString();
                         activity_key = aux_activity_key.substring(0, Math.min(aux_activity_key.length(), 4));
                         new_activity = new Activity(activity_id, activity_key, activity_title, template_id,
-                                mAuth.getCurrentUser().getUid(), start_date, finish_date);
+                                mAuth.getCurrentUser().getUid(), start_date, finish_date, score, help);
                         db.collection("activities").document(activity_id)
                                 .set(new_activity)
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {

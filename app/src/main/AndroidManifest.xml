@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:allowBackup="true"
@@ -17,10 +19,15 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.OrientaTree">
-        <activity android:name=".OnGoingActivity"
-            android:screenOrientation="portrait"
-            android:parentActivityName=".HomeActivity"></activity>
-
+        <activity android:name=".ParticipantsListActivity"></activity>
+        <activity
+            android:name=".BeaconContentActivity"
+            android:parentActivityName=".OnGoingActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".OnGoingActivity"
+            android:parentActivityName=".HomeActivity"
+            android:screenOrientation="portrait" />
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -35,7 +42,8 @@
 
         <activity
             android:name=".MapActivity"
-            android:label="@string/title_activity_map" />
+            android:label="@string/title_activity_map"
+            android:parentActivityName=".OnGoingActivity" />
         <activity
             android:name=".InfoActivityActivity"
             android:parentActivityName=".HomeActivity"
@@ -51,14 +59,19 @@
             android:screenOrientation="portrait" />
         <activity
             android:name=".FindTemplate"
+            android:parentActivityName=".HomeActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".EditProfileActivity"
+            android:parentActivityName=".HomeActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".HomeActivity"
+            android:parentActivityName=".WelcomeActivity"
             android:screenOrientation="portrait" />
-        <activity android:name=".WelcomeActivity" />
+        <activity
+            android:name=".WelcomeActivity"
+            android:parentActivityName=".IdentificationActivity" />
         <activity
             android:name=".LogInActivity"
             android:label="Iniciar sesión"
@@ -71,6 +84,7 @@
             android:screenOrientation="portrait" />
         <activity
             android:name=".IdentificationActivity"
+            android:parentActivityName=".MainActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".MainActivity"

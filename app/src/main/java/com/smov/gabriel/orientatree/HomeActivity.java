@@ -22,6 +22,7 @@ import android.graphics.Color;
 import android.graphics.Movie;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -37,6 +38,7 @@ import com.bumptech.glide.annotation.GlideModule;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.module.AppGlideModule;
 import com.firebase.ui.storage.images.FirebaseImageLoader;
+import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -50,16 +52,23 @@ import com.google.common.net.PercentEscaper;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.functions.FirebaseFunctions;
+import com.google.firebase.functions.FirebaseFunctionsException;
+import com.google.firebase.functions.HttpsCallableResult;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -99,6 +108,8 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     FirebaseStorage storage;
     StorageReference storageReference;
     FirebaseUser user;
+    // f functions
+    //private FirebaseFunctions mFunctions;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,6 +124,12 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         userEmail = user.getEmail();
 
         db = FirebaseFirestore.getInstance();
+
+        // f functions
+        //mFunctions = FirebaseFunctions.getInstance();
+        //mFunctions = FirebaseFunctions.getInstance();
+        //mFunctions = FirebaseFunctions.getInstance();
+        //mFunctions.useEmulator("19ghjvhjv", 5001);
 
         storage = FirebaseStorage.getInstance();
         storageReference = storage.getReference();
@@ -210,6 +227,26 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                     .skipMemoryCache(true) // prevent caching
                     .into(profile_circleImageView);
         }
+        
+        // f functions
+        /*addMessage("Mensaje de prueba")
+                .addOnCompleteListener(new OnCompleteListener<String>() {
+                    @Override
+                    public void onComplete(@NonNull Task<String> task) {
+                        if (!task.isSuccessful()) {
+                            Exception e = task.getException();
+                            if (e instanceof FirebaseFunctionsException) {
+                                FirebaseFunctionsException ffe = (FirebaseFunctionsException) e;
+                                FirebaseFunctionsException.Code code = ffe.getCode();
+                                Object details = ffe.getDetails();
+                                Log.d("FFunctions", ffe.getMessage());
+                                Log.d("FFunctions", e.getMessage());
+                            }
+                            // ...
+                        }
+                        // ...
+                    }
+                });*/
     }
 
     @Override
@@ -382,4 +419,26 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                 .setDuration(8000)
                 .show();
     }
+
+    // f functions
+    /*private Task<String> addMessage(String text) {
+        // Create the arguments to the callable function.
+        Map<String, Object> data = new HashMap<>();
+        data.put("text", text);
+        data.put("push", true);
+
+        return mFunctions
+                .getHttpsCallable("addMessage")
+                .call(data)
+                .continueWith(new Continuation<HttpsCallableResult, String>() {
+                    @Override
+                    public String then(@NonNull Task<HttpsCallableResult> task) throws Exception {
+                        // This continuation runs on either success or failure, but if the task
+                        // has failed then getResult() will throw an Exception which will be
+                        // propagated down.
+                        String result = (String) task.getResult().getData();
+                        return result;
+                    }
+                });
+    }*/
 }

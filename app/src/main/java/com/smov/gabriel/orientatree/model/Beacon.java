@@ -10,16 +10,18 @@ public class Beacon implements Comparator<Beacon> {
     private int number;
     private String name;
     private String beacon_id;
+    private String template_id;
 
     public Beacon() {
 
     }
 
-    public Beacon(String beacon_id, GeoPoint location, int number, String name) {
+    public Beacon(String beacon_id, GeoPoint location, int number, String name, String template_id) {
         this.beacon_id = beacon_id;
         this.location = location;
         this.number = number;
         this.name = name;
+        this.template_id = template_id;
     }
 
     public GeoPoint getLocation() {
@@ -52,6 +54,14 @@ public class Beacon implements Comparator<Beacon> {
 
     public void setBeacon_id(String beacon_id) {
         this.beacon_id = beacon_id;
+    }
+
+    public String getTemplate_id() {
+        return template_id;
+    }
+
+    public void setTemplate_id(String template_id) {
+        this.template_id = template_id;
     }
 
     @Override
