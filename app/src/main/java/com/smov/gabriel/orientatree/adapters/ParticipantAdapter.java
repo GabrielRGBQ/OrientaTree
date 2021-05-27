@@ -32,15 +32,12 @@ import de.hdodenhof.circleimageview.CircleImageView;
 public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.MyViewHolder> {
 
     private Context context;
-    private ArrayList<User> participants;
-    private Activity currentActivity;
+    private ArrayList<Participation> participants;
     private int position;
 
-    public ParticipantAdapter(Context context, ArrayList<User> participants,
-                              Activity currentActivity) {
+    public ParticipantAdapter(Context context, ArrayList<Participation> participants) {
         this.context = context;
         this.participants = participants;
-        this.currentActivity = currentActivity;
     }
 
     @NonNull
@@ -54,40 +51,40 @@ public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull @NotNull MyViewHolder holder, int position) {
+
         this.position = position ;
-        User user = participants.get(position);
+
+        Participation participation = participants.get(position);
+        String userID = participation.getParticipant();
 
         // formatting date in order to display it on card
         String pattern = "HH:mm:ss";
         DateFormat df_hour = new SimpleDateFormat(pattern);
 
-        holder.email_textView.setText(user.getEmail());
-        holder.name_textView.setText(user.getName());
-
-        holder.db.collection("activities").document(currentActivity.getId())
-                .collection("participations").document(user.getId())
+        holder.db.collection("users").document(userID)
                 .get()
                 .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                     @Override
                     public void onSuccess(DocumentSnapshot documentSnapshot) {
-                        Participation participation = documentSnapshot.toObject(Participation.class);
-                        if (participation != null) {
+                        User user = documentSnapshot.toObject(User.class);
+                        if(user != null) {
+                            holder.email_textView.setText(user.getEmail());
+                            holder.name_textView.setText(user.getName());
                             if (participation.getStartTime() != null) {
                                 holder.start_textView.append(df_hour.format(participation.getStartTime()));
                             }
                             if (participation.getFinishTime() != null) {
                                 holder.finish_textView.append(df_hour.format(participation.getFinishTime()));
                             }
+                            StorageReference ref = holder.storageReference.child("profileImages/" + user.getId());
+                            Glide.with(context)
+                                    .load(ref)
+                                    .diskCacheStrategy(DiskCacheStrategy.NONE ) // prevent caching
+                                    .skipMemoryCache(true) // prevent caching
+                                    .into(holder.participant_circleImageView);
                         }
                     }
                 });
-
-        StorageReference ref = holder.storageReference.child("profileImages/" + user.getId());
-        Glide.with(context)
-                .load(ref)
-                .diskCacheStrategy(DiskCacheStrategy.NONE ) // prevent caching
-                .skipMemoryCache(true) // prevent caching
-                .into(holder.participant_circleImageView);
 
     }
 

@@ -53,10 +53,8 @@ public class OnGoingActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
     private ImageView onGoing_imageView;
-    private TextView type_textView, mode_textView, title_textView, location_textView, template_textView,
-            startAndFinish_textView/*,
-            start_textView, end_textView, state_textView, beacons_textView, startTime_textView,
-            finishTime_textView, reachedBeacons_textView*/;
+    private TextView type_textView, title_textView, location_textView, template_textView,
+            startAndFinish_textView;
     private MaterialButton norms_button, map_button;
     private Button start_button, participants_button;
     private CircularProgressIndicator progressIndicator/*, generalProgressIndicator*/;
@@ -214,36 +212,15 @@ public class OnGoingActivity extends AppCompatActivity {
                                                 default:
                                                     break;
                                             }
-
-                                            // showing or hiding participant and organizer options
-                                            /*if (savedInstanceState == null) {
-                                                if (activity.getParticipants().contains(userID)) { // if current user is a participant
-                                                    // show participants fragment and start button, hide (just in case) participants button
-                                                    getSupportFragmentManager().beginTransaction()
-                                                            .setReorderingAllowed(true)
-                                                            .add(R.id.onGoing_fragmentContainer, ParticipantFragment.class, null)
-                                                            .commit();
-                                                    start_button.setVisibility(View.GONE);
-                                                    participants_button.setVisibility(GONE);
-                                                } else if(activity.getPlanner_id().equals(userID)) { // current user is the organizer
-                                                    // hide start button, don't show fragment, and show participants button
-                                                    start_button.setVisibility(GONE);
-                                                    //participants_button.setVisibility(View.VISIBLE);
-                                                    getSupportFragmentManager().beginTransaction()
-                                                            .setReorderingAllowed(true)
-                                                            .add(R.id.onGoing_fragmentContainer, OrganizerFragment.class, null)
-                                                            .commit();
-                                                }
-                                            }*/
-
                                         }
                                     });
                         } else {
                             // if logged user is the activity planner...
                             map_button.setEnabled(true);
-                            // TODO: show him his specific actions
                             start_button.setEnabled(false);
                             start_button.setVisibility(GONE);
+                            participants_button.setVisibility(View.VISIBLE);
+                            participants_button.setEnabled(true);
                         }
                     }
                 });
@@ -361,6 +338,13 @@ public class OnGoingActivity extends AppCompatActivity {
                 } else {
                     requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_ACCESS_REQUEST_CODE);
                 }
+            }
+        });
+
+        participants_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updateUIParticipants();
             }
         });
 
@@ -533,6 +517,12 @@ public class OnGoingActivity extends AppCompatActivity {
     private void updateUIMap(File map) {
         Intent intent = new Intent(OnGoingActivity.this, MapActivity.class);
         intent.putExtra("map", map);
+        startActivity(intent);
+    }
+
+    private void updateUIParticipants() {
+        Intent intent = new Intent(OnGoingActivity.this, ParticipantsListActivity.class);
+        intent.putExtra("activity", activity);
         startActivity(intent);
     }
 

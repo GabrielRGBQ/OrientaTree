@@ -43,7 +43,6 @@ public class ParticipantFragment extends Fragment {
 
     private int num_beacons;
     private int beacons_reached;
-    //private ArrayList<BeaconReached> beaconReaches;
 
     private String hour_pattern = "HH:mm:ss";
     private Format df_hour = new SimpleDateFormat(hour_pattern);
@@ -161,17 +160,8 @@ public class ParticipantFragment extends Fragment {
                             public void onEvent(@Nullable QuerySnapshot value,
                                                 @Nullable FirebaseFirestoreException e) {
                                 if (e != null) {
-                                    //Log.w(TAG, "Listen failed.", e);
                                     return;
                                 }
-                                /*beaconReaches = new ArrayList<>();
-                                for (QueryDocumentSnapshot doc : value) {
-                                    //User participant = doc.toObject(User.class);
-                                    //BeaconReached beaconReached = doc.toObject(BeaconReached.class);
-                                    //beaconReaches.add(beaconReached);
-                                    //participants.add(participant);
-                                }*/
-                                //beacons_reached = beaconReaches.size();
                                 beacons_reached = value.size();
                                 participantBeacons_textView.setText(beacons_reached + "/" + num_beacons);
                             }

@@ -19,9 +19,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.OrientaTree">
-        <activity android:name=".BeaconContentActivity"
-            android:screenOrientation="portrait"
-            android:parentActivityName=".OnGoingActivity"></activity>
+        <activity android:name=".ParticipantsListActivity"></activity>
+        <activity
+            android:name=".BeaconContentActivity"
+            android:parentActivityName=".OnGoingActivity"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".OnGoingActivity"
             android:parentActivityName=".HomeActivity"
@@ -41,7 +43,7 @@
         <activity
             android:name=".MapActivity"
             android:label="@string/title_activity_map"
-            android:parentActivityName=".OnGoingActivity"/>
+            android:parentActivityName=".OnGoingActivity" />
         <activity
             android:name=".InfoActivityActivity"
             android:parentActivityName=".HomeActivity"
@@ -57,18 +59,19 @@
             android:screenOrientation="portrait" />
         <activity
             android:name=".FindTemplate"
-            android:screenOrientation="portrait"
-            android:parentActivityName=".HomeActivity"/>
+            android:parentActivityName=".HomeActivity"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".EditProfileActivity"
-            android:screenOrientation="portrait"
-            android:parentActivityName=".HomeActivity"/>
+            android:parentActivityName=".HomeActivity"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".HomeActivity"
-            android:screenOrientation="portrait"
-            android:parentActivityName=".WelcomeActivity"/>
-        <activity android:name=".WelcomeActivity"
-            android:parentActivityName=".IdentificationActivity"/>
+            android:parentActivityName=".WelcomeActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".WelcomeActivity"
+            android:parentActivityName=".IdentificationActivity" />
         <activity
             android:name=".LogInActivity"
             android:label="Iniciar sesión"
@@ -81,8 +84,8 @@
             android:screenOrientation="portrait" />
         <activity
             android:name=".IdentificationActivity"
-            android:screenOrientation="portrait"
-            android:parentActivityName=".MainActivity"/>
+            android:parentActivityName=".MainActivity"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".MainActivity"
             android:screenOrientation="portrait">
