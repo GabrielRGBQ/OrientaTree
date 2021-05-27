@@ -155,9 +155,29 @@ public class LocationService extends Service {
                                 Log.d(TAG, "##################\n" + beacon_indexes.size() + "\n#################");
                                 // place the beacons in order
                                 Collections.sort(beacons, new Beacon());
+                                // now we have to check if some of those beacons are already reached
+                                // so we search for the reaches for that participant and activity
+                                db.collection("activities").document(activity.getId())
+                                        .collection("participations").document(userID)
+                                        .collection("beaconReaches")
+                                        .get()
+                                        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                                            @Override
+                                            public void onComplete(@NonNull @NotNull Task<QuerySnapshot> task) {
+                                                nextBeacon = task.getResult().size() + 1;
+                                                for(QueryDocumentSnapshot documentSnapshot : task.getResult()) {
+                                                    // remove from the set those that have already been reached
+                                                    BeaconReached beaconReached = documentSnapshot.toObject(BeaconReached.class);
+                                                    beacon_indexes.remove(beaconReached.getBeacon_id());
+                                                    //Log.d(TAG, "Removing index...");
+                                                }
+                                                indexesUpdated = true;
+                                                //Log.d(TAG, "Actualizados los indices: " + beacon_indexes.size());
+                                            }
+                                        });
                             }
                         });
-                // get the number of already reached beacons at the moment of starting the service
+                /*// get the number of already reached beacons at the moment of starting the service
                 // so that we know which beacon is next
                 db.collection("activities").document(activity.getId())
                         .collection("participations").document(userID)
@@ -170,10 +190,12 @@ public class LocationService extends Service {
                                 for(QueryDocumentSnapshot documentSnapshot : task.getResult()) {
                                     BeaconReached beaconReached = documentSnapshot.toObject(BeaconReached.class);
                                     beacon_indexes.remove(beaconReached.getBeacon_id());
+                                    Log.d(TAG, "Removing index...");
                                 }
                                 indexesUpdated = true;
+                                Log.d(TAG, "Actualizados los indices: " + beacon_indexes.size());
                             }
-                        });
+                        });*/
             }
         }
 

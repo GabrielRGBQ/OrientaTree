@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     tools:context=".ParticipantFragment">
 
@@ -40,7 +41,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:text="00:30:14"
+                        android:text="00:00:00"
                         android:textAppearance="@style/TextAppearance.MaterialComponents.Headline4" />
 
                 </LinearLayout>
@@ -63,7 +64,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:text="2/6"
+                        android:text="0/0"
                         android:textAppearance="@style/TextAppearance.MaterialComponents.Headline4" />
 
                 </LinearLayout>
@@ -76,7 +77,7 @@
                 android:layout_marginTop="8dp"
                 android:background="@android:color/darker_gray" />
 
-            <LinearLayout
+            <!--<LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
@@ -86,6 +87,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Hora de salida: "
+                    android:layout_marginLeft="35dp"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2" />
 
                 <TextView
@@ -96,9 +98,9 @@
                     android:text="14:15"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6" />
 
-            </LinearLayout>
+            </LinearLayout>-->
 
-            <LinearLayout
+            <!--<LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
@@ -108,6 +110,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Hora de fin: "
+                    android:layout_marginLeft="35dp"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2" />
 
                 <TextView
@@ -118,7 +121,63 @@
                     android:text="15:30"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6" />
 
-            </LinearLayout>
+            </LinearLayout>-->
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="20dp"
+                android:paddingTop="10dp">
+
+                <androidx.constraintlayout.widget.Guideline
+                    android:id="@+id/guideline1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    app:layout_constraintGuide_percent="0.5" />
+
+                <TextView
+                    android:id="@+id/start_hour"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Hora de salida: "
+                    android:layout_marginRight="20dp"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"
+                    app:layout_constraintBottom_toBottomOf="@id/participantStart_textView"
+                    app:layout_constraintEnd_toStartOf="@id/guideline1"
+                    />
+
+                <TextView
+                    android:id="@+id/participantStart_textView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:layout_marginLeft="20dp"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/guideline1"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Hora de fin: "
+                    android:layout_marginRight="20dp"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"
+                    app:layout_constraintBottom_toBottomOf="@id/participantFinish_textView"
+                    app:layout_constraintEnd_toStartOf="@id/guideline1"/>
+
+                <TextView
+                    android:id="@+id/participantFinish_textView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="20dp"
+                    android:text=""
+                    android:layout_marginTop="4dp"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
+                    app:layout_constraintStart_toEndOf="@id/guideline1"
+                    app:layout_constraintTop_toBottomOf="@id/participantStart_textView"/>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
         </LinearLayout>
 
