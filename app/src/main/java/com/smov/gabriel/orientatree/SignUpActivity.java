@@ -41,7 +41,7 @@ public class SignUpActivity extends AppCompatActivity {
 
     private LinearLayout signUp_layout;
 
-    private String name, surname, email, password, role;
+    private String name, surname, email, password;
     private String userID;
 
     private FirebaseAuth mAuth;
@@ -67,6 +67,9 @@ public class SignUpActivity extends AppCompatActivity {
         password_textfield = findViewById(R.id.password_textfield);
         signUp_button = findViewById(R.id.signUp_button);
         progress_circular = findViewById(R.id.progress_circular);
+
+        // needed to show the snackbar at right place
+        final View viewPos = findViewById(R.id.signUp_coordinator_snackBar);
 
         toolbar = findViewById(R.id.signUp_toolbar);
         setSupportActionBar(toolbar);
@@ -146,7 +149,7 @@ public class SignUpActivity extends AppCompatActivity {
                                                 }
                                             });
                                 } else {
-                                    progress_circular.setVisibility(View.INVISIBLE);
+                                    progress_circular.setVisibility(View.GONE);
                                     try {
                                         throw task.getException();
                                     } catch (FirebaseAuthWeakPasswordException e) {
@@ -160,7 +163,7 @@ public class SignUpActivity extends AppCompatActivity {
                                         email_textfield.setError("Ya existe ese usuario");
                                     } catch (Exception e) {
                                         String error_msg = "Algo salió mal: " + task.getException().toString();
-                                        showSnackBar(error_msg);
+                                        showSnackBar(error_msg, viewPos);
                                     }
                                 }
                             }
@@ -179,14 +182,14 @@ public class SignUpActivity extends AppCompatActivity {
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
-                        progress_circular.setVisibility(View.INVISIBLE);
+                        progress_circular.setVisibility(View.GONE);
                         updateUIHome();
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        progress_circular.setVisibility(View.INVISIBLE);
+                        progress_circular.setVisibility(View.GONE);
                         updateUIHome();
                     }
                 });
@@ -203,15 +206,27 @@ public class SignUpActivity extends AppCompatActivity {
         finish();
     }
 
-    private void showSnackBar(String msg) {
-        Snackbar.make(signUp_layout, msg, Snackbar.LENGTH_LONG)
+    private void showSnackBar(String msg, View viewPos) {
+        Snackbar.make(viewPos, msg, Snackbar.LENGTH_LONG)
                 .setAction("OK", new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-
                     }
                 })
                 .setDuration(8000)
+                .addCallback(new Snackbar.Callback() {
+                    @Override
+                    public void onDismissed(Snackbar transientBottomBar, int event) {
+                        viewPos.setVisibility(View.GONE);
+                        super.onDismissed(transientBottomBar, event);
+                    }
+
+                    @Override
+                    public void onShown(Snackbar sb) {
+                        viewPos.setVisibility(View.VISIBLE);
+                        super.onShown(sb);
+                    }
+                })
                 .show();
     }
 }
