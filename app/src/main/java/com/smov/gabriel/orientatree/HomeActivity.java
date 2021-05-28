@@ -94,6 +94,9 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     private OnGoingFragment onGoingFragment;
     private ProgrammedFragment programmedFragment;
 
+    // useful to reset the last tab when coming back from another activity
+    private int tabSelected = 0;
+
     private FloatingActionButton fab;
 
     // needed to show snackbar
@@ -108,8 +111,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     FirebaseStorage storage;
     StorageReference storageReference;
     FirebaseUser user;
-    // f functions
-    //private FirebaseFunctions mFunctions;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -125,12 +126,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
         db = FirebaseFirestore.getInstance();
 
-        // f functions
-        //mFunctions = FirebaseFunctions.getInstance();
-        //mFunctions = FirebaseFunctions.getInstance();
-        //mFunctions = FirebaseFunctions.getInstance();
-        //mFunctions.useEmulator("19ghjvhjv", 5001);
-
         storage = FirebaseStorage.getInstance();
         storageReference = storage.getReference();
 
@@ -141,7 +136,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //updateUIFindTemplate();
                 updateUIFindActivity();
             }
         });
@@ -192,15 +186,17 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                /*switch (tab.getPosition()) {
+                switch (tab.getPosition()) {
                     case 0:
+                        tabSelected = 0;
                         break;
                     case 1:
-                        fab.hide();
+                        tabSelected = 1;
                         break;
                     case 2:
+                        tabSelected = 2;
                         break;
-                }*/
+                }
             }
 
             @Override
@@ -227,26 +223,12 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                     .skipMemoryCache(true) // prevent caching
                     .into(profile_circleImageView);
         }
-        
-        // f functions
-        /*addMessage("Mensaje de prueba")
-                .addOnCompleteListener(new OnCompleteListener<String>() {
-                    @Override
-                    public void onComplete(@NonNull Task<String> task) {
-                        if (!task.isSuccessful()) {
-                            Exception e = task.getException();
-                            if (e instanceof FirebaseFunctionsException) {
-                                FirebaseFunctionsException ffe = (FirebaseFunctionsException) e;
-                                FirebaseFunctionsException.Code code = ffe.getCode();
-                                Object details = ffe.getDetails();
-                                Log.d("FFunctions", ffe.getMessage());
-                                Log.d("FFunctions", e.getMessage());
-                            }
-                            // ...
-                        }
-                        // ...
-                    }
-                });*/
+    }
+
+    @Override
+    protected void onResume() {
+        viewPager.setCurrentItem(tabSelected);
+        super.onResume();
     }
 
     @Override
@@ -267,7 +249,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                 logOut();
                 break;
             case R.id.delete_profile_item:
-                deleteAccount();
+                //deleteAccount();
                 break;
         }
         //close navigation drawer
@@ -275,7 +257,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         return false;
     }
 
-    private void deleteAccount() {
+    /*private void deleteAccount() {
         new MaterialAlertDialogBuilder(this)
                 .setMessage("¿Realmente desea eliminar su perfil y todos sus datos de manera permanente?")
                 .setPositiveButton("Sí", new DialogInterface.OnClickListener() {
@@ -286,9 +268,9 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                 })
                 .setNegativeButton("No", null)
                 .show();
-    }
+    }*/
 
-    private void deleteProfilePicture() {
+    /*private void deleteProfilePicture() {
         StorageReference ref = storageReference.child("profileImages/" + userID);
         ref.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
@@ -333,7 +315,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                 showSnackBar("Su cuenta no ha podido eliminarse. Pruebe de nuevo.");
             }
         });
-    }
+    }*/
 
     private void logOut() {
         new MaterialAlertDialogBuilder(this)
@@ -408,37 +390,14 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         startActivity(intent);
     }
 
-    private void showSnackBar(String msg) {
+    /*private void showSnackBar(String msg) {
         Snackbar.make(home_constraintLayout, msg, Snackbar.LENGTH_LONG)
                 .setAction("OK", new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-
                     }
                 })
                 .setDuration(8000)
                 .show();
-    }
-
-    // f functions
-    /*private Task<String> addMessage(String text) {
-        // Create the arguments to the callable function.
-        Map<String, Object> data = new HashMap<>();
-        data.put("text", text);
-        data.put("push", true);
-
-        return mFunctions
-                .getHttpsCallable("addMessage")
-                .call(data)
-                .continueWith(new Continuation<HttpsCallableResult, String>() {
-                    @Override
-                    public String then(@NonNull Task<HttpsCallableResult> task) throws Exception {
-                        // This continuation runs on either success or failure, but if the task
-                        // has failed then getResult() will throw an Exception which will be
-                        // propagated down.
-                        String result = (String) task.getResult().getData();
-                        return result;
-                    }
-                });
     }*/
 }
