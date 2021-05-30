@@ -1,5 +1,7 @@
 package com.smov.gabriel.orientatree.model;
 
+import com.google.firebase.firestore.GeoPoint;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 

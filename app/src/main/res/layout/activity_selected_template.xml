@@ -16,6 +16,7 @@
             android:id="@+id/selected_toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
+            app:title="Programar actividad"
             app:titleTextColor="@color/black">
 
         </androidx.appcompat.widget.Toolbar>
@@ -191,7 +192,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Asistencia ubicación"
+                    android:text="Ayuda con la ubicación"
                     android:layout_marginTop="8dp"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"/>
 
@@ -202,7 +203,7 @@
                     android:layout_marginTop="8dp"
                     android:layout_marginBottom="4dp"
                     android:checked="false"
-                    android:text="Es posible solicitar ayuda con la ubicación"
+                    android:text="Se puede solicitar ayuda con la ubicación"
                     android:id="@+id/help_switch"/>
 
                 <com.google.android.material.progressindicator.CircularProgressIndicator

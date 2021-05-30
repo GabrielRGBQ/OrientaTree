@@ -95,12 +95,10 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     private ProgrammedFragment programmedFragment;
 
     // useful to reset the last tab when coming back from another activity
+    // not always working... don't know why
     private int tabSelected = 0;
 
     private FloatingActionButton fab;
-
-    // needed to show snackbar
-    private ConstraintLayout home_constraintLayout;
 
     // user data stored in Auth user
     String userID, userEmail, userName;
@@ -130,8 +128,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         storageReference = storage.getReference();
 
         fab = findViewById(R.id.floating_action_button);
-
-        home_constraintLayout = findViewById(R.id.home_constraintLayout);
 
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -226,9 +222,9 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     }
 
     @Override
-    protected void onResume() {
+    protected void onPostResume() {
+        super.onPostResume();
         viewPager.setCurrentItem(tabSelected);
-        super.onResume();
     }
 
     @Override
