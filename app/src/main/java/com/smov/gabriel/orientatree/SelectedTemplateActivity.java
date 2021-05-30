@@ -84,6 +84,7 @@ public class SelectedTemplateActivity extends AppCompatActivity {
     private int finish_minute;
 
     private Activity new_activity;
+    private Template template;
 
     private DateFormat df_date;
     private DateFormat df_hour;
@@ -102,7 +103,6 @@ public class SelectedTemplateActivity extends AppCompatActivity {
 
         toolbar = findViewById(R.id.selected_toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setTitle(template_id);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         progressIndicator = findViewById(R.id.programmed_progressBar);
@@ -149,7 +149,7 @@ public class SelectedTemplateActivity extends AppCompatActivity {
         docRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
             @Override
             public void onSuccess(DocumentSnapshot documentSnapshot) {
-                Template template = documentSnapshot.toObject(Template.class);
+                template = documentSnapshot.toObject(Template.class);
                 selected_overline_textView.setText(template.getType());
                 if(template.getColor() != null) {
                     switch (template.getColor()) {

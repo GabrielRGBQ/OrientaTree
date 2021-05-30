@@ -2,6 +2,8 @@ package com.smov.gabriel.orientatree.model;
 
 import androidx.annotation.Nullable;
 
+import com.google.firebase.firestore.GeoPoint;
+
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -18,6 +20,8 @@ public class Activity implements Comparator<Activity>, Serializable {
     private String planner_id;
     private boolean score;
     private boolean location_help;
+
+    private GeoPoint goalLocation;
 
     private Date startTime;
     private Date finishTime;

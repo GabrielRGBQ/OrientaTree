@@ -81,27 +81,6 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
             holder.role_textView.setText("");
         }
 
-        // set whether the current user is the activity organizer, a participant, or both
-        /*if(activity.getParticipants() != null) {
-            if((user_id.equals(planner_id)) &&
-                    (activity.getParticipants().contains(user_id))) {
-                holder.role_textView.setText("Organizador + Participante");
-            } else if (activity.getParticipants().contains(user_id)) {
-                holder.role_textView.setText("Participante");
-            } else if(user_id.equals(planner_id)) {
-                holder.role_textView.setText("Organizador");
-            }
-            else {
-                holder.role_textView.setText("");
-            }
-        } else {
-            if(user_id.equals(planner_id)) {
-                holder.role_textView.setText("Organizador");
-            } else {
-                holder.role_textView.setText("");
-            }
-        }*/
-
         holder.row_activity_layout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

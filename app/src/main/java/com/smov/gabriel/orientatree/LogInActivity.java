@@ -35,15 +35,12 @@ public class LogInActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
 
-    private ConstraintLayout logIn_layout;
+    //private ConstraintLayout logIn_layout;
 
     private String email, password;
     private String name;
-    private String userID;
 
     private FirebaseAuth mAuth;
-
-    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,18 +49,19 @@ public class LogInActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        db = FirebaseFirestore.getInstance();
-
         email_textfield = findViewById(R.id.email_textfield);
         password_textfield = findViewById(R.id.password_textfield);
         logIn_button = findViewById(R.id.logIn_button);
         progress_circular = findViewById(R.id.progress_circular);
 
+        // needed to show the snackbar at right place
+        final View viewPos = findViewById(R.id.logIn_coordinator_snackBar);
+
         toolbar = findViewById(R.id.logIn_toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        logIn_layout = findViewById(R.id.logIn_layout);
+        //logIn_layout = findViewById(R.id.logIn_layout);
 
         logIn_button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -96,14 +94,19 @@ public class LogInActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if(task.isSuccessful()) {
-                            getUserName();
+                            name = mAuth.getCurrentUser().getDisplayName();
+                            if(name == null || name.equals("")) {
+                                name = "usuario";
+                                Toast.makeText(LogInActivity.this, "No pudieron obtenerse los datos del usuario", Toast.LENGTH_SHORT).show();
+                            }
+                            updateUIHome();
                         } else {
                             try {
                                 throw task.getException();
                             }
                             catch (FirebaseAuthInvalidUserException | FirebaseAuthInvalidCredentialsException e) {
                                 progress_circular.setVisibility(View.GONE);
-                                showSnackBar();
+                                showSnackBar(viewPos);
                             }
                             catch (Exception e) {
                                 progress_circular.setVisibility(View.GONE);
@@ -117,51 +120,11 @@ public class LogInActivity extends AppCompatActivity {
 
     }
 
-    private void getUserName() {
-        userID = mAuth.getCurrentUser().getUid();
-        DocumentReference docRef = db.collection("users").document(userID);
-        /*docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                progress_circular.setVisibility(View.GONE);
-                if(task.isSuccessful()) {
-                    DocumentSnapshot document = task.getResult();
-                    if(document.exists()) {
-                        name = (String)document.get("name");
-                        updateUIHome();
-                    } else {
-                        Toast.makeText(LogInActivity.this, "El documento no existe", Toast.LENGTH_SHORT).show();
-                        // TODO: handle this error
-                    }
-                } else {
-                    Toast.makeText(LogInActivity.this, "No se ha leido el documento", Toast.LENGTH_SHORT).show();
-                    // TODO: handle this error
-                }
-            }
-        });*/
-        docRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-            @Override
-            public void onSuccess(DocumentSnapshot documentSnapshot) {
-                progress_circular.setVisibility(View.GONE);
-                User user = documentSnapshot.toObject(User.class);
-                if(user != null) {
-                    name = user.getName();
-                    updateUIHome();
-                } else {
-                    Toast.makeText(LogInActivity.this, "No se obtuvieron los datos del usuario", Toast.LENGTH_SHORT).show();
-                    name = "user"; // so that the next Activity does not show "null" or something
-                    updateUIHome(); // we continue with next activity anyway
-                }
-            }
-        });
-    }
-
-    private void showSnackBar() {
-        Snackbar.make(logIn_layout, "Usuario o password incorrectos", Snackbar.LENGTH_LONG)
+    private void showSnackBar(View viewPos) {
+        Snackbar.make(viewPos, "Usuario o password incorrectos", Snackbar.LENGTH_LONG)
             .setAction("OK", new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-
                 }
             })
              .setDuration(8000)
