@@ -12,12 +12,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.smov.gabriel.orientatree.adapters.ParticipantAdapter;
 import com.smov.gabriel.orientatree.model.BeaconReached;
+import com.smov.gabriel.orientatree.model.Participation;
 import com.smov.gabriel.orientatree.model.ParticipationState;
 import com.smov.gabriel.orientatree.model.User;
 
@@ -41,8 +43,10 @@ public class ParticipantFragment extends Fragment {
 
     private OnGoingActivity onGoingActivity;
 
-    private int num_beacons;
-    private int beacons_reached;
+    private Participation participation;
+
+    private int num_beacons; // number of beacons that this activity has
+    private int beacons_reached; // number of beacons that have already been reached by the participant
 
     private String hour_pattern = "HH:mm:ss";
     private Format df_hour = new SimpleDateFormat(hour_pattern);
@@ -104,49 +108,74 @@ public class ParticipantFragment extends Fragment {
 
         onGoingActivity = (OnGoingActivity) getActivity();
 
-        if(onGoingActivity.participation != null) {
-            Date current_time = new Date(System.currentTimeMillis());
-            if(onGoingActivity.participation.getStartTime() != null) {
-                Date start_time = onGoingActivity.participation.getStartTime();
-                participantStart_textView.setText(df_hour.format(start_time));
-                if(onGoingActivity.participation.getState() == ParticipationState.NOW) {
-                    // taking part now, so we display the current timing
-                    long diff = Math.abs(start_time.getTime() - current_time.getTime()) / 1000;
-                    time = (double) diff;
-                    // set the timer
-                    if(time < 86400) { // the maximum time it can display is 23:59:59...
-                        timer = new Timer();
-                        timerTask = new TimerTask()
-                        {
-                            @Override
-                            public void run()
-                            {
-                                onGoingActivity.runOnUiThread(new Runnable()
-                                {
-                                    @Override
-                                    public void run()
-                                    {
-                                        time++;
-                                        participantTime_textView.setText(getTimerText());
-                                    }
-                                });
-                            }
+        // listen for realtime updates on the participation
+        onGoingActivity.db.collection("activities").document(onGoingActivity.activity.getId())
+                .collection("participations").document(onGoingActivity.userID)
+                .addSnapshotListener(new EventListener<DocumentSnapshot>() {
+                    @Override
+                    public void onEvent(@Nullable @org.jetbrains.annotations.Nullable DocumentSnapshot value, @Nullable @org.jetbrains.annotations.Nullable FirebaseFirestoreException error) {
+                        if (error != null) {
+                            return;
+                        }
+                        if (value != null && value.exists()) {
+                            participation = value.toObject(Participation.class);
+                            if(participation != null) {
+                                Date current_time = new Date(System.currentTimeMillis());
+                                if(participation.getStartTime() != null) {
+                                    Date start_time = participation.getStartTime();
+                                    participantStart_textView.setText(df_hour.format(start_time));
+                                    switch (participation.getState()){
+                                        case NOT_YET:
+                                            break;
+                                        case NOW:
+                                            // taking part now, so we display the current time record
+                                            long diff_to_now = Math.abs(start_time.getTime() - current_time.getTime()) / 1000;
+                                            time = (double) diff_to_now;
+                                            // set the timer
+                                            if(time < 86400) { // the maximum time it can display is 23:59:59...
+                                                timer = new Timer();
+                                                timerTask = new TimerTask()
+                                                {
+                                                    @Override
+                                                    public void run()
+                                                    {
+                                                        onGoingActivity.runOnUiThread(new Runnable()
+                                                        {
+                                                            @Override
+                                                            public void run()
+                                                            {
+                                                                time++;
+                                                                participantTime_textView.setText(getTimerText());
+                                                            }
+                                                        });
+                                                    }
 
-                        };
-                        timer.scheduleAtFixedRate(timerTask, 0 ,1000);
+                                                };
+                                                timer.scheduleAtFixedRate(timerTask, 0 ,1000);
+                                            }
+                                            break;
+                                        case FINISHED:
+                                            // participation finished, so we show the total time (static, not counting)
+                                            if(timerTask != null) {
+                                                // stop the timer
+                                                timerTask.cancel();
+                                            }
+                                            if(participation.getFinishTime() != null) {
+                                                Date finish_time = participation.getFinishTime();
+                                                participantFinish_textView.setText(df_hour.format(finish_time));
+                                                long diff_to_finish = Math.abs(start_time.getTime() - finish_time.getTime()) / 1000;
+                                                double total_time = (double) diff_to_finish;
+                                                participantTime_textView.setText(getTimerText(total_time));
+                                            }
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                }
+                            }
+                        }
                     }
-                } else if (onGoingActivity.participation.getState() == ParticipationState.FINISHED) {
-                    // participation finished, so we show the total time (static, not counting)
-                    if(onGoingActivity.participation.getFinishTime() != null) {
-                        Date finish_time = onGoingActivity.participation.getFinishTime();
-                        participantFinish_textView.setText(df_hour.format(finish_time));
-                        long diff = Math.abs(start_time.getTime() - finish_time.getTime()) / 1000;
-                        double total_time = (double) diff;
-                        participantTime_textView.setText(getTimerText(total_time));
-                    }
-                }
-            }
-        }
+                });
 
         // realtime listener to the beaconReaches in order to set when a new beacon has been reached
         if(onGoingActivity.template != null) {
