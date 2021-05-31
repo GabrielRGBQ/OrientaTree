@@ -7,12 +7,14 @@ import java.util.ArrayList;
 
 public class Template implements Serializable {
 
-    private String name_id;
-    private String type;
-    private String color;
+    private String template_id;
+    private String name;
+    private TemplateType type;
+    private TemplateColor color;
     private String location;
     private String description;
     private String norms_id;
+    private String map_id;
 
     private ArrayList<String> beacons;
 
@@ -20,38 +22,32 @@ public class Template implements Serializable {
 
     }
 
-    public Template(String name_id, String type, String color, String location,
-                    String description, String norms_id) {
-        this.name_id = name_id;
+    public Template(String template_id, String name, TemplateType type, TemplateColor color, String location,
+                    String description, String norms_id, String map_id) {
+        this.template_id = template_id;
+        this.name = name;
         this.type = type;
         this.color = color;
         this.location = location;
         this.description = description;
         this.norms_id = norms_id;
         beacons = new ArrayList<>();
+        this.map_id = map_id;
     }
 
-    public String getName_id() {
-        return name_id;
-    }
-
-    public void setName_id(String name_id) {
-        this.name_id = name_id;
-    }
-
-    public String getType() {
+    public TemplateType getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(TemplateType type) {
         this.type = type;
     }
 
-    public String getColor() {
+    public TemplateColor getColor() {
         return color;
     }
 
-    public void setColor(String color) {
+    public void setColor(TemplateColor color) {
         this.color = color;
     }
 
@@ -85,5 +81,29 @@ public class Template implements Serializable {
 
     public void setBeacons(ArrayList<String> beacons) {
         this.beacons = beacons;
+    }
+
+    public String getTemplate_id() {
+        return template_id;
+    }
+
+    public void setTemplate_id(String template_id) {
+        this.template_id = template_id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getMap_id() {
+        return map_id;
+    }
+
+    public void setMap_id(String map_id) {
+        this.map_id = map_id;
     }
 }

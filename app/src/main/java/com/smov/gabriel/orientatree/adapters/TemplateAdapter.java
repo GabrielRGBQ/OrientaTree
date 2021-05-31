@@ -58,9 +58,9 @@ public class TemplateAdapter extends RecyclerView.Adapter<TemplateAdapter.MyView
         this.position = position ;
         Template template = templates.get(position);
 
-        holder.typeTemplate_textview.setText(template.getType());
-        holder.titleTemplate_textview.setText(template.getName_id());
-        holder.subtitleTemplate_textview.setText("Balizas: 4");
+        holder.typeTemplate_textview.setText(template.getType().toString());
+        holder.titleTemplate_textview.setText(template.getName());
+        holder.subtitleTemplate_textview.setText("Balizas: " + template.getBeacons().size());
         
         holder.row_template_layout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -71,11 +71,11 @@ public class TemplateAdapter extends RecyclerView.Adapter<TemplateAdapter.MyView
 
         if(template.getColor() != null) {
             switch (template.getColor()) {
-                case "Naranja":
+                case NARANJA:
                     holder.typeTemplate_textview.setText(template.getType() + " " + template.getColor());
                     holder.typeTemplate_textview.setTextColor(Color.parseColor("#FFA233"));
                     break;
-                case "Roja":
+                case ROJA:
                     holder.typeTemplate_textview.setText(template.getType() + " " + template.getColor());
                     holder.typeTemplate_textview.setTextColor(Color.parseColor("#E32A10"));
                     break;
@@ -85,7 +85,7 @@ public class TemplateAdapter extends RecyclerView.Adapter<TemplateAdapter.MyView
             }
         }
 
-        StorageReference ref = holder.storageReference.child("templateImages/" + template.getName_id() + ".jpg");
+        StorageReference ref = holder.storageReference.child("templateImages/" + template.getTemplate_id() + ".jpg");
         Glide.with(context)
                 .load(ref)
                 .diskCacheStrategy(DiskCacheStrategy.NONE ) // prevent caching
@@ -96,7 +96,7 @@ public class TemplateAdapter extends RecyclerView.Adapter<TemplateAdapter.MyView
 
     private void updateUISelectedTemplate(Template template) {
         Intent intent = new Intent(context, SelectedTemplateActivity.class);
-        intent.putExtra("template_id", template.getName_id());
+        intent.putExtra("template_id", template.getTemplate_id());
         findActivity.startActivityForResult(intent, 1); // this is to allow us to come back from the activity
     }
 
@@ -143,7 +143,7 @@ public class TemplateAdapter extends RecyclerView.Adapter<TemplateAdapter.MyView
            } else {
                String filterPattern = constraint.toString().toLowerCase().trim();
                for(Template template : templates_full) {
-                   if(template.getName_id().toLowerCase().contains(filterPattern)) {
+                   if(template.getName().toLowerCase().contains(filterPattern)) {
                        filteredList.add(template);
                    }
                }

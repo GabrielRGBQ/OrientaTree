@@ -60,6 +60,7 @@
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Headline4" />
 
                 <TextView
+                    android:id="@+id/template_location_textView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
@@ -71,7 +72,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:maxLines="2"
                     android:text="Lorem ipsum dolor sit amet consectetur adipiscing elit malesuada ut platea, felis
             Lorem ipsum dolor sit amet consectetur adipiscing elit malesuada ut platea, felis"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />

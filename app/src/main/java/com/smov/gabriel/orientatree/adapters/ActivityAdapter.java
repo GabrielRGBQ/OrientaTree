@@ -14,8 +14,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.HomeActivity;
@@ -24,6 +27,7 @@ import com.smov.gabriel.orientatree.MapActivity;
 import com.smov.gabriel.orientatree.OnGoingActivity;
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.model.Activity;
+import com.smov.gabriel.orientatree.model.Template;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -67,7 +71,6 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
         Date date = activity.getStartTime();
         String dateAsString = df.format(date);
 
-        holder.template_textView.setText(activity.getTemplate());
         holder.title_textView.setText(activity.getTitle());
         holder.date_textView.setText("Fecha: " + dateAsString);
 
@@ -99,6 +102,16 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
             }
         });
 
+        holder.db.collection("templates").document(activity.getTemplate())
+                .get()
+                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                    @Override
+                    public void onSuccess(DocumentSnapshot documentSnapshot) {
+                        Template template = documentSnapshot.toObject(Template.class);
+                        holder.template_textView.setText(template.getName());
+                    }
+                });
+
         // get and set the activity picture
         StorageReference ref = holder.storageReference.child("templateImages/" + activity.getTemplate() + ".jpg");
         Glide.with(context)
@@ -120,6 +133,8 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
 
         FirebaseAuth mAuth;
 
+        FirebaseFirestore db;
+
         LinearLayout row_activity_layout; // not sure if needed
         TextView title_textView, date_textView, template_textView, role_textView;
         ImageView rowImage_imageView;
@@ -136,6 +151,8 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
 
             storage = FirebaseStorage.getInstance();
             storageReference = storage.getReference();
+
+            db = FirebaseFirestore.getInstance();
 
             mAuth = FirebaseAuth.getInstance();
         }

@@ -59,7 +59,8 @@ public class SelectedTemplateActivity extends AppCompatActivity {
     private CircularProgressIndicator progressIndicator;
 
     private ImageView selected_imageView;
-    private TextView selected_overline_textView, selected_title_textView, description_textView;
+    private TextView selected_overline_textView, selected_title_textView, description_textView,
+        templateLocation_textView;
     private Chip chip_date, chip_start, chip_finish;
     private Button program_button;
     private SwitchMaterial switchHelp;
@@ -118,6 +119,7 @@ public class SelectedTemplateActivity extends AppCompatActivity {
         switchHelp = findViewById(R.id.help_switch);
         classic_radioButton = findViewById(R.id.radio_button_1);
         score_radioButton = findViewById(R.id.radio_button_2);
+        templateLocation_textView = findViewById(R.id.template_location_textView);
 
         // need this to display the chosen date and hour on the chips
         String pattern_date = "dd/MM/yyyy";
@@ -143,21 +145,24 @@ public class SelectedTemplateActivity extends AppCompatActivity {
                 .skipMemoryCache(true) // prevent caching
                 .into(selected_imageView);
 
-        selected_title_textView.setText(template_id);
+        //selected_title_textView.setText(template_id);
 
         DocumentReference docRef = db.collection("templates").document(template_id);
         docRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
             @Override
             public void onSuccess(DocumentSnapshot documentSnapshot) {
                 template = documentSnapshot.toObject(Template.class);
-                selected_overline_textView.setText(template.getType());
+                selected_overline_textView.setText(template.getType().toString());
+                selected_title_textView.setText(template.getName());
+                templateLocation_textView.setText(template.getLocation());
+                description_textView.setText(template.getDescription());
                 if(template.getColor() != null) {
                     switch (template.getColor()) {
-                        case "Naranja":
+                        case NARANJA:
                             selected_overline_textView.setText(template.getType() + " " + template.getColor());
                             selected_overline_textView.setTextColor(Color.parseColor("#FFA233"));
                             break;
-                        case "Roja":
+                        case ROJA:
                             selected_overline_textView.setText(template.getType() + " " + template.getColor());
                             selected_overline_textView.setTextColor(Color.parseColor("#E32A10"));
                             break;
@@ -435,5 +440,6 @@ public class SelectedTemplateActivity extends AppCompatActivity {
     private void updateUIFindTemplate() {
         Intent intent = new Intent(SelectedTemplateActivity.this, FindTemplate.class);
         startActivity(intent);
+        finish();
     }
 }

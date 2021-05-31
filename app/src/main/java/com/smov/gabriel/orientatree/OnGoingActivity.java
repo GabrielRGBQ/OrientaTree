@@ -37,6 +37,7 @@ import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Participation;
 import com.smov.gabriel.orientatree.model.ParticipationState;
 import com.smov.gabriel.orientatree.model.Template;
+import com.smov.gabriel.orientatree.model.TemplateColor;
 import com.smov.gabriel.orientatree.services.LocationService;
 
 import org.jetbrains.annotations.NotNull;
@@ -131,7 +132,6 @@ public class OnGoingActivity extends AppCompatActivity {
 
         // setting UI according to current data
         // data from the Activity
-        template_textView.setText(activity.getTemplate());
         title_textView.setText(activity.getTitle());
         String date = "Día " + df_date.format(activity.getStartTime()) +
                 ", Duración " + df_hour.format(activity.getStartTime()) +
@@ -151,19 +151,20 @@ public class OnGoingActivity extends AppCompatActivity {
                     public void onSuccess(DocumentSnapshot documentSnapshot) {
                         //generalProgressIndicator.setVisibility(GONE);
                         template = documentSnapshot.toObject(Template.class);
+                        template_textView.setText(template.getName());
                         if (template.getColor() != null) {
                             type_textView.setText(template.getType() + " " + template.getColor() + score);
                         } else {
-                            type_textView.setText(template.getType());
+                            type_textView.setText(template.getType().toString());
                         }
                         location_textView.setText(template.getLocation());
                         //beacons_textView.setText("Balizas: " + template.getBeacons().size() + score);
                         if (template.getColor() != null) {
                             switch (template.getColor()) {
-                                case "Naranja":
+                                case NARANJA:
                                     type_textView.setTextColor(getResources().getColor(R.color.orange_activity));
                                     break;
-                                case "Roja":
+                                case ROJA:
                                     type_textView.setTextColor(getResources().getColor(R.color.red_activity));
                                     break;
                                 default:
@@ -258,7 +259,7 @@ public class OnGoingActivity extends AppCompatActivity {
                                         // if successful, launch the map activity passing the reference of the
                                         // file where the map was downloaded
                                         progressIndicator.setVisibility(View.INVISIBLE);
-                                        updateUIMap(localFile);
+                                        updateUIMap(localFile, template);
                                     }
                                 })
                                 .addOnFailureListener(new OnFailureListener() {
@@ -514,9 +515,10 @@ public class OnGoingActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void updateUIMap(File map) {
+    private void updateUIMap(File map, Template template) {
         Intent intent = new Intent(OnGoingActivity.this, MapActivity.class);
         intent.putExtra("map", map);
+        intent.putExtra("template", template);
         startActivity(intent);
     }
 
