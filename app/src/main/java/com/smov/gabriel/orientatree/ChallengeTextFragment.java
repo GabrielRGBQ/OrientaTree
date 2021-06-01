@@ -1,18 +1,29 @@
 package com.smov.gabriel.orientatree;
 
 import android.content.DialogInterface;
+import android.graphics.Color;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+
+import java.text.Normalizer;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
+import com.smov.gabriel.orientatree.model.BeaconReached;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -25,9 +36,10 @@ public class ChallengeTextFragment extends Fragment {
 
     private String right_answer;
     private String given_answer;
+    private boolean givenAnswerIsRight;
 
     private TextInputLayout challengeAnswer_textInputLayout;
-    private Button challengeText_button;
+    private Button challengeText_button, challengeText_continueButton;
     private CircularProgressIndicator challengeText_progressIndicator;
 
     // TODO: Rename parameter arguments, choose names that match
@@ -85,6 +97,7 @@ public class ChallengeTextFragment extends Fragment {
         challengeAnswer_textInputLayout = view.findViewById(R.id.challengeAnswer_textInputLayout);
         challengeText_button = view.findViewById(R.id.challengeText_button);
         challengeText_progressIndicator = view.findViewById(R.id.challengeText_progressIndicator);
+        challengeText_continueButton = view.findViewById(R.id.challengeText_continueButton);
 
         // button listener
         challengeText_button.setOnClickListener(new View.OnClickListener() {
@@ -98,12 +111,43 @@ public class ChallengeTextFragment extends Fragment {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 given_answer = challengeAnswer_textInputLayout.getEditText().getText().toString().trim();
-                                if(given_answer.length() == 0) {
+                                challengeAnswer_textInputLayout.setEnabled(false);
+                                if (given_answer.length() == 0) {
                                     challengeAnswer_textInputLayout.setError("No se puede dejar este campo vacío");
                                     challengeAnswer_textInputLayout.setErrorEnabled(true);
                                 } else {
                                     challengeAnswer_textInputLayout.setErrorEnabled(false);
-                                    //challengeText_progressIndicator.setVisibility(View.VISIBLE);
+                                    // check if the given answer is numeric
+                                    boolean numericAnswer = isNumeric(given_answer);
+                                    if (numericAnswer) {
+                                        // if numeric, correction with numeric criteria
+                                        if (given_answer.equals(right_answer)) {
+                                            givenAnswerIsRight = true;
+                                            updateBeaconReach();
+                                        } else {
+                                            givenAnswerIsRight = false;
+                                            updateBeaconReach();
+                                        }
+                                    } else {
+                                        // if given answer is not numeric, correction with textual criteria
+                                        // the smaller ratio is, the more similar is its length
+                                        // if ratio is too big, we consider it wrong even if one contains the other
+                                        double ratio = Math.abs(1 - (given_answer.length() / (double) right_answer.length()));
+                                        // convert the given and right answers to uppercase
+                                        String temp_given_answer = stripAccents(given_answer.toUpperCase());
+                                        String temp_right_answer = stripAccents(right_answer.toUpperCase());
+                                        if ((temp_given_answer.contains(temp_right_answer) ||
+                                                temp_right_answer.contains(temp_given_answer)) && ratio <= 0.25) {
+                                            // if one contains the other and they both have similar length, we consider them right
+                                            givenAnswerIsRight = true;
+                                            updateBeaconReach();
+                                            //Toast.makeText(ca, "Correcto: " + temp_given_answer + " y " + temp_right_answer, Toast.LENGTH_SHORT).show();
+                                        } else {
+                                            givenAnswerIsRight = false;
+                                            updateBeaconReach();
+                                            //Toast.makeText(ca, "INcorrecto: " + temp_given_answer + " y " + temp_right_answer, Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
                                 }
                             }
                         })
@@ -111,6 +155,80 @@ public class ChallengeTextFragment extends Fragment {
             }
         });
 
+        challengeText_continueButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ca.finish();
+            }
+        });
+
         return view;
     }
+
+    // function to check if the answer is numeric or not
+    public static boolean isNumeric(String strNum) {
+        if (strNum == null) {
+            return false;
+        }
+        try {
+            double d = Double.parseDouble(strNum);
+        } catch (NumberFormatException nfe) {
+            return false;
+        }
+        return true;
+    }
+
+    // remove accents from a String
+    public static String stripAccents(String s) {
+        s = Normalizer.normalize(s, Normalizer.Form.NFD);
+        s = s.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
+        return s;
+    }
+
+    // write in Firestore the answer given by the user, give some feedback and allow to continue
+    public void updateBeaconReach() {
+        challengeText_progressIndicator.setVisibility(View.VISIBLE);
+        ca.db.collection("activities").document(ca.activityID)
+                .collection("participations").document(ca.userID)
+                .collection("beaconReaches").document(ca.beacon.getBeacon_id())
+                .update("answer_right", givenAnswerIsRight,
+                        "written_answer", given_answer)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void unused) {
+                        challengeText_progressIndicator.setVisibility(View.GONE);
+                        // hide the submit button and show the continue one
+                        challengeText_button.setEnabled(false);
+                        challengeText_button.setVisibility(View.GONE);
+                        challengeText_continueButton.setVisibility(View.VISIBLE);
+                        // give some feedback
+                        if(givenAnswerIsRight) {
+                            displayPositiveFeedBack();
+                        } else {
+                            displayNegativaFeedBack();
+                        }
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull @NotNull Exception e) {
+                        challengeText_progressIndicator.setVisibility(View.GONE);
+                        Toast.makeText(ca, "Algo salió mal, vuelva a intentarlo.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void displayNegativaFeedBack() {
+        challengeAnswer_textInputLayout.setErrorIconDrawable(R.drawable.ic_close);
+        challengeAnswer_textInputLayout.setError("La respuesta correcta es: " + right_answer);
+        challengeAnswer_textInputLayout.setErrorEnabled(true);
+    }
+
+    private void displayPositiveFeedBack() {
+        challengeAnswer_textInputLayout.setEndIconActivated(true);
+        challengeAnswer_textInputLayout.setHelperText("Respuesta correcta");
+        challengeAnswer_textInputLayout.setHelperTextEnabled(true);
+        challengeAnswer_textInputLayout.setEndIconDrawable(R.drawable.ic_check);
+    }
+
 }

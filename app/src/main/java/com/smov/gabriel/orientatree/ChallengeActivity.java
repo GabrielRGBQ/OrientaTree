@@ -11,6 +11,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
@@ -37,11 +38,14 @@ public class ChallengeActivity extends AppCompatActivity {
     private String beaconID;
     private String templateID;
     String activityID;
+    String userID;
 
-    private FirebaseFirestore db;
+    FirebaseFirestore db;
 
     private FirebaseStorage storage;
     private StorageReference storageReference;
+
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +57,9 @@ public class ChallengeActivity extends AppCompatActivity {
 
         storage = FirebaseStorage.getInstance();
         storageReference = storage.getReference();
+
+        mAuth = FirebaseAuth.getInstance();
+        userID = mAuth.getCurrentUser().getUid();
 
         // get the beacon data from the intent
         beaconID = getIntent().getExtras().getString("beaconID");
