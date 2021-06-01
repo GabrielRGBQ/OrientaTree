@@ -56,4 +56,6 @@ dependencies {
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
     // geofencing
     implementation 'com.google.android.gms:play-services-location:18.0.0'
+    // allow image zoom
+    compile 'com.commit451:PhotoView:1.2.4'
 }

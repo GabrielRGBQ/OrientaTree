@@ -2,6 +2,7 @@ package com.smov.gabriel.orientatree.model;
 
 import com.google.firebase.firestore.GeoPoint;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 
 public class Beacon implements Comparator<Beacon> {
@@ -12,18 +13,30 @@ public class Beacon implements Comparator<Beacon> {
     private String beacon_id;
     private String template_id;
     private boolean goal;
+    private String text;
+    private String question;
+    private String written_right_answer;
+    private ArrayList<String> possible_answers;
+    private int quiz_right_answer;
 
     public Beacon() {
 
     }
 
-    public Beacon(String beacon_id, GeoPoint location, int number, String name, String template_id, boolean goal) {
+    public Beacon(String beacon_id, GeoPoint location, int number, String name, String template_id,
+                  boolean goal, String text, String question, String written_right_answer,
+                  ArrayList<String> possible_answers, int quiz_right_answer) {
         this.beacon_id = beacon_id;
         this.location = location;
         this.number = number;
         this.name = name;
         this.template_id = template_id;
         this.goal = goal;
+        this.text = text;
+        this.question = question;
+        this.written_right_answer = written_right_answer;
+        this.possible_answers = possible_answers;
+        this.quiz_right_answer = quiz_right_answer;
     }
 
     public GeoPoint getLocation() {
@@ -72,6 +85,46 @@ public class Beacon implements Comparator<Beacon> {
 
     public void setGoal(boolean goal) {
         this.goal = goal;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public String getQuestion() {
+        return question;
+    }
+
+    public void setQuestion(String question) {
+        this.question = question;
+    }
+
+    public String getWritten_right_answer() {
+        return written_right_answer;
+    }
+
+    public void setWritten_right_answer(String written_right_answer) {
+        this.written_right_answer = written_right_answer;
+    }
+
+    public ArrayList<String> getPossible_answers() {
+        return possible_answers;
+    }
+
+    public void setPossible_answers(ArrayList<String> possible_answers) {
+        this.possible_answers = possible_answers;
+    }
+
+    public int getQuiz_right_answer() {
+        return quiz_right_answer;
+    }
+
+    public void setQuiz_right_answer(int quiz_right_answer) {
+        this.quiz_right_answer = quiz_right_answer;
     }
 
     @Override

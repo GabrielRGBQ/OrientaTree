@@ -33,7 +33,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.smov.gabriel.orientatree.BeaconContentActivity;
+import com.smov.gabriel.orientatree.ChallengeActivity;
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Beacon;
@@ -60,7 +60,7 @@ public class LocationService extends Service {
 
     private static final String TAG = "Location Service";
 
-    private static final float LOCATION_PRECISION = 20000f;
+    private static final float LOCATION_PRECISION = 200000f;
 
     private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 3000;
     private static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
@@ -493,9 +493,11 @@ public class LocationService extends Service {
         String BEACON_NOTIFICATION_CHANNEL_ID = "beacon.orientatree"; // name of the channel for beacon notifications
 
         // Create an explicit intent for an Activity in your app
-        Intent intent = new Intent(this, BeaconContentActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        //Intent intent = new Intent(this, BeaconContentActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        Intent intent = new Intent(this, ChallengeActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         intent.putExtra("beaconID", beacon.getBeacon_id());
-        intent.putExtra("templateID", activity.getTemplate());
+        //intent.putExtra("templateID", activity.getTemplate());
+        intent.putExtra("activity", activity);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
