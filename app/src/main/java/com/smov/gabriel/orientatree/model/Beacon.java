@@ -1,6 +1,10 @@
 package com.smov.gabriel.orientatree.model;
 
+import androidx.annotation.NonNull;
+
 import com.google.firebase.firestore.GeoPoint;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -25,7 +29,7 @@ public class Beacon implements Comparator<Beacon> {
 
     public Beacon(String beacon_id, GeoPoint location, int number, String name, String template_id,
                   boolean goal, String text, String question, String written_right_answer,
-                  ArrayList<String> possible_answers, int quiz_right_answer) {
+                  int quiz_right_answer) {
         this.beacon_id = beacon_id;
         this.location = location;
         this.number = number;
@@ -35,8 +39,8 @@ public class Beacon implements Comparator<Beacon> {
         this.text = text;
         this.question = question;
         this.written_right_answer = written_right_answer;
-        this.possible_answers = possible_answers;
         this.quiz_right_answer = quiz_right_answer;
+        this.possible_answers = new ArrayList<>();
     }
 
     public GeoPoint getLocation() {

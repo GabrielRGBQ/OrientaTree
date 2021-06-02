@@ -111,7 +111,6 @@ public class ChallengeTextFragment extends Fragment {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 given_answer = challengeAnswer_textInputLayout.getEditText().getText().toString().trim();
-                                challengeAnswer_textInputLayout.setEnabled(false);
                                 if (given_answer.length() == 0) {
                                     challengeAnswer_textInputLayout.setError("No se puede dejar este campo vacío");
                                     challengeAnswer_textInputLayout.setErrorEnabled(true);
@@ -199,6 +198,7 @@ public class ChallengeTextFragment extends Fragment {
                         challengeText_progressIndicator.setVisibility(View.GONE);
                         // hide the submit button and show the continue one
                         challengeText_button.setEnabled(false);
+                        challengeAnswer_textInputLayout.setEnabled(false);
                         challengeText_button.setVisibility(View.GONE);
                         challengeText_continueButton.setVisibility(View.VISIBLE);
                         // give some feedback

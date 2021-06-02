@@ -130,7 +130,7 @@ public class ChallengeActivity extends AppCompatActivity {
         }
 
         // get the image of the beacon
-        StorageReference ref = storageReference.child("challengeImages/" + beaconID + ".jpg");
+        StorageReference ref = storageReference.child("challengeImages/" + templateID + "/" + beaconID + ".jpg");
         Glide.with(this)
                 .load(ref)
                 .diskCacheStrategy(DiskCacheStrategy.NONE ) // prevent caching
@@ -147,6 +147,9 @@ public class ChallengeActivity extends AppCompatActivity {
     }
 
     private void showFragmentQuiz() {
-        // TODO
+        getSupportFragmentManager().beginTransaction()
+                .setReorderingAllowed(true)
+                .add(R.id.challenge_fragmentContainer, ChallengeQuizFragment.class, null)
+                .commit();
     }
 }
