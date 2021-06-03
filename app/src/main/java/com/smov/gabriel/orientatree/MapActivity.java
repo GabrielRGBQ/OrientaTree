@@ -8,6 +8,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.gms.location.LocationServices;
@@ -22,8 +23,10 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.button.MaterialButton;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Map;
 import com.smov.gabriel.orientatree.model.Template;
 
@@ -35,11 +38,14 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
 
     private static final String TAG = "MapsActivity";
 
+    private MaterialButton mapBeacons_button;
+
     private GoogleMap mMap;
 
     private Map templateMap;
 
     private Template template;
+    private Activity activity;
 
     // file containing the map
     private File mapFile;
@@ -61,7 +67,25 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
         Intent intent = getIntent();
         mapFile = (File) intent.getSerializableExtra("map");
         template = (Template) intent.getSerializableExtra("template");
+        activity = (Activity) intent.getSerializableExtra("activity");
 
+        // bind UI elements
+        mapBeacons_button = findViewById(R.id.beaconsMap_button);
+
+        // set listener to the beacons button
+        mapBeacons_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updateUIReaches(activity);
+            }
+        });
+
+    }
+
+    private void updateUIReaches(Activity activity) {
+        Intent intent = new Intent(MapActivity.this, ReachesActivity.class);
+        intent.putExtra("activity", activity);
+        startActivity(intent);
     }
 
     /**

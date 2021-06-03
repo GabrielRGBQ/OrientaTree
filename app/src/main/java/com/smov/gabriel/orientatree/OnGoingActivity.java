@@ -259,7 +259,7 @@ public class OnGoingActivity extends AppCompatActivity {
                                         // if successful, launch the map activity passing the reference of the
                                         // file where the map was downloaded
                                         progressIndicator.setVisibility(View.INVISIBLE);
-                                        updateUIMap(localFile, template);
+                                        updateUIMap(localFile, template, activity);
                                     }
                                 })
                                 .addOnFailureListener(new OnFailureListener() {
@@ -515,10 +515,11 @@ public class OnGoingActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void updateUIMap(File map, Template template) {
+    private void updateUIMap(File map, Template template, Activity activity) {
         Intent intent = new Intent(OnGoingActivity.this, MapActivity.class);
         intent.putExtra("map", map);
         intent.putExtra("template", template);
+        intent.putExtra("activity", activity);
         startActivity(intent);
     }
 
