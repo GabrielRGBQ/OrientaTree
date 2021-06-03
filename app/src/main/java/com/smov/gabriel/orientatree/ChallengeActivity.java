@@ -1,9 +1,11 @@
 package com.smov.gabriel.orientatree;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -151,5 +153,16 @@ public class ChallengeActivity extends AppCompatActivity {
                 .setReorderingAllowed(true)
                 .add(R.id.challenge_fragmentContainer, ChallengeQuizFragment.class, null)
                 .commit();
+    }
+
+    // allow to go back when pressing the AppBar back arrow
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                this.finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

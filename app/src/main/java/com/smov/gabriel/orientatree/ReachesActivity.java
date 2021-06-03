@@ -25,6 +25,7 @@ import com.smov.gabriel.orientatree.adapters.ReachAdapter;
 import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.BeaconReached;
 import com.smov.gabriel.orientatree.model.Participation;
+import com.smov.gabriel.orientatree.model.Template;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +40,7 @@ public class ReachesActivity extends AppCompatActivity {
     private ReachAdapter reachAdapter;
 
     private Activity activity;
+    private Template template;
 
     private ReachesActivity reachesActivity;
 
@@ -72,8 +74,9 @@ public class ReachesActivity extends AppCompatActivity {
         // get from the intent the activity
         Intent intent = getIntent();
         activity = (Activity) intent.getSerializableExtra("activity");
+        template = (Template) intent.getSerializableExtra("template");
 
-        if(activity != null) {
+        if(activity != null && template != null) {
             // get the activity and the user's IDs
             activityID = activity.getId();
             userID = mAuth.getCurrentUser().getUid();
@@ -95,7 +98,7 @@ public class ReachesActivity extends AppCompatActivity {
                                 reaches.add(reach);
                             }
                             reachAdapter = new ReachAdapter(reachesActivity, ReachesActivity.this, reaches,
-                                    templateID);
+                                    templateID, activity, template);
                             reaches_recyclerView.setAdapter(reachAdapter);
                             reaches_recyclerView.setLayoutManager(new LinearLayoutManager(ReachesActivity.this));
                         }

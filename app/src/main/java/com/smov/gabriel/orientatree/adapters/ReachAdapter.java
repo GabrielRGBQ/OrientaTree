@@ -1,9 +1,11 @@
 package com.smov.gabriel.orientatree.adapters;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -12,10 +14,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.smov.gabriel.orientatree.ChallengeActivity;
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Beacon;
 import com.smov.gabriel.orientatree.model.BeaconReached;
+import com.smov.gabriel.orientatree.model.Template;
+import com.smov.gabriel.orientatree.model.TemplateType;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -29,14 +34,19 @@ public class ReachAdapter extends RecyclerView.Adapter<ReachAdapter.MyViewHolder
     private android.app.Activity reachesActivity;
     private int position;
     private String templateID;
+    private Activity activity;
     private ArrayList<BeaconReached> reaches;
+    private Template template;
 
     public ReachAdapter(android.app.Activity reachesActivity, Context context,
-                        ArrayList<BeaconReached> reaches, String templateID){
+                        ArrayList<BeaconReached> reaches, String templateID,
+                        Activity activity, Template template){
         this.context = context;
         this.reachesActivity = reachesActivity;
         this.reaches = reaches;
         this.templateID = templateID;
+        this.activity = activity;
+        this.template = template;
     }
 
     @NonNull
@@ -54,6 +64,7 @@ public class ReachAdapter extends RecyclerView.Adapter<ReachAdapter.MyViewHolder
         this.position = position;
         BeaconReached reach = reaches.get(position);
 
+        // useful IDs
         String beaconID = reach.getBeacon_id();
 
         // pattern to format the our at which the beacon was reached
@@ -61,6 +72,16 @@ public class ReachAdapter extends RecyclerView.Adapter<ReachAdapter.MyViewHolder
         DateFormat df = new SimpleDateFormat(pattern);
 
         holder.reachTime_textView.setText("Alcanzada: " + df.format(reach.getReachMoment()));
+
+        if(template.getType() == TemplateType.EDUCATIVA) {
+            if (!reach.isAnswered()) {
+                holder.reachState_textView.setText("Pendiente");
+            } else {
+                holder.reachState_textView.setText("Respondida");
+            }
+        } else if(template.getType() == TemplateType.DEPORTIVA){
+            holder.reachState_textView.setText("Sin contenido");
+        }
 
         // get the beacon to set the name and the number
         holder.db.collection("templates").document(templateID)
@@ -78,6 +99,24 @@ public class ReachAdapter extends RecyclerView.Adapter<ReachAdapter.MyViewHolder
                         }
                     }
                 });
+
+        holder.row_reach_layout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(template.getType() == TemplateType.EDUCATIVA && !reach.isGoal()) {
+                    // if template DEPORTIVA we don't do anything
+                    // same if it is goal
+                    updateUIChallengeActivity(beaconID, activity);
+                }
+            }
+        });
+    }
+
+    private void updateUIChallengeActivity(String beaconID, Activity activity) {
+        Intent intent = new Intent(context, ChallengeActivity.class);
+        intent.putExtra("beaconID", beaconID);
+        intent.putExtra("activity", activity);
+        reachesActivity.startActivityForResult(intent, 1);
     }
 
     @Override
@@ -92,6 +131,8 @@ public class ReachAdapter extends RecyclerView.Adapter<ReachAdapter.MyViewHolder
 
         FirebaseFirestore db;
 
+        LinearLayout row_reach_layout;
+
         public MyViewHolder(@NonNull @NotNull View itemView) {
             super(itemView);
 
@@ -103,6 +144,7 @@ public class ReachAdapter extends RecyclerView.Adapter<ReachAdapter.MyViewHolder
             reachTitle_textView = itemView.findViewById(R.id.reachTitle_textView);
             reachNumber_textView = itemView.findViewById(R.id.reachNumber_textView);
             reachTime_textView = itemView.findViewById(R.id.reachTime_textView);
+            row_reach_layout = itemView.findViewById(R.id.row_reach_layout);
 
         }
     }

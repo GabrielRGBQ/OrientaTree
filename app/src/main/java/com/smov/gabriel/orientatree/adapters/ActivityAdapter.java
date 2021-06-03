@@ -135,7 +135,7 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
 
         FirebaseFirestore db;
 
-        LinearLayout row_activity_layout; // not sure if needed
+        LinearLayout row_activity_layout;
         TextView title_textView, date_textView, template_textView, role_textView;
         ImageView rowImage_imageView;
 

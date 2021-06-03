@@ -85,6 +85,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
     private void updateUIReaches(Activity activity) {
         Intent intent = new Intent(MapActivity.this, ReachesActivity.class);
         intent.putExtra("activity", activity);
+        intent.putExtra("template", template);
         startActivity(intent);
     }
 

@@ -60,7 +60,7 @@ public class LocationService extends Service {
 
     private static final String TAG = "Location Service";
 
-    private static final float LOCATION_PRECISION = 20000f;
+    private static final float LOCATION_PRECISION = 20f;
 
     private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 3000;
     private static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
@@ -293,7 +293,8 @@ public class LocationService extends Service {
                         // DEBUG
                         Log.d(TAG, "Aún no estamos buscando la meta, y hemos alcanzado una baliza que no es la meta");
                         //
-                        BeaconReached beaconReached = new BeaconReached(current_time, beacon.getBeacon_id()); // create a new BeaconReached
+                        BeaconReached beaconReached = new BeaconReached(current_time, beacon.getBeacon_id(),
+                                false, beacon.isGoal()); // create a new BeaconReached
                         uploadingReach = true; // uploading...
                         db.collection("activities").document(activity.getId())
                                 .collection("participations").document(userID)
@@ -322,7 +323,8 @@ public class LocationService extends Service {
                         // DEBUG
                         Log.d(TAG, "Estamos buscando la meta y la hemos encontrado");
                         //
-                        BeaconReached beaconReached = new BeaconReached(current_time, beacon.getBeacon_id()); // create a new BeaconReached
+                        BeaconReached beaconReached = new BeaconReached(current_time, beacon.getBeacon_id(),
+                                false, beacon.isGoal()); // create a new BeaconReached
                         uploadingReach = true; // uploading...
                         db.collection("activities").document(activity.getId())
                                 .collection("participations").document(userID)
@@ -394,7 +396,8 @@ public class LocationService extends Service {
         float dist = getDistance(lat1, lat2, lng1, lng2);
         if (dist <= LOCATION_PRECISION && !uploadingReach) {
             // if we are close enough and not in the middle of an uploading operation...
-            BeaconReached beaconReached = new BeaconReached(current_time, searchedBeacon.getBeacon_id()); // create a new BeaconReached
+            BeaconReached beaconReached = new BeaconReached(current_time, searchedBeacon.getBeacon_id(),
+                    false, searchedBeacon.isGoal()); // create a new BeaconReached
             uploadingReach = true; // uploading...
             db.collection("activities").document(activity.getId())
                     .collection("participations").document(userID)

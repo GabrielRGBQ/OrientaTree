@@ -37,25 +37,29 @@
                         android:id="@+id/quiz_radio_button_0"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:text="Opción A" />
+                        android:text="Opción A"
+                        android:clickable="false"/>
 
                     <RadioButton
                         android:id="@+id/quiz_radio_button_1"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:text="Opción B" />
+                        android:text="Opción B"
+                        android:clickable="false"/>
 
                     <RadioButton
                         android:id="@+id/quiz_radio_button_2"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:text="Opción C" />
+                        android:text="Opción C"
+                        android:clickable="false"/>
 
                     <RadioButton
                         android:id="@+id/quiz_radio_button_3"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:text="Opción D" />
+                        android:text="Opción D"
+                        android:clickable="false"/>
 
                 </RadioGroup>
 

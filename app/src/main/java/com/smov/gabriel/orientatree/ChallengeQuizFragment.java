@@ -18,8 +18,12 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.smov.gabriel.orientatree.model.BeaconReached;
 
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -35,8 +39,16 @@ public class ChallengeQuizFragment extends Fragment {
     private RadioButton quiz_radioButton_0, quiz_radioButton_1, quiz_radioButton_2, quiz_radioButton_3;
     private RadioGroup quiz_radioGroup;
 
+    private BeaconReached beaconReached;
+
     private int radioButton_selected = 0;
     private boolean givenAnswerIsRight = false;
+
+    // here we store the possible_answers
+    private ArrayList<String> possible_answers;
+
+    // flag to know if we successfully got the possible_answers or not
+    private boolean possible_answers_set = false;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -97,11 +109,56 @@ public class ChallengeQuizFragment extends Fragment {
 
         // set the text for the different options
         if(ca.beacon != null) {
-            quiz_radioButton_0.setText(ca.beacon.getPossible_answers().get(0));
-            quiz_radioButton_1.setText(ca.beacon.getPossible_answers().get(1));
-            quiz_radioButton_2.setText(ca.beacon.getPossible_answers().get(2));
-            quiz_radioButton_3.setText(ca.beacon.getPossible_answers().get(3));
+            possible_answers = ca.beacon.getPossible_answers();
+            if(possible_answers != null) {
+                if(possible_answers.size() == 4) {
+                    quiz_radioButton_0.setText(possible_answers.get(0));
+                    quiz_radioButton_1.setText(possible_answers.get(1));
+                    quiz_radioButton_2.setText(possible_answers.get(2));
+                    quiz_radioButton_3.setText(possible_answers.get(3));
+                    possible_answers_set = true;
+                }
+            }
         }
+
+        // notify the user in case that the different options couldn't be set
+        if(!possible_answers_set) {
+            Toast.makeText(ca, "Algo salió mal al cargar las posibles respuestas", Toast.LENGTH_SHORT).show();
+        }
+
+        // get the reach to check if already answered
+        ca.db.collection("activities").document(ca.activityID)
+                .collection("participations").document(ca.userID)
+                .collection("beaconReaches").document(ca.beacon.getBeacon_id())
+                .get()
+                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                    @Override
+                    public void onSuccess(DocumentSnapshot documentSnapshot) {
+                        beaconReached = documentSnapshot.toObject(BeaconReached.class);
+                        if(beaconReached.isAnswered()) {
+                            // if the reach has already been answered, get what the user answered
+                            // and show some feedback, but without enabling any actions
+                            radioButton_selected = beaconReached.getQuiz_answer();
+                            if(beaconReached.isAnswer_right()) {
+                                showPositiveFeedBack();
+                            } else {
+                                showNegativeFeedBack();
+                            }
+                        } else {
+                            // if the reach has not been answered yet, enable the radio buttons
+                            quiz_radioButton_0.setClickable(true);
+                            quiz_radioButton_1.setClickable(true);
+                            quiz_radioButton_2.setClickable(true);
+                            quiz_radioButton_3.setClickable(true);
+                        }
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull @NotNull Exception e) {
+                        Toast.makeText(ca, "Algo salió mal, vuelve a intentarlo", Toast.LENGTH_SHORT).show();
+                    }
+                });
 
         // radio group listener
         quiz_radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
@@ -160,7 +217,8 @@ public class ChallengeQuizFragment extends Fragment {
                 .collection("participations").document(ca.userID)
                 .collection("beaconReaches").document(ca.beacon.getBeacon_id())
                 .update("answer_right", givenAnswerIsRight,
-                        "quiz_answer", radioButton_selected)
+                        "quiz_answer", radioButton_selected,
+                        "answered", true)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void unused) {
