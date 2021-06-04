@@ -1,10 +1,13 @@
 package com.smov.gabriel.orientatree.adapters;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -17,8 +20,10 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.R;
+import com.smov.gabriel.orientatree.ReachesActivity;
 import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Participation;
+import com.smov.gabriel.orientatree.model.Template;
 import com.smov.gabriel.orientatree.model.User;
 
 import org.jetbrains.annotations.NotNull;
@@ -32,12 +37,19 @@ import de.hdodenhof.circleimageview.CircleImageView;
 public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.MyViewHolder> {
 
     private Context context;
+    private android.app.Activity participantsListActivity;
     private ArrayList<Participation> participants;
     private int position;
+    private Template template;
+    private Activity activity;
 
-    public ParticipantAdapter(Context context, ArrayList<Participation> participants) {
+    public ParticipantAdapter(android.app.Activity pActivity, Context context, ArrayList<Participation> participants,
+                              Template template, Activity activity) {
         this.context = context;
         this.participants = participants;
+        this.template = template;
+        this.activity = activity;
+        this.participantsListActivity = pActivity;
     }
 
     @NonNull
@@ -86,6 +98,25 @@ public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.
                     }
                 });
 
+        holder.row_participant_layout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updateUIReaches(userID);
+            }
+        });
+
+    }
+
+    private void updateUIReaches(String participantID) {
+        if(template != null && activity != null) {
+            Intent intent = new Intent(context, ReachesActivity.class);
+            intent.putExtra("activity", activity);
+            intent.putExtra("template", template);
+            intent.putExtra("participantID", participantID);
+            participantsListActivity.startActivityForResult(intent, 1);
+        } else {
+            Toast.makeText(context, "Algo salió mal al intentar ver la información del participante", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -99,6 +130,8 @@ public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.
 
         FirebaseStorage storage;
         StorageReference storageReference;
+
+        LinearLayout row_participant_layout;
 
         CircleImageView participant_circleImageView;
         TextView email_textView, name_textView, start_textView, finish_textView;
@@ -116,7 +149,7 @@ public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.
             name_textView = itemView.findViewById(R.id.participantName_textView);
             start_textView = itemView.findViewById(R.id.participantStart_row_textView);
             finish_textView = itemView.findViewById(R.id.participantFinish_row_textView);
-
+            row_participant_layout = itemView.findViewById(R.id.row_participant_layout);
         }
     }
 }

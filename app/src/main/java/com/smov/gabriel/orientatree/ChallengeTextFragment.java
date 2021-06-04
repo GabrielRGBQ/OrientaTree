@@ -118,9 +118,11 @@ public class ChallengeTextFragment extends Fragment {
                                displayNegativeFeedBack();
                            }
                         } else {
-                            // if not yet answered, enable actions and continue
-                            challengeAnswer_textInputLayout.setEnabled(true);
-                            challengeText_button.setEnabled(true);
+                            if(!ca.organizer) {
+                                // if not yet answered and we are not the planner enable actions and continue
+                                challengeAnswer_textInputLayout.setEnabled(true);
+                                challengeText_button.setEnabled(true);
+                            }
                         }
                     }
                 })

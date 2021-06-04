@@ -30,6 +30,7 @@ import com.smov.gabriel.orientatree.model.Template;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class ReachesActivity extends AppCompatActivity {
 
@@ -46,8 +47,10 @@ public class ReachesActivity extends AppCompatActivity {
 
     // useful ID strings
     private String activityID;
-    private String userID;
+    private String userID; // currently logged user's ID
     private String templateID;
+    private String participantID; // ID received within the intent
+    // (only used if we are the organizer trying to see certain participant's information)
 
     // Firebase services
     private FirebaseFirestore db;
@@ -75,15 +78,32 @@ public class ReachesActivity extends AppCompatActivity {
         Intent intent = getIntent();
         activity = (Activity) intent.getSerializableExtra("activity");
         template = (Template) intent.getSerializableExtra("template");
+        participantID = intent.getExtras().getString("participantID");
+
+        // get current user id
+        userID = mAuth.getCurrentUser().getUid();
 
         if(activity != null && template != null) {
-            // get the activity and the user's IDs
             activityID = activity.getId();
-            userID = mAuth.getCurrentUser().getUid();
             templateID = activity.getTemplate();
+            String participant_searched;
+            if(activity.getPlanner_id().equals(userID)) {
+                // if we are the organizer
+                if(participantID != null) {
+                    // we should have received from the intent the participant ID
+                    participant_searched = participantID;
+                } else {
+                    // if we haven't, finish and tell the user
+                    Toast.makeText(reachesActivity, "Algo salió mal al mostrar las balizas", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            } else {
+                // if we are not the organizer, then we are a user trying to watch its own beacons
+                participant_searched = userID;
+            }
             // get the participant's reaches with realtime updates
             db.collection("activities").document(activityID)
-                    .collection("participations").document(userID)
+                    .collection("participations").document(participant_searched)
                     .collection("beaconReaches")
                     .addSnapshotListener(new EventListener<QuerySnapshot>() {
                         @Override
@@ -97,8 +117,9 @@ public class ReachesActivity extends AppCompatActivity {
                                 BeaconReached reach = doc.toObject(BeaconReached.class);
                                 reaches.add(reach);
                             }
+                            Collections.sort(reaches, new BeaconReached());
                             reachAdapter = new ReachAdapter(reachesActivity, ReachesActivity.this, reaches,
-                                    templateID, activity, template);
+                                    templateID, activity, template, participant_searched);
                             reaches_recyclerView.setAdapter(reachAdapter);
                             reaches_recyclerView.setLayoutManager(new LinearLayoutManager(ReachesActivity.this));
                         }

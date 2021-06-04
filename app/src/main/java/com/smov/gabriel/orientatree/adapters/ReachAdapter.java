@@ -2,6 +2,8 @@ package com.smov.gabriel.orientatree.adapters;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.smov.gabriel.orientatree.ChallengeActivity;
@@ -37,16 +40,19 @@ public class ReachAdapter extends RecyclerView.Adapter<ReachAdapter.MyViewHolder
     private Activity activity;
     private ArrayList<BeaconReached> reaches;
     private Template template;
+    private String participantID;
 
     public ReachAdapter(android.app.Activity reachesActivity, Context context,
                         ArrayList<BeaconReached> reaches, String templateID,
-                        Activity activity, Template template){
+                        Activity activity, Template template,
+                        String participantID){
         this.context = context;
         this.reachesActivity = reachesActivity;
         this.reaches = reaches;
         this.templateID = templateID;
         this.activity = activity;
         this.template = template;
+        this.participantID = participantID;
     }
 
     @NonNull
@@ -73,16 +79,6 @@ public class ReachAdapter extends RecyclerView.Adapter<ReachAdapter.MyViewHolder
 
         holder.reachTime_textView.setText("Alcanzada: " + df.format(reach.getReachMoment()));
 
-        if(template.getType() == TemplateType.EDUCATIVA) {
-            if (!reach.isAnswered()) {
-                holder.reachState_textView.setText("Pendiente");
-            } else {
-                holder.reachState_textView.setText("Respondida");
-            }
-        } else if(template.getType() == TemplateType.DEPORTIVA){
-            holder.reachState_textView.setText("Sin contenido");
-        }
-
         // get the beacon to set the name and the number
         holder.db.collection("templates").document(templateID)
                 .collection("beacons").document(beaconID)
@@ -94,8 +90,24 @@ public class ReachAdapter extends RecyclerView.Adapter<ReachAdapter.MyViewHolder
                         holder.reachTitle_textView.setText(beacon.getName());
                         if(beacon.isGoal()) {
                             holder.reachNumber_textView.setText("Meta");
+                            holder.reachState_textView.setText("Meta");
+                            holder.row_reach_cardView.setCardBackgroundColor(Color.parseColor("#eeeeee"));
                         } else {
                             holder.reachNumber_textView.setText("Baliza número " + beacon.getNumber());
+                            if(template.getType() == TemplateType.EDUCATIVA) {
+                                if (!reach.isAnswered()) {
+                                    holder.reachState_textView.setText("Pendiente");
+                                } else {
+                                    holder.reachState_textView.setText("Respondida");
+                                    if(reach.isAnswer_right()) {
+                                        holder.row_reach_cardView.setCardBackgroundColor(Color.parseColor("#b9f6ca"));
+                                    } else {
+                                        holder.row_reach_cardView.setCardBackgroundColor(Color.parseColor("#ef9a9a"));
+                                    }
+                                }
+                            } else if(template.getType() == TemplateType.DEPORTIVA){
+                                holder.reachState_textView.setText("Sin contenido");
+                            }
                         }
                     }
                 });
@@ -116,6 +128,7 @@ public class ReachAdapter extends RecyclerView.Adapter<ReachAdapter.MyViewHolder
         Intent intent = new Intent(context, ChallengeActivity.class);
         intent.putExtra("beaconID", beaconID);
         intent.putExtra("activity", activity);
+        intent.putExtra("participantID", participantID);
         reachesActivity.startActivityForResult(intent, 1);
     }
 
@@ -128,6 +141,8 @@ public class ReachAdapter extends RecyclerView.Adapter<ReachAdapter.MyViewHolder
 
         TextView reachState_textView, reachTitle_textView,
             reachNumber_textView, reachTime_textView;
+
+        MaterialCardView row_reach_cardView;
 
         FirebaseFirestore db;
 
@@ -145,6 +160,7 @@ public class ReachAdapter extends RecyclerView.Adapter<ReachAdapter.MyViewHolder
             reachNumber_textView = itemView.findViewById(R.id.reachNumber_textView);
             reachTime_textView = itemView.findViewById(R.id.reachTime_textView);
             row_reach_layout = itemView.findViewById(R.id.row_reach_layout);
+            row_reach_cardView = itemView.findViewById(R.id.row_reach_cardView);
 
         }
     }

@@ -1,8 +1,9 @@
 package com.smov.gabriel.orientatree.model;
 
+import java.util.Comparator;
 import java.util.Date;
 
-public class BeaconReached {
+public class BeaconReached implements Comparator<BeaconReached> {
 
     private Date reachMoment;
     private String beacon_id;
@@ -87,5 +88,14 @@ public class BeaconReached {
 
     public void setGoal(boolean goal) {
         this.goal = goal;
+    }
+
+    @Override
+    public int compare(BeaconReached o1, BeaconReached o2) {
+        if(o1.getReachMoment() != null && o2.getReachMoment() != null) {
+            return o2.getReachMoment().compareTo(o1.getReachMoment());
+        } else {
+            return 0;
+        }
     }
 }

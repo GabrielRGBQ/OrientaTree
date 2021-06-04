@@ -193,6 +193,7 @@ public class OnGoingActivity extends AppCompatActivity {
                                                         start_button.setText("Continuar");
                                                         start_button.setEnabled(true);
                                                         start_button.setVisibility(View.VISIBLE);
+                                                        // TODO: hide fragment
                                                     } else {
                                                         start_button.setEnabled(false);
                                                         start_button.setVisibility(GONE);
@@ -536,6 +537,7 @@ public class OnGoingActivity extends AppCompatActivity {
     private void updateUIParticipants() {
         Intent intent = new Intent(OnGoingActivity.this, ParticipantsListActivity.class);
         intent.putExtra("activity", activity);
+        intent.putExtra("template", template);
         startActivity(intent);
     }
 

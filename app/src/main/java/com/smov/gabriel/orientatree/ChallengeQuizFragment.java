@@ -145,11 +145,14 @@ public class ChallengeQuizFragment extends Fragment {
                                 showNegativeFeedBack();
                             }
                         } else {
-                            // if the reach has not been answered yet, enable the radio buttons
-                            quiz_radioButton_0.setClickable(true);
-                            quiz_radioButton_1.setClickable(true);
-                            quiz_radioButton_2.setClickable(true);
-                            quiz_radioButton_3.setClickable(true);
+                            if(!ca.organizer) {
+                                // if the reach has not been answered yet, and we are not the organizer
+                                // enable the radio buttons
+                                quiz_radioButton_0.setClickable(true);
+                                quiz_radioButton_1.setClickable(true);
+                                quiz_radioButton_2.setClickable(true);
+                                quiz_radioButton_3.setClickable(true);
+                            }
                         }
                     }
                 })
