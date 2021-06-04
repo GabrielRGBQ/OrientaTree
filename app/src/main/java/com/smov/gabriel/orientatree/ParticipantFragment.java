@@ -192,7 +192,12 @@ public class ParticipantFragment extends Fragment {
                                     return;
                                 }
                                 beacons_reached = value.size();
-                                participantBeacons_textView.setText(beacons_reached + "/" + num_beacons);
+                                int show_reaches = beacons_reached;
+                                if(beacons_reached > (num_beacons - 1)) {
+                                    show_reaches = num_beacons - 1;
+                                }
+                                participantBeacons_textView.setText(show_reaches + "/"
+                                        + (num_beacons - 1));
                             }
                         });
             }

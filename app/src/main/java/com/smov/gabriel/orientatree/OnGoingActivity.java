@@ -37,7 +37,6 @@ import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Participation;
 import com.smov.gabriel.orientatree.model.ParticipationState;
 import com.smov.gabriel.orientatree.model.Template;
-import com.smov.gabriel.orientatree.model.TemplateColor;
 import com.smov.gabriel.orientatree.services.LocationService;
 
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +55,7 @@ public class OnGoingActivity extends AppCompatActivity {
     private ImageView onGoing_imageView;
     private TextView type_textView, title_textView, location_textView, template_textView,
             startAndFinish_textView;
-    private MaterialButton norms_button, map_button;
+    private MaterialButton beacons_button, map_button;
     private Button start_button, participants_button;
     private CircularProgressIndicator progressIndicator/*, generalProgressIndicator*/;
 
@@ -120,7 +119,7 @@ public class OnGoingActivity extends AppCompatActivity {
         title_textView = findViewById(R.id.onGoing_title_textView);
         location_textView = findViewById(R.id.onGoing_location_textView);
         template_textView = findViewById(R.id.onGoing_template_textView);
-        norms_button = findViewById(R.id.onGoing_norms_button);
+        beacons_button = findViewById(R.id.onGoing_beacons_button);
         map_button = findViewById(R.id.onGoing_map_button);
         progressIndicator = findViewById(R.id.onGoing_map_progressBar);
         start_button = findViewById(R.id.onGoing_start_button);
@@ -174,6 +173,8 @@ public class OnGoingActivity extends AppCompatActivity {
 
                         if (activity.getParticipants().contains(userID)) {
                             // if logged user is a participant...
+                            beacons_button.setVisibility(View.VISIBLE);
+                            beacons_button.setEnabled(true);
                             db.collection("activities").document(activity.getId())
                                     .collection("participations").document(userID)
                                     .get()
@@ -192,6 +193,7 @@ public class OnGoingActivity extends AppCompatActivity {
                                                         start_button.setText("Continuar");
                                                         start_button.setEnabled(true);
                                                         start_button.setVisibility(View.VISIBLE);
+                                                        // TODO: hide fragment
                                                     } else {
                                                         start_button.setEnabled(false);
                                                         start_button.setVisibility(GONE);
@@ -220,6 +222,8 @@ public class OnGoingActivity extends AppCompatActivity {
                             map_button.setEnabled(true);
                             start_button.setEnabled(false);
                             start_button.setVisibility(GONE);
+                            beacons_button.setVisibility(View.INVISIBLE);
+                            beacons_button.setEnabled(false);
                             participants_button.setVisibility(View.VISIBLE);
                             participants_button.setEnabled(true);
                         }
@@ -259,7 +263,7 @@ public class OnGoingActivity extends AppCompatActivity {
                                         // if successful, launch the map activity passing the reference of the
                                         // file where the map was downloaded
                                         progressIndicator.setVisibility(View.INVISIBLE);
-                                        updateUIMap(localFile, template);
+                                        updateUIMap(localFile, template, activity);
                                     }
                                 })
                                 .addOnFailureListener(new OnFailureListener() {
@@ -274,6 +278,13 @@ public class OnGoingActivity extends AppCompatActivity {
                         showSnackBar("Error al cargar el mapa. Vuelve a intentarlo.");
                     }
                 }
+            }
+        });
+
+        beacons_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updateUIBeacons(activity, template);
             }
         });
 
@@ -515,16 +526,25 @@ public class OnGoingActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void updateUIMap(File map, Template template) {
+    private void updateUIMap(File map, Template template, Activity activity) {
         Intent intent = new Intent(OnGoingActivity.this, MapActivity.class);
         intent.putExtra("map", map);
         intent.putExtra("template", template);
+        intent.putExtra("activity", activity);
         startActivity(intent);
     }
 
     private void updateUIParticipants() {
         Intent intent = new Intent(OnGoingActivity.this, ParticipantsListActivity.class);
         intent.putExtra("activity", activity);
+        intent.putExtra("template", template);
+        startActivity(intent);
+    }
+
+    private void updateUIBeacons(Activity activity, Template template) {
+        Intent intent = new Intent(OnGoingActivity.this, ReachesActivity.class);
+        intent.putExtra("activity", activity);
+        intent.putExtra("template", template);
         startActivity(intent);
     }
 

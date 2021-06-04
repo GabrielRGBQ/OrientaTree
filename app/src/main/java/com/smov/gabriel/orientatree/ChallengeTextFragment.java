@@ -1,7 +1,6 @@
 package com.smov.gabriel.orientatree;
 
 import android.content.DialogInterface;
-import android.graphics.Color;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -19,8 +18,8 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.smov.gabriel.orientatree.model.BeaconReached;
 
 import org.jetbrains.annotations.NotNull;
@@ -38,8 +37,10 @@ public class ChallengeTextFragment extends Fragment {
     private String given_answer;
     private boolean givenAnswerIsRight;
 
+    private BeaconReached beaconReached;
+
     private TextInputLayout challengeAnswer_textInputLayout;
-    private Button challengeText_button, challengeText_continueButton;
+    private Button challengeText_button;
     private CircularProgressIndicator challengeText_progressIndicator;
 
     // TODO: Rename parameter arguments, choose names that match
@@ -97,7 +98,40 @@ public class ChallengeTextFragment extends Fragment {
         challengeAnswer_textInputLayout = view.findViewById(R.id.challengeAnswer_textInputLayout);
         challengeText_button = view.findViewById(R.id.challengeText_button);
         challengeText_progressIndicator = view.findViewById(R.id.challengeText_progressIndicator);
-        challengeText_continueButton = view.findViewById(R.id.challengeText_continueButton);
+
+        // get the reach to check if already answered
+        ca.db.collection("activities").document(ca.activityID)
+                .collection("participations").document(ca.userID)
+                .collection("beaconReaches").document(ca.beacon.getBeacon_id())
+                .get()
+                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                    @Override
+                    public void onSuccess(DocumentSnapshot documentSnapshot) {
+                        beaconReached = documentSnapshot.toObject(BeaconReached.class);
+                        if(beaconReached.isAnswered()) {
+                            // if already answered, don't enable actions and so the answer given instead
+                           challengeAnswer_textInputLayout.getEditText()
+                                   .setText(beaconReached.getWritten_answer());
+                           if(beaconReached.isAnswer_right()) {
+                               displayPositiveFeedBack();
+                           } else {
+                               displayNegativeFeedBack();
+                           }
+                        } else {
+                            if(!ca.organizer) {
+                                // if not yet answered and we are not the planner enable actions and continue
+                                challengeAnswer_textInputLayout.setEnabled(true);
+                                challengeText_button.setEnabled(true);
+                            }
+                        }
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull @NotNull Exception e) {
+                        Toast.makeText(ca, "Algo salió mal, vuelve a intentarlo", Toast.LENGTH_SHORT).show();
+                    }
+                });
 
         // button listener
         challengeText_button.setOnClickListener(new View.OnClickListener() {
@@ -154,13 +188,6 @@ public class ChallengeTextFragment extends Fragment {
             }
         });
 
-        challengeText_continueButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ca.finish();
-            }
-        });
-
         return view;
     }
 
@@ -191,7 +218,8 @@ public class ChallengeTextFragment extends Fragment {
                 .collection("participations").document(ca.userID)
                 .collection("beaconReaches").document(ca.beacon.getBeacon_id())
                 .update("answer_right", givenAnswerIsRight,
-                        "written_answer", given_answer)
+                        "written_answer", given_answer,
+                        "answered", true)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void unused) {
@@ -199,13 +227,11 @@ public class ChallengeTextFragment extends Fragment {
                         // hide the submit button and show the continue one
                         challengeText_button.setEnabled(false);
                         challengeAnswer_textInputLayout.setEnabled(false);
-                        challengeText_button.setVisibility(View.GONE);
-                        challengeText_continueButton.setVisibility(View.VISIBLE);
                         // give some feedback
                         if(givenAnswerIsRight) {
                             displayPositiveFeedBack();
                         } else {
-                            displayNegativaFeedBack();
+                            displayNegativeFeedBack();
                         }
                     }
                 })
@@ -218,7 +244,7 @@ public class ChallengeTextFragment extends Fragment {
                 });
     }
 
-    private void displayNegativaFeedBack() {
+    private void displayNegativeFeedBack() {
         challengeAnswer_textInputLayout.setErrorIconDrawable(R.drawable.ic_close);
         challengeAnswer_textInputLayout.setError("La respuesta correcta es: " + right_answer);
         challengeAnswer_textInputLayout.setErrorEnabled(true);

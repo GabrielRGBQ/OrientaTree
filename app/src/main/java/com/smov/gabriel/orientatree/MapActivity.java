@@ -1,6 +1,7 @@
 package com.smov.gabriel.orientatree;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
 
 import android.content.Intent;
@@ -8,6 +9,8 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.location.LocationServices;
@@ -22,29 +25,61 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.button.MaterialButton;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Map;
+import com.smov.gabriel.orientatree.model.Participation;
 import com.smov.gabriel.orientatree.model.Template;
+import com.smov.gabriel.orientatree.model.TemplateType;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MapActivity extends FragmentActivity implements OnMapReadyCallback/*, GoogleMap.OnMapLongClickListener*/ {
 
-    private static final String TAG = "MapsActivity";
+    private TextView reachesMap_textView, map_timer_textView;
+    private MaterialButton mapBeacons_button;
 
     private GoogleMap mMap;
 
     private Map templateMap;
+    private Participation participation;
 
     private Template template;
+    private Activity activity;
+
+    // to format the way hours are displayed
+    private static String pattern_hour = "HH:mm";
+    private static DateFormat df_hour = new SimpleDateFormat(pattern_hour);
+
+    private Timer timer;
+    private TimerTask timerTask;
+    private Double time = 0.0;
+
+    private int num_beacons; // number of beacons that this activity has
+    private int beacons_reached; // number of beacons that have already been reached by the participant
+
+    // useful IDs
+    private String userID;
 
     // file containing the map
     private File mapFile;
 
+    // Firebase services
     private FirebaseFirestore db;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,13 +90,130 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        // initialize Firebase services
         db = FirebaseFirestore.getInstance();
+        mAuth = FirebaseAuth.getInstance();
+
+        // get current user's ID
+        userID = mAuth.getCurrentUser().getUid();
 
         //get map file
         Intent intent = getIntent();
         mapFile = (File) intent.getSerializableExtra("map");
         template = (Template) intent.getSerializableExtra("template");
+        activity = (Activity) intent.getSerializableExtra("activity");
 
+        // bind UI elements
+        mapBeacons_button = findViewById(R.id.beaconsMap_button);
+        reachesMap_textView = findViewById(R.id.reachesMap_textView);
+        map_timer_textView = findViewById(R.id.map_timer_textView);
+
+        // set listener to the beacons button
+        mapBeacons_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updateUIReaches(activity);
+            }
+        });
+
+        // realtime listener to display the timer
+        if (activity != null && template != null && userID != null
+                /*&& template.getType() == TemplateType.DEPORTIVA*/) {
+            db.collection("activities").document(activity.getId())
+                    .collection("participations").document(userID)
+                    .addSnapshotListener(new EventListener<DocumentSnapshot>() {
+                        @Override
+                        public void onEvent(@Nullable @org.jetbrains.annotations.Nullable DocumentSnapshot value, @Nullable @org.jetbrains.annotations.Nullable FirebaseFirestoreException error) {
+                            if (error != null) {
+                                return;
+                            }
+                            if (value != null && value.exists()) {
+                                participation = value.toObject(Participation.class);
+                                if (participation != null) {
+                                    Date current_time = new Date(System.currentTimeMillis());
+                                    if (participation.getStartTime() != null) {
+                                        Date start_time = participation.getStartTime();
+                                        switch (participation.getState()) {
+                                            case NOT_YET:
+                                                break;
+                                            case NOW:
+                                                // taking part now, so we display the current time record
+                                                long diff_to_now = Math.abs(start_time.getTime() - current_time.getTime()) / 1000;
+                                                time = (double) diff_to_now;
+                                                // set the timer
+                                                if (time < 86400) { // the maximum time it can display is 23:59:59...
+                                                    timer = new Timer();
+                                                    timerTask = new TimerTask() {
+                                                        @Override
+                                                        public void run() {
+                                                            MapActivity.this.runOnUiThread(new Runnable() {
+                                                                @Override
+                                                                public void run() {
+                                                                    time++;
+                                                                    map_timer_textView.setText(getTimerText());
+                                                                }
+                                                            });
+                                                        }
+
+                                                    };
+                                                    timer.scheduleAtFixedRate(timerTask, 0, 1000);
+                                                }
+                                                break;
+                                            case FINISHED:
+                                                // participation finished, so we show the total time (static, not counting)
+                                                if (timerTask != null) {
+                                                    // stop the timer
+                                                    timerTask.cancel();
+                                                }
+                                                if (participation.getFinishTime() != null) {
+                                                    Date finish_time = participation.getFinishTime();
+                                                    long diff_to_finish = Math.abs(start_time.getTime() - finish_time.getTime()) / 1000;
+                                                    double total_time = (double) diff_to_finish;
+                                                    map_timer_textView.setText(getTimerText(total_time));
+                                                }
+                                                break;
+                                            default:
+                                                break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+        }
+
+        // realtime listener to display the number of beacons already reached
+        if (activity != null && template != null) {
+            if (template.getBeacons() != null) {
+                num_beacons = template.getBeacons().size();
+                db.collection("activities").document(activity.getId())
+                        .collection("participations").document(userID)
+                        .collection("beaconReaches")
+                        .addSnapshotListener(new EventListener<QuerySnapshot>() {
+                            @Override
+                            public void onEvent(@Nullable QuerySnapshot value,
+                                                @Nullable FirebaseFirestoreException e) {
+                                if (e != null) {
+                                    return;
+                                }
+                                beacons_reached = value.size();
+                                int show_reaches = beacons_reached;
+                                if (beacons_reached > (num_beacons - 1)) {
+                                    show_reaches = num_beacons - 1;
+                                }
+                                reachesMap_textView.setText(show_reaches + "/"
+                                        + (num_beacons - 1));
+                            }
+                        });
+            }
+        }
+    }
+
+    private void updateUIReaches(Activity activity) {
+        Intent intent = new Intent(MapActivity.this, ReachesActivity.class);
+        intent.putExtra("activity", activity);
+        intent.putExtra("template", template);
+        startActivity(intent);
     }
 
     /**
@@ -83,15 +235,13 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
         try {
             boolean success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style));
             if (!success) {
-                // TODO: handle this
-                Toast.makeText(this, "Style parsing failed", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Algo salió mal al configurar el mapa", Toast.LENGTH_SHORT).show();
             }
         } catch (Resources.NotFoundException e) {
-            // TODO: handle this
-            Toast.makeText(this, "Can't find parsing file", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Algo salió mal al configurar el mapa", Toast.LENGTH_SHORT).show();
         }
 
-        if(template != null && mapFile != null) {
+        if (template != null && mapFile != null) {
             db.collection("maps").document(template.getMap_id())
                     .get()
                     .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
@@ -136,12 +286,10 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
                                     new LatLng(templateMap.getMap_corners().get(1).getLatitude(),
                                             templateMap.getMap_corners().get(1).getLongitude())  // NE bounds
                             );
-
                             mMap.setLatLngBoundsForCameraTarget(map_bounds);
                         }
                     });
         } else {
-            // TODO: handle this
             Toast.makeText(this, "Algo salió mal al cargar el mapa", Toast.LENGTH_SHORT).show();
         }
     }
@@ -184,8 +332,30 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
             o2.inSampleSize = scale;
             return BitmapFactory.decodeStream(new FileInputStream(f), null, o2);
         } catch (FileNotFoundException e) {
-            // TODO: handle the exception
+            Toast.makeText(this, "Algo salió mal al cargar el mapa", Toast.LENGTH_SHORT).show();
         }
         return null;
+    }
+
+    // used when we need a timer because the participation is not finished
+    private String getTimerText() {
+        int rounded = (int) Math.round(time);
+        int seconds = ((rounded % 86400) % 3600) % 60;
+        int minutes = ((rounded % 86400) % 3600) / 60;
+        int hours = ((rounded % 86400) / 3600);
+        return formatTime(seconds, minutes, hours);
+    }
+
+    // used when the activity is already finished, and we do not need a timer any more
+    private String getTimerText(double time) {
+        int rounded = (int) Math.round(time);
+        int seconds = ((rounded % 86400) % 3600) % 60;
+        int minutes = ((rounded % 86400) % 3600) / 60;
+        int hours = ((rounded % 86400) / 3600);
+        return formatTime(seconds, minutes, hours);
+    }
+
+    private String formatTime(int seconds, int minutes, int hours) {
+        return String.format("%02d", hours) + ":" + String.format("%02d", minutes) + ":" + String.format("%02d", seconds);
     }
 }

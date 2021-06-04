@@ -1,9 +1,11 @@
 package com.smov.gabriel.orientatree;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -20,8 +22,6 @@ import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Beacon;
 import com.smov.gabriel.orientatree.model.Template;
 
-import uk.co.senab.photoview.PhotoViewAttacher;
-
 public class ChallengeActivity extends AppCompatActivity {
 
     private ImageView challenge_imageView;
@@ -33,6 +33,7 @@ public class ChallengeActivity extends AppCompatActivity {
     private Activity activity;
     Beacon beacon;
     private Template template;
+    boolean organizer = false; // flag to signal if the logged user is the organizer of the activity
 
     // some useful IDs
     private String beaconID;
@@ -61,13 +62,26 @@ public class ChallengeActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         userID = mAuth.getCurrentUser().getUid();
 
-        // get the beacon data from the intent
+        // get data from the intent
         beaconID = getIntent().getExtras().getString("beaconID");
-        //templateID = getIntent().getExtras().getString("templateID");
         activity = (Activity) getIntent().getSerializableExtra("activity");
         if(activity != null) {
             templateID = activity.getTemplate();
             activityID = activity.getId();
+        }
+        String tempUserID = getIntent().getExtras().getString("participantID");
+        if(activity.getPlanner_id().equals(userID)) {
+            // if the current user is the organizer...
+            organizer = true;
+            if(tempUserID != null) {
+                // if we got the participant id from the intent right...
+                userID = tempUserID;
+            } else {
+                Toast.makeText(this, "Algo salió mal al obtener los datos", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        } else {
+            organizer = false;
         }
 
         // set the toolbar
@@ -80,11 +94,6 @@ public class ChallengeActivity extends AppCompatActivity {
         challengeTitle_textView = findViewById(R.id.challengeTitle_textView);
         challengeText_textView = findViewById(R.id.challengeText_textView);
         challengeQuestion_textView = findViewById(R.id.challengeQuestion_textView);
-
-        // allow zooming the image view
-        PhotoViewAttacher pAttacher;
-        pAttacher = new PhotoViewAttacher(challenge_imageView);
-        pAttacher.update();
 
         // get the beacon from Firestore using the data that we received from the intent
         if(beaconID != null && templateID != null) {
@@ -151,5 +160,16 @@ public class ChallengeActivity extends AppCompatActivity {
                 .setReorderingAllowed(true)
                 .add(R.id.challenge_fragmentContainer, ChallengeQuizFragment.class, null)
                 .commit();
+    }
+
+    // allow to go back when pressing the AppBar back arrow
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                this.finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

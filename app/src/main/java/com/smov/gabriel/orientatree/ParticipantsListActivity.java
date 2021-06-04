@@ -19,6 +19,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.smov.gabriel.orientatree.adapters.ParticipantAdapter;
 import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Participation;
+import com.smov.gabriel.orientatree.model.Template;
 
 import java.util.ArrayList;
 
@@ -27,10 +28,14 @@ public class ParticipantsListActivity extends AppCompatActivity {
     private Toolbar toolbar;
 
     private Activity activity;
+    private Template template;
 
     private RecyclerView participantsList_recyclerView;
     private ParticipantAdapter participantAdapter;
     private ArrayList<Participation> participations;
+
+    // needed to pass it to the adapter so that cards can be clicked and head to a new activity
+    private ParticipantsListActivity participantsListActivity;
 
     private FirebaseFirestore db;
 
@@ -39,10 +44,15 @@ public class ParticipantsListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_participants_list);
 
+        // initializing Firebase services
         db = FirebaseFirestore.getInstance();
 
+        // binding interface elements
         participantsList_recyclerView = findViewById(R.id.participantsList_recyclerView);
 
+        participantsListActivity = (ParticipantsListActivity) this;
+
+        // setting the AppBar
         toolbar = findViewById(R.id.participantsList_toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -50,8 +60,9 @@ public class ParticipantsListActivity extends AppCompatActivity {
         // get the activity
         Intent intent = getIntent();
         activity = (Activity) intent.getSerializableExtra("activity");
+        template = (Template) intent.getSerializableExtra("template");
 
-        if(activity != null) {
+        if(activity != null && template != null) {
             db.collection("activities").document(activity.getId())
                     .collection("participations")
                     .addSnapshotListener(new EventListener<QuerySnapshot>() {
@@ -66,7 +77,8 @@ public class ParticipantsListActivity extends AppCompatActivity {
                                 Participation participation = doc.toObject(Participation.class);
                                 participations.add(participation);
                             }
-                            participantAdapter = new ParticipantAdapter(ParticipantsListActivity.this, participations);
+                            participantAdapter = new ParticipantAdapter(participantsListActivity, ParticipantsListActivity.this,
+                                    participations, template, activity);
                             participantsList_recyclerView.setAdapter(participantAdapter);
                             participantsList_recyclerView.setLayoutManager(new LinearLayoutManager(ParticipantsListActivity.this));
                         }

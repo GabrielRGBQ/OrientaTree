@@ -99,12 +99,14 @@
                     android:textAllCaps="true" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/onGoing_norms_button"
+                    android:id="@+id/onGoing_beacons_button"
                     style="?attr/borderlessButtonStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Ver normas"
-                    android:textAllCaps="true" />
+                    android:text="Balizas"
+                    android:textAllCaps="true"
+                    android:enabled="false"
+                    android:visibility="invisible"/>
 
                 <com.google.android.material.progressindicator.CircularProgressIndicator
                     android:id="@+id/onGoing_map_progressBar"

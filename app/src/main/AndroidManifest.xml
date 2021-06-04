@@ -19,10 +19,14 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.OrientaTree">
-        <activity android:name=".ChallengeActivity"
+        <activity android:name=".ReachesActivity"
             android:screenOrientation="portrait"></activity>
-        <activity android:name=".ParticipantsListActivity"
-            android:screenOrientation="portrait"/>
+        <activity
+            android:name=".ChallengeActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ParticipantsListActivity"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".OnGoingActivity"
             android:parentActivityName=".HomeActivity"
@@ -42,7 +46,8 @@
         <activity
             android:name=".MapActivity"
             android:label="@string/title_activity_map"
-            android:parentActivityName=".OnGoingActivity" />
+            android:parentActivityName=".OnGoingActivity"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".InfoActivityActivity"
             android:parentActivityName=".HomeActivity"
