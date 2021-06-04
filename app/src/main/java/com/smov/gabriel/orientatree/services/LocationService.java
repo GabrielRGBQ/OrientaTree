@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.location.Location;
+import android.media.AudioAttributes;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
@@ -60,9 +61,9 @@ public class LocationService extends Service {
 
     private static final String TAG = "Location Service";
 
-    private static final float LOCATION_PRECISION = 20f;
+    private static final float LOCATION_PRECISION = 20000f;
 
-    private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 3000;
+    private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 10000;
     private static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
             UPDATE_INTERVAL_IN_MILLISECONDS / 2;
 
@@ -228,7 +229,6 @@ public class LocationService extends Service {
                         .addOnSuccessListener(new OnSuccessListener<Void>() {
                             @Override
                             public void onSuccess(Void aVoid) {
-                                // TODO: special notification. No more time. Actually, this should be done with CLOUD FUNCTION
                                 // DEBUG
                                 Log.d(TAG, "Se acabó el tiempo. Terminando la actividad...");
                                 //
@@ -252,7 +252,6 @@ public class LocationService extends Service {
                             .addOnSuccessListener(new OnSuccessListener<Void>() {
                                 @Override
                                 public void onSuccess(Void aVoid) {
-                                    // TODO: special notification. All the beacons reached
                                     // DEBUG
                                     Log.d(TAG, "Actividad terminada. Todas las balizas alcanzadas");
                                     //
@@ -349,7 +348,6 @@ public class LocationService extends Service {
                                                         Log.d(TAG, "Finalización anotada. Terminando el servicio...");
                                                         //
                                                         uploadingReach = false; // not uploading any more
-                                                        // TODO: special notification. All beacons reached
                                                         sendBeaconNotification(beacon, activity);
                                                         stopSelf();
                                                     }
@@ -425,7 +423,6 @@ public class LocationService extends Service {
                                                 Log.d(TAG, "Finalización anotada. Terminando el servicio...");
                                                 //
                                                 uploadingReach = false; // not uploading any more
-                                                // TODO: special notification. All beacons reached
                                                 sendBeaconNotification(searchedBeacon, activity);
                                                 stopSelf();
                                             }
@@ -456,11 +453,12 @@ public class LocationService extends Service {
     // displays the notification of the foreground service
     private void startMyOwnForeground() {
 
-        String ON_GOING_NOTIFICATION_CHANNEL_ID = "onGoing.orientatree";
+        String ON_GOING_NOTIFICATION_CHANNEL_ID = "orientatree.foregroundService";
+        int ON_GOING_NOTIFICATION_CHANNEL_NUMBER = 1111;
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            String channelName = "Current activity";
-            String description = "This is the notification that is displayed during the time when the user is taking part in an activity";
+            String channelName = "Rastreo de la ubicación";
+            String description = "Notificación que se muestra mientras el el servicio que rastrea la ubicación está en marcha";
             int importance = NotificationManager.IMPORTANCE_LOW;
             NotificationChannel channel = new NotificationChannel(ON_GOING_NOTIFICATION_CHANNEL_ID, channelName, importance);
             channel.setDescription(description);
@@ -469,89 +467,85 @@ public class LocationService extends Service {
 
             NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, ON_GOING_NOTIFICATION_CHANNEL_ID);
             Notification notification = notificationBuilder.setOngoing(true)
-                    .setContentTitle("Título de la actividad")
-                    .setContentText("Algo de texto y cronómetro")
+                    .setContentTitle("Participando en la actividad")
+                    .setContentText("Rastreando la ubicación en busca de balizas cercanas")
                     .setSmallIcon(R.drawable.ic_map)
                     .setColor(getColor(R.color.primary_color))
                     .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                    .setPriority(NotificationManager.IMPORTANCE_LOW)
                     .build();
 
-            startForeground(2, notification);
+            //startForeground(2, notification);
+            startForeground(ON_GOING_NOTIFICATION_CHANNEL_NUMBER, notification);
         } else {
             Notification notification =
                     new Notification.Builder(this, ON_GOING_NOTIFICATION_CHANNEL_ID)
-                            .setContentTitle("Título")
-                            .setContentText("Descripción")
+                            .setContentTitle("Participando en la actividad")
+                            .setContentText("Rastreando la ubicación en busca de balizas cercanas")
                             .setSmallIcon(R.drawable.ic_map)
                             .setColor(getColor(R.color.primary_color))
+                            .setPriority(Notification.PRIORITY_LOW)
                             .build();
-            startForeground(1, notification);
+            //startForeground(1, notification);
+            startForeground(ON_GOING_NOTIFICATION_CHANNEL_NUMBER + 1, notification);
         }
     }
 
     // send the notification of a regular beacon
     private void sendBeaconNotification(Beacon beacon, Activity activity) {
-        // 1 create the channel if needed, and set the intent for the action
-        String BEACON_NOTIFICATION_CHANNEL_ID = "beacon.orientatree"; // name of the channel for beacon notifications
 
-        // Create an explicit intent for an Activity in your app
-        //Intent intent = new Intent(this, BeaconContentActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        Intent intent = new Intent(this, ChallengeActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        intent.putExtra("beaconID", beacon.getBeacon_id());
-        //intent.putExtra("templateID", activity.getTemplate());
-        intent.putExtra("activity", activity);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-        stackBuilder.addNextIntentWithParentStack(intent);
-        //PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        PendingIntent pendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+        // 1 create the channel if needed, and set the intent for the action
+        String BEACON_NOTIFICATION_CHANNEL_ID = "orientatree.beaconNotification"; // name of the channel for beacon notifications
+
+        String notification_text;
+        if(beacon.isGoal()) {
+            notification_text = "Has llegado a la meta. Actividad finalizada.";
+        } else {
+            notification_text = "Has alcanzado la baliza " + beacon.getName();
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = "Notificaciones balizas";
+            CharSequence name = "Notificaciones de llegada a las balizas";
             String description = "Notificaciones que aparecen al llegar a una baliza";
             int importance = NotificationManager.IMPORTANCE_HIGH;
             NotificationChannel channel = new NotificationChannel(BEACON_NOTIFICATION_CHANNEL_ID, name, importance);
             channel.setDescription(description);
+            Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .build();
+            channel.setSound(alarmSound, audioAttributes);
+            channel.enableLights(true);
+            channel.setLightColor(getColor(R.color.secondary_color));
+            channel.enableVibration(true);
+            channel.setVibrationPattern(new long[]{1000, 1000, 1000, 1000, 1000, 1000});
             // Register the channel with the system; you can't change the importance
             // or other notification behaviors after this
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
 
-            // 2 create the notification
+            // 2.0 create the notification
             NotificationCompat.Builder builder = new NotificationCompat.Builder(this, BEACON_NOTIFICATION_CHANNEL_ID)
                     .setSmallIcon(R.drawable.ic_flag)
                     .setColor(getColor(R.color.secondary_color))
-                    .setContentTitle("Baliza " + beacon.getName())
-                    //.setContentIntent(pendingIntent)
+                    .setContentTitle(beacon.getName())
                     .setAutoCancel(true)
-                    .setVibrate(new long[]{1000, 1000, 1000, 1000, 1000})
-                    .setLights(getColor(R.color.primary_color), 3000, 3000)
-                    .setFullScreenIntent(pendingIntent, true)
-                    .setContentText("Ya puedes ver el contenido de la baliza");
-            Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-            builder.setSound(alarmSound);
+                    .setLights(getColor(R.color.secondary_color), 3000, 3000)
+                    .setContentText(notification_text);
 
-            // 3 show the notification
+            // 3.0 show the notification
             notificationManager.notify(beacon.getNumber(), builder.build());
-            /*Vibrator vibrator = (Vibrator) this.getSystemService(Context.VIBRATOR_SERVICE);
-            vibrator.vibrate(new long[] {1000, 100, 1000, 100, 1000}, 1);
-            Uri uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-            Ringtone ringtone = RingtoneManager.getRingtone(this, uri);
-            ringtone.play();*/
+
         } else {
             // 2.1 create the notification
             NotificationCompat.Builder builder = new NotificationCompat.Builder(this, BEACON_NOTIFICATION_CHANNEL_ID)
                     .setSmallIcon(R.drawable.ic_flag)
                     .setColor(getColor(R.color.secondary_color))
-                    .setContentTitle("Baliza " + beacon.getName())
-                    .setContentText("Ya puedes ver el contenido de la baliza")
-                    .setContentIntent(pendingIntent)
+                    .setContentTitle(beacon.getName())
+                    .setContentText(notification_text)
                     .setAutoCancel(true)
                     .setVibrate(new long[]{1000, 1000, 1000, 1000, 1000})
-                    .setLights(getColor(R.color.primary_color), 3000, 3000)
-                    .setFullScreenIntent(pendingIntent, true)
+                    .setLights(getColor(R.color.secondary_color), 3000, 3000)
                     .setPriority(NotificationCompat.PRIORITY_HIGH);
             Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
             builder.setSound(alarmSound);
