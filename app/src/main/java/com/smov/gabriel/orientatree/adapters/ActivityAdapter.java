@@ -24,6 +24,7 @@ import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.HomeActivity;
 import com.smov.gabriel.orientatree.InfoActivityActivity;
 import com.smov.gabriel.orientatree.MapActivity;
+import com.smov.gabriel.orientatree.NowActivity;
 import com.smov.gabriel.orientatree.OnGoingActivity;
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.model.Activity;
@@ -171,7 +172,8 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
     }
 
     private void updateUIOnGoingActivity(Activity activity) {
-        Intent intent = new Intent(context, OnGoingActivity.class);
+        //Intent intent = new Intent(context, OnGoingActivity.class);
+        Intent intent = new Intent(context, NowActivity.class);
         intent.putExtra("activity", activity);
         homeActivity.startActivityForResult(intent, 1); // this is to allow us to come back from the activity
     }
