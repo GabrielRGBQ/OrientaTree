@@ -25,7 +25,6 @@
                     android:id="@+id/now_toolbar"
                     android:layout_width="match_parent"
                     android:layout_height="?attr/actionBarSize"
-                    app:title="Actividad en curso"
                     app:titleTextColor="@color/black">
 
                 </androidx.appcompat.widget.Toolbar>
@@ -190,8 +189,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:visibility="gone"
-            android:indeterminate="true" />
+            android:indeterminate="true"
+            android:visibility="gone" />
 
         <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
             android:id="@+id/nowParticipant_extendedFab"
@@ -205,7 +204,7 @@
             app:icon="@drawable/ic_play" />
 
         <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-            android:id="@+id/nowOrganizer_extendedFab"
+            android:id="@+id/nowSeeParticipants_extendedFab"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|center"

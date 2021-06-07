@@ -15,6 +15,8 @@ public class Template implements Serializable {
     private String description;
     private String norms_id;
     private String map_id;
+    private double start_lat;
+    private double start_lng;
 
     private ArrayList<String> beacons;
 
@@ -23,7 +25,8 @@ public class Template implements Serializable {
     }
 
     public Template(String template_id, String name, TemplateType type, TemplateColor color, String location,
-                    String description, String norms_id, String map_id) {
+                    String description, String norms_id, String map_id,
+                    double start_lat, double start_lng) {
         this.template_id = template_id;
         this.name = name;
         this.type = type;
@@ -33,6 +36,8 @@ public class Template implements Serializable {
         this.norms_id = norms_id;
         beacons = new ArrayList<>();
         this.map_id = map_id;
+        this.start_lat = start_lat;
+        this.start_lng = start_lng;
     }
 
     public TemplateType getType() {
@@ -105,5 +110,21 @@ public class Template implements Serializable {
 
     public void setMap_id(String map_id) {
         this.map_id = map_id;
+    }
+
+    public double getStart_lat() {
+        return start_lat;
+    }
+
+    public void setStart_lat(double start_lat) {
+        this.start_lat = start_lat;
+    }
+
+    public double getStart_lng() {
+        return start_lng;
+    }
+
+    public void setStart_lng(double start_lng) {
+        this.start_lng = start_lng;
     }
 }
