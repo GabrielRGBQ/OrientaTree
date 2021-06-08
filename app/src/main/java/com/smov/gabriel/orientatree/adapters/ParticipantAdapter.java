@@ -15,6 +15,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
@@ -69,6 +71,9 @@ public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.
         Participation participation = participants.get(position);
         String userID = participation.getParticipant();
 
+        FirebaseUser current_user = holder.mAuth.getCurrentUser();
+        String current_userID = current_user.getUid();
+
         // formatting date in order to display it on card
         String pattern = "HH:mm:ss";
         DateFormat df_hour = new SimpleDateFormat(pattern);
@@ -101,21 +106,22 @@ public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.
         holder.row_participant_layout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                updateUIReaches(userID);
+                updateUIReaches(userID, current_userID);
             }
         });
 
     }
 
-    private void updateUIReaches(String participantID) {
-        if(template != null && activity != null) {
+    // update UI only if we are the participant, or we are the organizer of the activity
+    private void updateUIReaches(String participantID, String current_userID) {
+        if(template != null && activity != null
+                && (participantID.equals(current_userID)
+                    || current_userID.equals(activity.getPlanner_id()))) {
             Intent intent = new Intent(context, ReachesActivity.class);
             intent.putExtra("activity", activity);
             intent.putExtra("template", template);
             intent.putExtra("participantID", participantID);
             participantsListActivity.startActivityForResult(intent, 1);
-        } else {
-            Toast.makeText(context, "Algo salió mal al intentar ver la información del participante", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -127,6 +133,8 @@ public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.
     public class MyViewHolder extends RecyclerView.ViewHolder {
 
         FirebaseFirestore db;
+
+        FirebaseAuth mAuth;
 
         FirebaseStorage storage;
         StorageReference storageReference;
@@ -140,6 +148,8 @@ public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.
             super(itemView);
 
             db = FirebaseFirestore.getInstance();
+
+            mAuth = FirebaseAuth.getInstance();
 
             storage = FirebaseStorage.getInstance();
             storageReference = storage.getReference();

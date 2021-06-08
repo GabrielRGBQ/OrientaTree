@@ -1,8 +1,9 @@
 package com.smov.gabriel.orientatree.model;
 
+import java.util.Comparator;
 import java.util.Date;
 
-public class Participation {
+public class Participation implements Comparator<Participation> {
 
     private String participant;
     private ParticipationState state = ParticipationState.NOT_YET;
@@ -47,6 +48,12 @@ public class Participation {
 
     public void setFinishTime(Date finishTime) {
         this.finishTime = finishTime;
+    }
+
+    @Override
+    public int compare(Participation o1, Participation o2) {
+        int res = 0;
+        return 0;
     }
 }
 

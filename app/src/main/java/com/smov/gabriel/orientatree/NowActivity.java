@@ -226,7 +226,11 @@ public class NowActivity extends AppCompatActivity {
                             template = documentSnapshot.toObject(Template.class);
                             if (template != null) {
                                 // get the data from the template
-                                nowType_textView.setText(template.getType() + " " + template.getColor());
+                                nowType_textView.setText(template.getType().toString());
+                                if(template.getType() == TemplateType.EDUCATIVA &&
+                                        template.getColor() != null) {
+                                    nowType_textView.append(" " + template.getColor());
+                                }
                                 nowDescription_textView.setText(template.getDescription());
                                 nowTemplate_textView.append(template.getName());
                                 nowLocation_textView.append(template.getLocation());
