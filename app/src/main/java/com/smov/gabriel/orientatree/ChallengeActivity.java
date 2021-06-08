@@ -30,7 +30,7 @@ public class ChallengeActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
 
-    private Activity activity;
+    Activity activity;
     Beacon beacon;
     private Template template;
     boolean organizer = false; // flag to signal if the logged user is the organizer of the activity

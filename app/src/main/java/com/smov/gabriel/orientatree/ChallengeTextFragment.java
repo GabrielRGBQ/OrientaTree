@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import java.text.Normalizer;
+import java.util.Date;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -119,9 +120,13 @@ public class ChallengeTextFragment extends Fragment {
                            }
                         } else {
                             if(!ca.organizer) {
-                                // if not yet answered and we are not the planner enable actions and continue
-                                challengeAnswer_textInputLayout.setEnabled(true);
-                                challengeText_button.setEnabled(true);
+                                Date current_time = new Date(System.currentTimeMillis());
+                                if(current_time.before(ca.activity.getFinishTime())) {
+                                    // if not yet answered and we are not the planner,
+                                    // and the activity didn't finish yet then enable actions and continue
+                                    challengeAnswer_textInputLayout.setEnabled(true);
+                                    challengeText_button.setEnabled(true);
+                                }
                             }
                         }
                     }
@@ -224,7 +229,6 @@ public class ChallengeTextFragment extends Fragment {
                     @Override
                     public void onSuccess(Void unused) {
                         challengeText_progressIndicator.setVisibility(View.GONE);
-                        // hide the submit button and show the continue one
                         challengeText_button.setEnabled(false);
                         challengeAnswer_textInputLayout.setEnabled(false);
                         // give some feedback

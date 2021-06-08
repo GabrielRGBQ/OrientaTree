@@ -571,6 +571,14 @@ public class NowActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    private void updateUIMyParticipation() {
+        Intent intent = new Intent(NowActivity.this, MyParticipationActivity.class);
+        intent.putExtra("participation", participation);
+        intent.putExtra("activity", activity);
+        intent.putExtra("template", template);
+        startActivity(intent);
+    }
+
     private void showSnackBar(String message) {
         if (now_coordinatorLayout != null) {
             Snackbar.make(now_coordinatorLayout, message, Snackbar.LENGTH_LONG)
@@ -620,7 +628,7 @@ public class NowActivity extends AppCompatActivity {
                     && participation != null) {
                 switch (item.getItemId()) {
                     case R.id.participation_activity:
-                        // TODO: update UI
+                        updateUIMyParticipation();
                         break;
                     default:
                         break;

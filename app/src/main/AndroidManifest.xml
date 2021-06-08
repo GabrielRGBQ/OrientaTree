@@ -19,9 +19,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.OrientaTree">
-        <activity android:name=".NowActivity"
-            android:screenOrientation="portrait"
-            android:parentActivityName=".HomeActivity"></activity>
+        <activity android:name=".MyParticipationActivity"
+            android:screenOrientation="portrait"></activity>
+        <activity
+            android:name=".NowActivity"
+            android:parentActivityName=".HomeActivity"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".ReachesActivity"
             android:screenOrientation="portrait" />

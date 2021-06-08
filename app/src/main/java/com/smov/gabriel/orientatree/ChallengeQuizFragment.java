@@ -24,6 +24,7 @@ import com.smov.gabriel.orientatree.model.BeaconReached;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -146,12 +147,15 @@ public class ChallengeQuizFragment extends Fragment {
                             }
                         } else {
                             if(!ca.organizer) {
-                                // if the reach has not been answered yet, and we are not the organizer
-                                // enable the radio buttons
-                                quiz_radioButton_0.setClickable(true);
-                                quiz_radioButton_1.setClickable(true);
-                                quiz_radioButton_2.setClickable(true);
-                                quiz_radioButton_3.setClickable(true);
+                                Date current_time = new Date(System.currentTimeMillis());
+                                if(current_time.before(ca.activity.getFinishTime())) {
+                                    // if the reach has not been answered yet, and we are not the organizer
+                                    // and the activity didn't finish yet then enable the radio buttons
+                                    quiz_radioButton_0.setClickable(true);
+                                    quiz_radioButton_1.setClickable(true);
+                                    quiz_radioButton_2.setClickable(true);
+                                    quiz_radioButton_3.setClickable(true);
+                                }
                             }
                         }
                     }

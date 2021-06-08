@@ -1,9 +1,10 @@
 package com.smov.gabriel.orientatree.model;
 
+import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Date;
 
-public class Participation implements Comparator<Participation> {
+public class Participation implements Comparator<Participation>, Serializable {
 
     private String participant;
     private ParticipationState state = ParticipationState.NOT_YET;
@@ -52,7 +53,7 @@ public class Participation implements Comparator<Participation> {
 
     @Override
     public int compare(Participation o1, Participation o2) {
-        int res = 0;
+        // TODO
         return 0;
     }
 }
