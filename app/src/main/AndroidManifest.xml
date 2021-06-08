@@ -31,10 +31,6 @@
         <activity
             android:name=".ParticipantsListActivity"
             android:screenOrientation="portrait" />
-        <activity
-            android:name=".OnGoingActivity"
-            android:parentActivityName=".HomeActivity"
-            android:screenOrientation="portrait" />
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -50,11 +46,6 @@
         <activity
             android:name=".MapActivity"
             android:label="@string/title_activity_map"
-            android:parentActivityName=".OnGoingActivity"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".InfoActivityActivity"
-            android:parentActivityName=".HomeActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".FindActivityActivity"

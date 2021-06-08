@@ -15,17 +15,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.smov.gabriel.orientatree.HomeActivity;
-import com.smov.gabriel.orientatree.InfoActivityActivity;
-import com.smov.gabriel.orientatree.MapActivity;
 import com.smov.gabriel.orientatree.NowActivity;
-import com.smov.gabriel.orientatree.OnGoingActivity;
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Template;
@@ -60,7 +55,7 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-        this.position = position ;
+        this.position = position;
         Activity activity = activities.get(position);
 
         String planner_id = activity.getPlanner_id();
@@ -75,10 +70,10 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
         holder.title_textView.setText(activity.getTitle());
         holder.date_textView.setText("Fecha: " + dateAsString);
 
-        if(activity.getPlanner_id().equals(user_id)) {
+        if (activity.getPlanner_id().equals(user_id)) {
             holder.role_textView.setText("Organizador/a");
         } else if (activity.getParticipants() != null) {
-            if(activity.getParticipants().contains(user_id)) {
+            if (activity.getParticipants().contains(user_id)) {
                 holder.role_textView.setText("Participante");
             }
         } else {
@@ -88,20 +83,7 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
         holder.row_activity_layout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                long millis=System.currentTimeMillis();
-                Date current_time = new Date(millis );
-                if(activity.getFinishTime().before(current_time)) {
-                    // past activity
-                    //updateUIInfoActivity(activity);
-                    updateUIOnGoingActivity(activity);
-                } else if (activity.getStartTime().after(current_time)) {
-                    // future activity
-                    //updateUIInfoActivity(activity);
-                    updateUIOnGoingActivity(activity);
-                } else {
-                    // on going activity
-                    updateUIOnGoingActivity(activity);
-                }
+                updateUINowActivity(activity);
             }
         });
 
@@ -119,7 +101,7 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
         StorageReference ref = holder.storageReference.child("templateImages/" + activity.getTemplate() + ".jpg");
         Glide.with(context)
                 .load(ref)
-                .diskCacheStrategy(DiskCacheStrategy.NONE ) // prevent caching
+                .diskCacheStrategy(DiskCacheStrategy.NONE) // prevent caching
                 .skipMemoryCache(true) // prevent caching
                 .into(holder.rowImage_imageView);
     }
@@ -161,19 +143,7 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.MyView
         }
     }
 
-    private void updateUIInfoActivity(Activity activity) {
-        Intent intent = new Intent(context, InfoActivityActivity.class);
-        intent.putExtra("activity", activity);
-        homeActivity.startActivityForResult(intent, 1); // this is to allow us to come back from the activity
-    }
-
-    private void updateUIMapActivity(Activity activity) {
-        Intent intent = new Intent(context, MapActivity.class);
-        intent.putExtra("activity", activity);
-        homeActivity.startActivityForResult(intent, 1); // this is to allow us to come back from the activity
-    }
-
-    private void updateUIOnGoingActivity(Activity activity) {
+    private void updateUINowActivity(Activity activity) {
         Intent intent = new Intent(context, NowActivity.class);
         intent.putExtra("activity", activity);
         homeActivity.startActivityForResult(intent, 1); // this is to allow us to come back from the activity
