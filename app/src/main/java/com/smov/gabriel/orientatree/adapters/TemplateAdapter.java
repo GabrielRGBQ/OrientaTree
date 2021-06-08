@@ -60,7 +60,7 @@ public class TemplateAdapter extends RecyclerView.Adapter<TemplateAdapter.MyView
 
         holder.typeTemplate_textview.setText(template.getType().toString());
         holder.titleTemplate_textview.setText(template.getName());
-        holder.subtitleTemplate_textview.setText("Balizas: " + template.getBeacons().size());
+        holder.subtitleTemplate_textview.setText("Balizas: " + (template.getBeacons().size() - 1));
         
         holder.row_template_layout.setOnClickListener(new View.OnClickListener() {
             @Override
