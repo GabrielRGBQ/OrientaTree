@@ -104,19 +104,19 @@ public class MyParticipationActivity extends AppCompatActivity {
                 if(start_time != null) {
                     myParticipationStart_textView.setText(df_hour.format(start_time));
                 } else {
-                    myParticipationStart_textView.setText("");
+                    myParticipationStart_textView.setText("Nada que mostrar");
                 }
                 if(finish_time != null) {
                     myParticipationFinish_textView.setText(df_hour.format(finish_time));
                 } else {
-                    myParticipationFinish_textView.setText("");
+                    myParticipationFinish_textView.setText("Nada que mostrar");
                 }
                 if((start_time != null && finish_time != null) 
                         && start_time.before(finish_time)) {
                     long diff_millis = Math.abs(finish_time.getTime() - start_time.getTime());
                     myParticipationTotal_textView.setText(formatMillis(diff_millis));
                 } else {
-                    myParticipationTotal_textView.setText("");
+                    myParticipationTotal_textView.setText("Nada que mostrar");
                 }
                 // get the reaches
                 reaches = new ArrayList<>();
@@ -153,10 +153,10 @@ public class MyParticipationActivity extends AppCompatActivity {
             } else {
                 // if the participation has not yet started
                 // all fields empty
-                myParticipationStart_textView.setText("");
-                myParticipationFinish_textView.setText("");
-                myParticipationTotal_textView.setText("");
-                myParticipationBeacons_textView.setText("");
+                myParticipationStart_textView.setText("Nada que mostrar");
+                myParticipationFinish_textView.setText("Nada que mostrar");
+                myParticipationTotal_textView.setText("Nada que mostrar");
+                myParticipationBeacons_textView.setText("Nada que mostrar");
                 // enable the button to cancel the inscription
                 myParticipationInscription_button.setEnabled(true);
             }

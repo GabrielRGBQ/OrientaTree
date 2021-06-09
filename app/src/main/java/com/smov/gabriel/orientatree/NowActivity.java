@@ -390,140 +390,151 @@ public class NowActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (havePermissions) {
                     // if the user has given the permissions required...
-                    new MaterialAlertDialogBuilder(NowActivity.this)
-                            .setMessage("¿Deseas comenzar/retomar la actividad? Solo deberías " +
-                                    "hacerlo si el/la organizador/a ya te ha dado la salida")
-                            .setNegativeButton("Cancelar", null)
-                            .setPositiveButton("Comenzar", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    now_progressIndicator.setVisibility(View.VISIBLE);
-                                    // 1) get location
-                                    try {
-                                        fusedLocationClient.getLastLocation()
-                                                .addOnSuccessListener(NowActivity.this, new OnSuccessListener<Location>() {
-                                                    @Override
-                                                    public void onSuccess(Location location) {
-                                                        if (location != null) {
-                                                            // 2) check that we are close to the start spot or that we already started the activity
-                                                            // (in such case, we don't have to check that we are at the start spot)
-                                                            float diff = getDistance(location.getLatitude(), template.getStart_lat(),
-                                                                    location.getLongitude(), template.getStart_lng());
-                                                            if ((diff <= LOCATION_PRECISION
-                                                                    && participation.getState() == ParticipationState.NOT_YET)
-                                                                    || participation.getState() == ParticipationState.NOW) {
-                                                                // 3) if we are near enough, or if we had already started, continue to charge the map
-                                                                final ProgressDialog pd = new ProgressDialog(NowActivity.this);
-                                                                pd.setTitle("Cargando el mapa...");
-                                                                pd.show();
-                                                                StorageReference reference = storageReference.child("maps/" + activity.getTemplate() + ".png");
-                                                                try {
-                                                                    // try to read the map image from Firebase into a file
-                                                                    File localFile = File.createTempFile("images", "png");
-                                                                    reference.getFile(localFile)
-                                                                            .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                                                                                @Override
-                                                                                public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                                                                                    // if we already have the map image
-                                                                                    // quit the dialog
-                                                                                    pd.dismiss();
-                                                                                    // check that the service is not already being executed
-                                                                                    if (!LocationService.executing) {
-                                                                                        // now we have to do different things depending on whether the participation
-                                                                                        // is at NOT_YET or at NOW
-                                                                                        switch (participation.getState()) {
-                                                                                            case NOT_YET:
-                                                                                                // get current time
-                                                                                                long millis = System.currentTimeMillis();
-                                                                                                Date current_time = new Date(millis);
-                                                                                                // update the start time
-                                                                                                db.collection("activities").document(activity.getId())
-                                                                                                        .collection("participations").document(userID)
-                                                                                                        .update("state", ParticipationState.NOW,
-                                                                                                                "startTime", current_time)
-                                                                                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                                                                                            @Override
-                                                                                                            public void onSuccess(Void unused) {
-                                                                                                                now_progressIndicator.setVisibility(View.GONE);
-                                                                                                                // hide the button
-                                                                                                                nowParticipant_extendedFab.setEnabled(false);
-                                                                                                                nowParticipant_extendedFab.setVisibility(View.GONE);
-                                                                                                                // start service
-                                                                                                                locationServiceIntent.putExtra("activity", activity);
-                                                                                                                startService(locationServiceIntent);
-                                                                                                                // update UI
-                                                                                                                updateUIMap(localFile);
-                                                                                                            }
-                                                                                                        })
-                                                                                                        .addOnFailureListener(new OnFailureListener() {
-                                                                                                            @Override
-                                                                                                            public void onFailure(@NonNull @NotNull Exception e) {
-                                                                                                                now_progressIndicator.setVisibility(View.GONE);
-                                                                                                                showSnackBar("Error al comenzar la actividad. Inténtalo de nuevo.");
-                                                                                                            }
-                                                                                                        });
-                                                                                                break;
-                                                                                            case NOW:
-                                                                                                now_progressIndicator.setVisibility(View.GONE);
-                                                                                                // hide button
-                                                                                                nowParticipant_extendedFab.setEnabled(false);
-                                                                                                nowParticipant_extendedFab.setVisibility(View.GONE);
-                                                                                                // start service
-                                                                                                locationServiceIntent.putExtra("activity", activity);
-                                                                                                startService(locationServiceIntent);
-                                                                                                // update UI
-                                                                                                updateUIMap(localFile);
-                                                                                                break;
-                                                                                            default:
-                                                                                                now_progressIndicator.setVisibility(View.GONE);
-                                                                                                Toast.makeText(NowActivity.this, "Parece que la actividad ya ha terminado", Toast.LENGTH_SHORT).show();
-                                                                                                break;
+                    // check that the activity has not finished yet (it could have, in the meantime while
+                    // the user was reading the rules, for example)
+                    Date current_time = new Date(System.currentTimeMillis());
+                    if(current_time.before(activity.getFinishTime())) {
+                        // if the activity has not yet finished
+                        new MaterialAlertDialogBuilder(NowActivity.this)
+                                .setMessage("¿Deseas comenzar/retomar la actividad? Solo deberías " +
+                                        "hacerlo si el/la organizador/a ya te ha dado la salida")
+                                .setNegativeButton("Cancelar", null)
+                                .setPositiveButton("Comenzar", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        now_progressIndicator.setVisibility(View.VISIBLE);
+                                        // 1) get location
+                                        try {
+                                            fusedLocationClient.getLastLocation()
+                                                    .addOnSuccessListener(NowActivity.this, new OnSuccessListener<Location>() {
+                                                        @Override
+                                                        public void onSuccess(Location location) {
+                                                            if (location != null) {
+                                                                // 2) check that we are close to the start spot or that we already started the activity
+                                                                // (in such case, we don't have to check that we are at the start spot)
+                                                                float diff = getDistance(location.getLatitude(), template.getStart_lat(),
+                                                                        location.getLongitude(), template.getStart_lng());
+                                                                if ((diff <= LOCATION_PRECISION
+                                                                        && participation.getState() == ParticipationState.NOT_YET)
+                                                                        || participation.getState() == ParticipationState.NOW) {
+                                                                    // 3) if we are near enough, or if we had already started, continue to charge the map
+                                                                    final ProgressDialog pd = new ProgressDialog(NowActivity.this);
+                                                                    pd.setTitle("Cargando el mapa...");
+                                                                    pd.show();
+                                                                    StorageReference reference = storageReference.child("maps/" + activity.getTemplate() + ".png");
+                                                                    try {
+                                                                        // try to read the map image from Firebase into a file
+                                                                        File localFile = File.createTempFile("images", "png");
+                                                                        reference.getFile(localFile)
+                                                                                .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+                                                                                    @Override
+                                                                                    public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                                                                                        // if we already have the map image
+                                                                                        // quit the dialog
+                                                                                        pd.dismiss();
+                                                                                        // check that the service is not already being executed
+                                                                                        if (!LocationService.executing) {
+                                                                                            // now we have to do different things depending on whether the participation
+                                                                                            // is at NOT_YET or at NOW
+                                                                                            switch (participation.getState()) {
+                                                                                                case NOT_YET:
+                                                                                                    // get current time
+                                                                                                    long millis = System.currentTimeMillis();
+                                                                                                    Date current_time = new Date(millis);
+                                                                                                    // update the start time
+                                                                                                    db.collection("activities").document(activity.getId())
+                                                                                                            .collection("participations").document(userID)
+                                                                                                            .update("state", ParticipationState.NOW,
+                                                                                                                    "startTime", current_time)
+                                                                                                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                                                                                @Override
+                                                                                                                public void onSuccess(Void unused) {
+                                                                                                                    now_progressIndicator.setVisibility(View.GONE);
+                                                                                                                    // hide the button
+                                                                                                                    nowParticipant_extendedFab.setEnabled(false);
+                                                                                                                    nowParticipant_extendedFab.setVisibility(View.GONE);
+                                                                                                                    // start service
+                                                                                                                    locationServiceIntent.putExtra("activity", activity);
+                                                                                                                    startService(locationServiceIntent);
+                                                                                                                    // update UI
+                                                                                                                    updateUIMap(localFile);
+                                                                                                                }
+                                                                                                            })
+                                                                                                            .addOnFailureListener(new OnFailureListener() {
+                                                                                                                @Override
+                                                                                                                public void onFailure(@NonNull @NotNull Exception e) {
+                                                                                                                    now_progressIndicator.setVisibility(View.GONE);
+                                                                                                                    showSnackBar("Error al comenzar la actividad. Inténtalo de nuevo.");
+                                                                                                                }
+                                                                                                            });
+                                                                                                    break;
+                                                                                                case NOW:
+                                                                                                    now_progressIndicator.setVisibility(View.GONE);
+                                                                                                    // hide button
+                                                                                                    nowParticipant_extendedFab.setEnabled(false);
+                                                                                                    nowParticipant_extendedFab.setVisibility(View.GONE);
+                                                                                                    // start service
+                                                                                                    locationServiceIntent.putExtra("activity", activity);
+                                                                                                    startService(locationServiceIntent);
+                                                                                                    // update UI
+                                                                                                    updateUIMap(localFile);
+                                                                                                    break;
+                                                                                                default:
+                                                                                                    now_progressIndicator.setVisibility(View.GONE);
+                                                                                                    Toast.makeText(NowActivity.this, "Parece que la actividad ya ha terminado", Toast.LENGTH_SHORT).show();
+                                                                                                    break;
+                                                                                            }
+                                                                                        } else {
+                                                                                            now_progressIndicator.setVisibility(View.GONE);
+                                                                                            Toast.makeText(NowActivity.this, "No se pudo iniciar la actividad... ya ha un servicio ejecutándose", Toast.LENGTH_SHORT).show();
                                                                                         }
-                                                                                    } else {
-                                                                                        now_progressIndicator.setVisibility(View.GONE);
-                                                                                        Toast.makeText(NowActivity.this, "No se pudo iniciar la actividad... ya ha un servicio ejecutándose", Toast.LENGTH_SHORT).show();
                                                                                     }
-                                                                                }
-                                                                            })
-                                                                            .addOnFailureListener(new OnFailureListener() {
-                                                                                @Override
-                                                                                public void onFailure(@NonNull Exception e) {
-                                                                                    now_progressIndicator.setVisibility(View.GONE);
-                                                                                    pd.dismiss();
-                                                                                    showSnackBar("Algo salió mal al cargar el mapa. Sal y vuelve a intentarlo.");
-                                                                                }
-                                                                            })
-                                                                            .addOnProgressListener(new OnProgressListener<FileDownloadTask.TaskSnapshot>() {
-                                                                                @Override
-                                                                                public void onProgress(@NonNull @NotNull FileDownloadTask.TaskSnapshot snapshot) {
-                                                                                    double progressPercent = (100.00 * snapshot.getBytesTransferred() / snapshot.getTotalByteCount());
-                                                                                    pd.setMessage("Progreso: " + (int) progressPercent + "%");
-                                                                                }
-                                                                            });
-                                                                } catch (IOException e) {
+                                                                                })
+                                                                                .addOnFailureListener(new OnFailureListener() {
+                                                                                    @Override
+                                                                                    public void onFailure(@NonNull Exception e) {
+                                                                                        now_progressIndicator.setVisibility(View.GONE);
+                                                                                        pd.dismiss();
+                                                                                        showSnackBar("Algo salió mal al cargar el mapa. Sal y vuelve a intentarlo.");
+                                                                                    }
+                                                                                })
+                                                                                .addOnProgressListener(new OnProgressListener<FileDownloadTask.TaskSnapshot>() {
+                                                                                    @Override
+                                                                                    public void onProgress(@NonNull @NotNull FileDownloadTask.TaskSnapshot snapshot) {
+                                                                                        double progressPercent = (100.00 * snapshot.getBytesTransferred() / snapshot.getTotalByteCount());
+                                                                                        pd.setMessage("Progreso: " + (int) progressPercent + "%");
+                                                                                    }
+                                                                                });
+                                                                    } catch (IOException e) {
+                                                                        now_progressIndicator.setVisibility(View.GONE);
+                                                                        pd.dismiss();
+                                                                        showSnackBar("Algo salió mal al cargar el mapa. Sal y vuelve a intentarlo.");
+                                                                    }
+                                                                } else {
+                                                                    // too far from the start spot
                                                                     now_progressIndicator.setVisibility(View.GONE);
-                                                                    pd.dismiss();
-                                                                    showSnackBar("Algo salió mal al cargar el mapa. Sal y vuelve a intentarlo.");
+                                                                    int diff_meters = (int) diff;
+                                                                    showSnackBar("Estás demasiado lejos de la salida (" + diff_meters + "). Acércate" +
+                                                                            " a ella y vuelve a intentarlo");
                                                                 }
                                                             } else {
-                                                                // too far from the start spot
                                                                 now_progressIndicator.setVisibility(View.GONE);
-                                                                int diff_meters = (int) diff;
-                                                                showSnackBar("Estás demasiado lejos de la salida (" + diff_meters + "). Acércate" +
-                                                                        " a ella y vuelve a intentarlo");
+                                                                Toast.makeText(NowActivity.this, "Hubo algún problema al obtener la ubicación. Vuelve a intentarlo.", Toast.LENGTH_SHORT).show();
                                                             }
-                                                        } else {
-                                                            now_progressIndicator.setVisibility(View.GONE);
-                                                            Toast.makeText(NowActivity.this, "Hubo algún problema al obtener la ubicación. Vuelve a intentarlo.", Toast.LENGTH_SHORT).show();
                                                         }
-                                                    }
-                                                });
-                                    } catch (SecurityException e) {
-                                        showSnackBar("Parece que hay algún problema con los permisos de ubicación");
+                                                    });
+                                        } catch (SecurityException e) {
+                                            showSnackBar("Parece que hay algún problema con los permisos de ubicación");
+                                        }
                                     }
-                                }
-                            })
-                            .show();
+                                })
+                                .show();
+                    } else {
+                       // if the activity has already finished
+                        nowParticipant_extendedFab.setEnabled(false);
+                        nowParticipant_extendedFab.setVisibility(View.GONE);
+                       showSnackBar("Esta actividad ya ha terminado");
+                    }
                 } else {
                     // if we don't have the permissions we ask for them
                     requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_ACCESS_REQUEST_CODE);

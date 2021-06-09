@@ -208,7 +208,7 @@ public class SelectedTemplateActivity extends AppCompatActivity {
         CalendarConstraints.Builder constraintsBuilder = new CalendarConstraints.Builder();
         constraintsBuilder.setValidator(dateValidator);
         CalendarConstraints calendarConstraints = constraintsBuilder.build();
-        //date_builder.setCalendarConstraints(calendarConstraints);
+        date_builder.setCalendarConstraints(calendarConstraints);
         MaterialDatePicker materialDatePicker = date_builder.build();
         materialDatePicker.addOnPositiveButtonClickListener(new MaterialPickerOnPositiveButtonClickListener() {
             @Override

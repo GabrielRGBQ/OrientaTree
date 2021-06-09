@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
@@ -28,6 +29,8 @@ import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Participation;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -65,29 +68,31 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
         Date date = activity.getStartTime();
         String dateAsString = df.format(date);
 
-        holder.find_template_textView.setText(activity.getTemplate());
+        // display title and date
         holder.find_title_textView.setText(activity.getTitle());
         holder.find_date_textView.setText("Fecha: " + dateAsString);
-        holder.visibleId_textView.setText("ID: " + activity.getVisible_id());
 
-        if(activity.getPlanner_id().equals(holder.userID)) {
-            holder.find_subscribed_textView.setText("Organizador");
-            holder.subscribe_button.setEnabled(false);
-            holder.unsubscribe_button.setEnabled(false);
-        } else {
-            if(activity.getParticipants() != null) {
-                if(activity.getParticipants().contains(holder.userID)) {
-                    holder.find_subscribed_textView.setText("Inscrito");
+        // check that the current user is not the organizer of the activity
+        if(!activity.getPlanner_id().equals(holder.userID)) {
+            // if he/she is not the organizer:
+            // get the activity's participants
+            ArrayList<String> participants = activity.getParticipants();
+            if(participants != null) {
+                if(participants.contains(holder.userID)) {
+                    // if current user is a participant
+                    holder.subscribe_button.setText("Inscrito/a");
                     holder.subscribe_button.setEnabled(false);
                 } else {
-                    holder.find_subscribed_textView.setText("No inscrito");
-                    holder.unsubscribe_button.setEnabled(false);
+                    // if current user is not a participant
+                    holder.subscribe_button.setText("Inscribirme");
+                    holder.subscribe_button.setEnabled(true);
                 }
-            } else {
-                holder.find_subscribed_textView.setText("No inscrito");
-                holder.unsubscribe_button.setEnabled(false);
             }
+            // show the subscribe button (only if the current user is not the organizer of the activity)
+            holder.subscribe_button.setVisibility(View.VISIBLE);
+            holder.findActivity_separator.setVisibility(View.VISIBLE);
         }
+        // if the current user is the organizer, no button will be displayed since it just remains "gone"
 
         // get and set the activity picture
         StorageReference ref = holder.storageReference.child("templateImages/" + activity.getTemplate() + ".jpg");
@@ -104,7 +109,7 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
             }
         });
 
-        holder.unsubscribe_button.setOnClickListener(new View.OnClickListener() {
+        /*holder.unsubscribe_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 holder.circularProgressIndicator.setVisibility(View.VISIBLE);
@@ -129,7 +134,7 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
                             }
                         });
             }
-        });
+        });*/
     }
 
     @Override
@@ -139,41 +144,41 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
 
-        FirebaseAuth mAuth;
-
-        String userID;
-
+        // Firebase services
         FirebaseStorage storage;
         StorageReference storageReference;
-
+        FirebaseAuth mAuth;
         FirebaseFirestore db;
 
-        TextView find_title_textView, find_date_textView, find_template_textView, visibleId_textView, find_subscribed_textView;
+        // useful IDs
+        String userID;
+
+        // UI elements
+        TextView find_title_textView, find_date_textView;
         ImageView find_row_imageView;
-        Button subscribe_button, unsubscribe_button;
-        CircularProgressIndicator circularProgressIndicator;
+        Button subscribe_button;
+        View findActivity_separator;
+        CircularProgressIndicator progressIndicator;
 
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
 
+            // binding UI elements
             find_title_textView = itemView.findViewById(R.id.find_row_title_textView);
             find_date_textView = itemView.findViewById(R.id.find_row_date_textView);
-            find_template_textView = itemView.findViewById(R.id.find_row_template_textView);
-            visibleId_textView = itemView.findViewById(R.id.find_row_id_textView);
-            find_subscribed_textView = itemView.findViewById(R.id.subscribed_textView);
             find_row_imageView = itemView.findViewById(R.id.find_row_imageView);
             subscribe_button = itemView.findViewById(R.id.subscribe_button);
-            unsubscribe_button = itemView.findViewById(R.id.unsubscribe_button);
-            circularProgressIndicator = itemView.findViewById(R.id.row_find_progress_bar);
+            findActivity_separator = itemView.findViewById(R.id.finActivity_separator);
+            progressIndicator = itemView.findViewById(R.id.findActivity_progressIndicator);
 
-            mAuth = FirebaseAuth.getInstance();
-
-            userID = mAuth.getCurrentUser().getUid();
-
+            // initializing Firebase services
             db = FirebaseFirestore.getInstance();
-
+            mAuth = FirebaseAuth.getInstance();
             storage = FirebaseStorage.getInstance();
             storageReference = storage.getReference();
+
+            // getting IDs
+            userID = mAuth.getCurrentUser().getUid();
         }
     }
 
@@ -189,32 +194,38 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        holder.circularProgressIndicator.setVisibility(View.VISIBLE);
                         String input_key = input.getText().toString().trim();
                         if(input_key.equals(activity.getKey())) {
                             activity.addParticipant(holder.userID);
+                            holder.progressIndicator.setVisibility(View.VISIBLE);
                             holder.db.collection("activities").document(activity.getId())
                                     .set(activity)
                                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                                         @Override
                                         public void onSuccess(Void aVoid) {
                                             Participation participation = new Participation(holder.userID);
-                                            holder.circularProgressIndicator.setVisibility(View.INVISIBLE);
                                             holder.db.collection("activities").document(activity.getId())
                                                     .collection("participations").document(holder.userID)
                                                     .set(participation)
                                                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                                                         @Override
                                                         public void onSuccess(Void aVoid) {
-                                                            holder.find_subscribed_textView.setText("Inscrito");
+                                                            holder.progressIndicator.setVisibility(View.GONE);
+                                                            holder.subscribe_button.setText("Inscrito/a");
                                                             holder.subscribe_button.setEnabled(false);
-                                                            holder.unsubscribe_button.setEnabled(true);
+                                                            Toast.makeText(context, "La inscripción se ha completado correctamente", Toast.LENGTH_LONG).show();
+                                                        }
+                                                    })
+                                                    .addOnFailureListener(new OnFailureListener() {
+                                                        @Override
+                                                        public void onFailure(@NonNull @NotNull Exception e) {
+                                                            holder.progressIndicator.setVisibility(View.GONE);
+                                                            Toast.makeText(context, "La inscripción no pudo completarse. Vuelve a intentarlo", Toast.LENGTH_LONG).show();
                                                         }
                                                     });
                                         }
                                     });
                         } else {
-                            holder.circularProgressIndicator.setVisibility(View.INVISIBLE);
                             new MaterialAlertDialogBuilder(context)
                                     .setTitle("Clave incorrecta")
                                     .setMessage("La clave introducida para esa actividad es incorrecta")

@@ -244,9 +244,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             case R.id.log_out_item:
                 logOut();
                 break;
-            case R.id.delete_profile_item:
-                //deleteAccount();
-                break;
         }
         //close navigation drawer
         drawerLayout.closeDrawer(GravityCompat.START);

@@ -33,10 +33,6 @@
                     android:title="Cerrar sesión"
                     android:icon="@drawable/ic_log_out"
                     android:id="@+id/log_out_item"/>
-                <item
-                    android:title="Borrar cuenta"
-                    android:icon="@drawable/ic_delete"
-                    android:id="@+id/delete_profile_item"/>
             </menu>
         </item>
     </group>
