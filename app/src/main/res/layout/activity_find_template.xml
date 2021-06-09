@@ -2,10 +2,10 @@
 <androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout_template"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".FindTemplate"
-    android:id="@+id/drawer_layout_template">
+    tools:context=".FindTemplate">
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
@@ -25,8 +25,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="?attr/actionBarSize"
                     app:title="Organizar actividad"
-                    app:titleTextColor="@color/black">
-                </androidx.appcompat.widget.Toolbar>
+                    app:titleTextColor="@color/black"></androidx.appcompat.widget.Toolbar>
 
             </com.google.android.material.appbar.AppBarLayout>
 
@@ -36,9 +35,9 @@
                 android:orientation="vertical">
 
                 <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/template_recyclerview"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/template_recyclerview"/>
+                    android:layout_height="wrap_content" />
 
             </LinearLayout>
 
@@ -47,12 +46,11 @@
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
     <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view_template"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        app:menu="@menu/nav_menu"
-        android:id="@+id/nav_view_template"
         android:layout_gravity="start"
         app:headerLayout="@layout/nav_header_layout"
-        />
+        app:menu="@menu/nav_menu" />
 
 </androidx.drawerlayout.widget.DrawerLayout>

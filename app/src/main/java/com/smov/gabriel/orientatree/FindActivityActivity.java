@@ -14,11 +14,11 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -38,6 +38,7 @@ public class FindActivityActivity extends AppCompatActivity {
     private RecyclerView find_activity_recyclerview;
     private FindActivityAdapter findActivityAdapter;
     private ArrayList<Activity> activities;
+    private TextView emptyStateMessage_textView;
 
     private FirebaseFirestore db;
 
@@ -61,8 +62,9 @@ public class FindActivityActivity extends AppCompatActivity {
         activities = new ArrayList<>();
 
         find_activity_recyclerview = findViewById(R.id.find_activity_recyclerview);
+        emptyStateMessage_textView = findViewById(R.id.emptyStateMessage_textView);
 
-        no_activities_id_layout = findViewById(R.id.find_activity_empty_layout);
+        no_activities_id_layout = findViewById(R.id.peacockHead_emptyState);
         helper_layout = findViewById(R.id.find_helper_layout);
     }
 
@@ -93,8 +95,10 @@ public class FindActivityActivity extends AppCompatActivity {
                                     activities.add(activity);
                                 }
                                 if(activities.size() < 1 ) {
+                                    emptyStateMessage_textView.setText("Vaya, parece que no hay coincidencias");
                                     no_activities_id_layout.setVisibility(View.VISIBLE);
                                 } else {
+                                    emptyStateMessage_textView.setText("");
                                     no_activities_id_layout.setVisibility(View.GONE);
                                 }
                                 findActivityAdapter = new FindActivityAdapter(FindActivityActivity.this, activities);

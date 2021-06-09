@@ -4,12 +4,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -33,6 +36,8 @@ public class ParticipantsListActivity extends AppCompatActivity {
     private RecyclerView participantsList_recyclerView;
     private ParticipantAdapter participantAdapter;
     private ArrayList<Participation> participations;
+    private ConstraintLayout emptyState_layout;
+    private TextView emptyStateMessage_textView;
 
     // needed to pass it to the adapter so that cards can be clicked and head to a new activity
     private ParticipantsListActivity participantsListActivity;
@@ -49,6 +54,8 @@ public class ParticipantsListActivity extends AppCompatActivity {
 
         // binding interface elements
         participantsList_recyclerView = findViewById(R.id.participantsList_recyclerView);
+        emptyState_layout = findViewById(R.id.peacockHead_emptyState);
+        emptyStateMessage_textView = findViewById(R.id.emptyStateMessage_textView);
 
         participantsListActivity = (ParticipantsListActivity) this;
 
@@ -76,6 +83,14 @@ public class ParticipantsListActivity extends AppCompatActivity {
                             for (QueryDocumentSnapshot doc : value) {
                                 Participation participation = doc.toObject(Participation.class);
                                 participations.add(participation);
+                            }
+                            // show or hide the empty state with its message
+                            if(participations.size() < 1) {
+                                emptyStateMessage_textView.setText("Parece que esta actividad no tiene participantes");
+                                emptyState_layout.setVisibility(View.VISIBLE);
+                            } else {
+                                emptyStateMessage_textView.setText("");
+                                emptyState_layout.setVisibility(View.GONE);
                             }
                             participantAdapter = new ParticipantAdapter(participantsListActivity, ParticipantsListActivity.this,
                                     participations, template, activity);

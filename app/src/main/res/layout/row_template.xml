@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
+    android:id="@+id/row_activity_template"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:id="@+id/row_activity_template">
+    android:orientation="vertical">
 
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="350dp"
         android:layout_margin="8dp">
 
         <LinearLayout
@@ -18,38 +19,38 @@
                 android:id="@+id/row_template_imageView"
                 android:layout_width="match_parent"
                 android:layout_height="194dp"
-                android:scaleType="centerCrop"
-                />
+                android:scaleType="centerCrop" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="tipo"
-                android:textAppearance="?attr/textAppearanceOverline"
-                android:id="@+id/typeTemplate_textview"/>
+                android:orientation="vertical"
+                android:padding="16dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Title"
-                android:textAppearance="?attr/textAppearanceHeadline6"
-                android:id="@+id/titleTemplate_textview"/>
+                <TextView
+                    android:id="@+id/typeTemplate_textview"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="tipo"
+                    android:textAppearance="?attr/textAppearanceOverline" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Subtitle"
-                android:layout_marginTop="8dp"
-                android:textAppearance="?attr/textAppearanceBody2"
-                android:id="@+id/subtitleTemplate_textview"/>
+                <TextView
+                    android:id="@+id/titleTemplate_textview"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Title"
+                    android:maxLines="3"
+                    android:textAppearance="?attr/textAppearanceHeadline6" />
 
-        </LinearLayout>
+                <TextView
+                    android:id="@+id/subtitleTemplate_textview"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Subtitle"
+                    android:textAppearance="?attr/textAppearanceBody2" />
+
+            </LinearLayout>
 
 
         </LinearLayout>

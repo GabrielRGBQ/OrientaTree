@@ -4,12 +4,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -39,6 +42,8 @@ public class ReachesActivity extends AppCompatActivity {
     private RecyclerView reaches_recyclerView;
     private ArrayList<BeaconReached> reaches;
     private ReachAdapter reachAdapter;
+    private ConstraintLayout emptyState_layout;
+    private TextView emptyStateMessage_textView;
 
     private Activity activity;
     private Template template;
@@ -68,6 +73,8 @@ public class ReachesActivity extends AppCompatActivity {
         reachesActivity = (ReachesActivity) this;
 
         reaches_recyclerView = findViewById(R.id.reaches_recyclerView);
+        emptyState_layout = findViewById(R.id.peacockHead_emptyState);
+        emptyStateMessage_textView = findViewById(R.id.emptyStateMessage_textView);
 
         // set the AppBar
         toolbar = findViewById(R.id.reaches_toolbar);
@@ -116,6 +123,14 @@ public class ReachesActivity extends AppCompatActivity {
                             for (QueryDocumentSnapshot doc : value) {
                                 BeaconReached reach = doc.toObject(BeaconReached.class);
                                 reaches.add(reach);
+                            }
+                            // show or hide the empty state with its message
+                            if(reaches.size() < 1) {
+                                emptyStateMessage_textView.setText("No hay balizas alcanzadas");
+                                emptyState_layout.setVisibility(View.VISIBLE);
+                            } else {
+                                emptyStateMessage_textView.setText("");
+                                emptyState_layout.setVisibility(View.GONE);
                             }
                             Collections.sort(reaches, new BeaconReached());
                             reachAdapter = new ReachAdapter(reachesActivity, ReachesActivity.this, reaches,
