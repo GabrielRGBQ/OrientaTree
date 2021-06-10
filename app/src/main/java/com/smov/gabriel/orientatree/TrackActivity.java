@@ -9,6 +9,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -67,7 +68,7 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
     private Template template;
     private Activity activity;
     private Map templateMap;
-    private Participation participation;
+    //private Participation participation;
 
     // file containing the map
     private File mapFile;
@@ -110,12 +111,13 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
         mapFile = (File) intent.getSerializableExtra("map");
         template = (Template) intent.getSerializableExtra("template");
         activity = (Activity) intent.getSerializableExtra("activity");
-        participation = (Participation) intent.getSerializableExtra("participation");
+        //participation = (Participation) intent.getSerializableExtra("participation");
+        userID = intent.getExtras().getString("participantID");
 
         // get the important IDs
-        if(activity != null && participation != null) {
+        if(activity != null /*&& participation != null*/) {
             activityID = activity.getId();
-            userID = participation.getParticipant();
+           // userID = participation.getParticipant();
         }
 
         // binding UI elements
@@ -243,7 +245,7 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
                                                     Location location = documentSnapshot.toObject(Location.class);
                                                     locations.add(location);
                                                 }
-                                                if(locations != null) {
+                                                if(locations != null && locations.size() >= 1) {
                                                     // set slider parameters
                                                     track_slider.setValueFrom(0);
                                                     track_slider.setValueTo(locations.size() - 1);
@@ -258,14 +260,14 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
                                                         }
                                                     }
                                                 } else {
-                                                    Toast.makeText(TrackActivity.this, "Algo salió mal al obtener los datos de la participación. Sal y vuelve a intentarlo", Toast.LENGTH_SHORT).show();
+                                                    Toast.makeText(TrackActivity.this, "No se han encontrado datos que mostrar", Toast.LENGTH_SHORT).show();
                                                 }
                                             }
                                         })
                                         .addOnFailureListener(new OnFailureListener() {
                                             @Override
                                             public void onFailure(@NonNull @NotNull Exception e) {
-                                                Toast.makeText(TrackActivity.this, "Algo salió mal al obtener los datos de la participación. Sal y vuelve a intentarlo", Toast.LENGTH_SHORT).show();
+                                                Toast.makeText(TrackActivity.this, "Algo salió mal al descargar los datos de la participación. Sal y vuelve a intentarlo", Toast.LENGTH_SHORT).show();
                                             }
                                         });
                             } else {

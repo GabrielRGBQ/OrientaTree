@@ -171,7 +171,16 @@ public class MyParticipationActivity extends AppCompatActivity {
                 myParticipationTotal_textView.setText("Nada que mostrar");
                 myParticipationBeacons_textView.setText("Nada que mostrar");
                 // enable the button to cancel the inscription
-                myParticipationInscription_button.setEnabled(true);
+                //myParticipationInscription_button.setEnabled(true);
+            }
+            // check if we should allow the user to see the track
+            if(participation.getState() == ParticipationState.FINISHED
+                    || participation.getFinishTime() != null
+                    || (activity.getFinishTime().before(new Date(System.currentTimeMillis()))
+                            && participation.getStartTime() != null)) {
+                // if the participation is finished or if there is a finish time or if the activity has finished
+                // we enable the track button
+                myParticipationTrack_button.setEnabled(true);
             }
         } else {
             // if we couldn't receive right the participation
@@ -235,7 +244,8 @@ public class MyParticipationActivity extends AppCompatActivity {
         intent.putExtra("map", localFileMap);
         intent.putExtra("template", template);
         intent.putExtra("activity", activity);
-        intent.putExtra("participation", participation);
+        //intent.putExtra("participation", participation);
+        intent.putExtra("participantID", participation.getParticipant());
         startActivity(intent);
     }
 
