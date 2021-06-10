@@ -32,6 +32,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.smov.gabriel.orientatree.ChallengeActivity;
@@ -48,6 +49,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 public class LocationService extends Service {
 
@@ -260,6 +262,8 @@ public class LocationService extends Service {
                             });
                 } else {
                     // there are still beacons to be reached, so we play
+                    // update the current location (needed to see the track later)
+                    updateCurrentLocation(lat1, lng1, current_time);
                     if (activity.isScore()) {
                         playScore(lat1, lng1, current_time);
                     } else {
@@ -272,6 +276,19 @@ public class LocationService extends Service {
             Log.d(TAG, "La actividad es nula o aún no tenemos los datos iniciales, por lo que no hacemos nada");
             //
         }
+    }
+
+    private void updateCurrentLocation(double lat1, double lng1, Date current_time) {
+        // update current location (needed to see the track later)
+        com.smov.gabriel.orientatree.model.Location location = new com.smov.gabriel.orientatree.model.Location();
+        location.setTime(current_time);
+        GeoPoint point = new GeoPoint(lat1, lng1);
+        location.setLocation(point);
+        String locationID = UUID.randomUUID().toString();
+        db.collection("activities").document(activity.getId())
+                .collection("participations").document(userID)
+                .collection("locations").document(locationID)
+                .set(location);
     }
 
     private void playScore(double lat1, double lng1, Date current_time) {
