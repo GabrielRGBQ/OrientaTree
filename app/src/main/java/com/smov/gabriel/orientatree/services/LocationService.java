@@ -63,9 +63,9 @@ public class LocationService extends Service {
 
     private static final String TAG = "Location Service";
 
-    private static final float LOCATION_PRECISION = 600000f;
+    private static final float LOCATION_PRECISION = 20f;
 
-    private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 10000;
+    private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 3000;
     private static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
             UPDATE_INTERVAL_IN_MILLISECONDS / 2;
 

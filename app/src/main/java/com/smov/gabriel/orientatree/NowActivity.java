@@ -234,6 +234,7 @@ public class NowActivity extends AppCompatActivity {
                                 nowDescription_textView.setText(template.getDescription());
                                 nowTemplate_textView.append(template.getName());
                                 nowLocation_textView.append(template.getLocation());
+                                nowNorms_textView.setText(template.getNorms());
                                 // now that we have all the data from both the activity and the template, perform specific
                                 // actions depending on whether the user is the organizer or a participant
                                 if (isOrganizer) {

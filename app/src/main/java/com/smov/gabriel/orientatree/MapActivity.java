@@ -2,9 +2,13 @@ package com.smov.gabriel.orientatree;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -26,6 +30,9 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
@@ -47,10 +54,12 @@ import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MapActivity extends FragmentActivity implements OnMapReadyCallback/*, GoogleMap.OnMapLongClickListener*/ {
+public class MapActivity extends AppCompatActivity implements OnMapReadyCallback/*, GoogleMap.OnMapLongClickListener*/ {
 
     private TextView reachesMap_textView, map_timer_textView;
     private MaterialButton mapBeacons_button;
+    private FloatingActionButton map_fab;
+    private CircularProgressIndicator map_progressIndicator;
 
     private GoogleMap mMap;
 
@@ -81,6 +90,8 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
 
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1110;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -107,6 +118,8 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
         mapBeacons_button = findViewById(R.id.beaconsMap_button);
         reachesMap_textView = findViewById(R.id.reachesMap_textView);
         map_timer_textView = findViewById(R.id.map_timer_textView);
+        map_fab = findViewById(R.id.map_fab);
+        map_progressIndicator = findViewById(R.id.map_progressIndicator);
 
         // set listener to the beacons button
         mapBeacons_button.setOnClickListener(new View.OnClickListener() {
@@ -207,6 +220,25 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
                         });
             }
         }
+
+        map_fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //enableLocation();
+            }
+        });
+    }
+
+    private void enableLocation() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            if (mMap != null) {
+                mMap.setMyLocationEnabled(true);
+            }
+        } else {
+            // Permission to access the location is missing. Show rationale and request permission
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+        }
     }
 
     private void updateUIReaches(Activity activity) {
@@ -232,7 +264,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
         mMap = googleMap;
 
         // setting styles...
-        try {
+        /*try {
             boolean success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style));
             if (!success) {
                 Toast.makeText(this, "Algo salió mal al configurar el mapa", Toast.LENGTH_SHORT).show();
@@ -291,7 +323,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
                     });
         } else {
             Toast.makeText(this, "Algo salió mal al cargar el mapa", Toast.LENGTH_SHORT).show();
-        }
+        }*/
     }
 
     public static int calculateInSampleSize(
@@ -357,5 +389,19 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback/
 
     private String formatTime(int seconds, int minutes, int hours) {
         return String.format("%02d", hours) + ":" + String.format("%02d", minutes) + ":" + String.format("%02d", seconds);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case LOCATION_PERMISSION_REQUEST_CODE:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // user gave us the permission...
+                    //havePermissions = true;
+                    Toast.makeText(this, "Ahora ya puedes comenzar la actividad", Toast.LENGTH_SHORT).show();
+                } else {
+                    //showSnackBar("Es necesario dar permiso para poder participar en la actividad");
+                }
+        }
     }
 }

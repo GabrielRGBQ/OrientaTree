@@ -1,7 +1,5 @@
 package com.smov.gabriel.orientatree.model;
 
-import com.google.firebase.firestore.GeoPoint;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -13,7 +11,7 @@ public class Template implements Serializable {
     private TemplateColor color;
     private String location;
     private String description;
-    private String norms_id;
+    private String norms;
     private String map_id;
     private double start_lat;
     private double start_lng;
@@ -25,7 +23,7 @@ public class Template implements Serializable {
     }
 
     public Template(String template_id, String name, TemplateType type, TemplateColor color, String location,
-                    String description, String norms_id, String map_id,
+                    String description, String norms, String map_id,
                     double start_lat, double start_lng) {
         this.template_id = template_id;
         this.name = name;
@@ -33,7 +31,7 @@ public class Template implements Serializable {
         this.color = color;
         this.location = location;
         this.description = description;
-        this.norms_id = norms_id;
+        this.norms = norms;
         beacons = new ArrayList<>();
         this.map_id = map_id;
         this.start_lat = start_lat;
@@ -72,12 +70,12 @@ public class Template implements Serializable {
         this.description = description;
     }
 
-    public String getNorms_id() {
-        return norms_id;
+    public String getNorms() {
+        return norms;
     }
 
-    public void setNorms_id(String norms_id) {
-        this.norms_id = norms_id;
+    public void setNorms(String norms) {
+        this.norms = norms;
     }
 
     public ArrayList<String> getBeacons() {

@@ -38,6 +38,7 @@ public class ParticipantsListActivity extends AppCompatActivity {
     private ArrayList<Participation> participations;
     private ConstraintLayout emptyState_layout;
     private TextView emptyStateMessage_textView;
+    private TextView participantsListparticipants_textView;
 
     // needed to pass it to the adapter so that cards can be clicked and head to a new activity
     private ParticipantsListActivity participantsListActivity;
@@ -56,6 +57,7 @@ public class ParticipantsListActivity extends AppCompatActivity {
         participantsList_recyclerView = findViewById(R.id.participantsList_recyclerView);
         emptyState_layout = findViewById(R.id.peacockHead_emptyState);
         emptyStateMessage_textView = findViewById(R.id.emptyStateMessage_textView);
+        participantsListparticipants_textView = findViewById(R.id.participantsListparticipants_textView);
 
         participantsListActivity = (ParticipantsListActivity) this;
 
@@ -92,6 +94,7 @@ public class ParticipantsListActivity extends AppCompatActivity {
                                 emptyStateMessage_textView.setText("");
                                 emptyState_layout.setVisibility(View.GONE);
                             }
+                            participantsListparticipants_textView.setText("Participantes: (" + participations.size() + ")");
                             participantAdapter = new ParticipantAdapter(participantsListActivity, ParticipantsListActivity.this,
                                     participations, template, activity);
                             participantsList_recyclerView.setAdapter(participantAdapter);
