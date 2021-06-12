@@ -1,0 +1,280 @@
+package com.smov.gabriel.orientatree;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+
+import android.app.ProgressDialog;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.android.material.button.MaterialButton;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.storage.FileDownloadTask;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.StorageReference;
+import com.smov.gabriel.orientatree.model.Activity;
+import com.smov.gabriel.orientatree.model.BeaconReached;
+import com.smov.gabriel.orientatree.model.Participation;
+import com.smov.gabriel.orientatree.model.ParticipationState;
+import com.smov.gabriel.orientatree.model.Template;
+import com.smov.gabriel.orientatree.services.LocationService;
+
+import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+
+public class MyParticipationActivity extends AppCompatActivity {
+
+    // UI elements
+    private Toolbar toolbar;
+    private TextView myParticipationStart_textView, myParticipationFinish_textView,
+            myParticipationTotal_textView, myParticipationBeacons_textView;
+    private MaterialButton myParticipationBeacons_button, myParticipationTrack_button,
+            myParticipationInscription_button, myParticipationDelete_button;
+
+    // model objects
+    private Participation participation;
+    private Activity activity;
+    private ArrayList<BeaconReached> reaches;
+    private Template template;
+
+    // useful IDs
+    private String userID;
+    private String activityID;
+
+    // Firebase services
+    private FirebaseFirestore db;
+    private FirebaseAuth mAuth;
+    private FirebaseStorage firebaseStorage;
+    private StorageReference storageReference;
+
+    // to format the way hours are displayed
+    private static String pattern_hour = "HH:mm:ss";
+    private static DateFormat df_hour = new SimpleDateFormat(pattern_hour);
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_my_participation);
+
+        // get the intent
+        Intent intent = getIntent();
+        participation = (Participation) intent.getSerializableExtra("participation");
+        activity = (Activity) intent.getSerializableExtra("activity");
+        template = (Template) intent.getSerializableExtra("template"); 
+
+        // binding UI elements
+        toolbar = findViewById(R.id.myParticipation_toolbar);
+        myParticipationStart_textView = findViewById(R.id.myParticipationStart_textView);
+        myParticipationFinish_textView = findViewById(R.id.myParticipationFinish_textView);
+        myParticipationTotal_textView = findViewById(R.id.myParticipationTotal_textView);
+        myParticipationBeacons_textView = findViewById(R.id.myParticipationBeacons_textView);
+        myParticipationTrack_button = findViewById(R.id.myParticipationTrack_button);
+        myParticipationBeacons_button = findViewById(R.id.myParticipationBeacons_button);
+        myParticipationDelete_button = findViewById(R.id.myParticipationDelete_button);
+        myParticipationInscription_button = findViewById(R.id.myParticipationInscription_button);
+
+        // initialize Firebase services
+        db = FirebaseFirestore.getInstance();
+        mAuth = FirebaseAuth.getInstance();
+        firebaseStorage = FirebaseStorage.getInstance();
+        storageReference = firebaseStorage.getReference();
+
+        // setting useful IDs
+        userID = mAuth.getCurrentUser().getUid();
+        activityID = activity.getId();
+
+        // setting the AppBar
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        // setting the info
+        // check that we received properly the participation and the activity
+        if(participation != null && activityID != null
+                && template != null) {
+            // check if it has already started
+            if(participation.getState() != ParticipationState.NOT_YET) {
+                Date start_time = participation.getStartTime();
+                Date finish_time = participation.getFinishTime();
+                if(start_time != null) {
+                    myParticipationStart_textView.setText(df_hour.format(start_time));
+                } else {
+                    myParticipationStart_textView.setText("Nada que mostrar");
+                }
+                if(finish_time != null) {
+                    myParticipationFinish_textView.setText(df_hour.format(finish_time));
+                } else {
+                    myParticipationFinish_textView.setText("Nada que mostrar");
+                }
+                if((start_time != null && finish_time != null) 
+                        && start_time.before(finish_time)) {
+                    long diff_millis = Math.abs(finish_time.getTime() - start_time.getTime());
+                    myParticipationTotal_textView.setText(formatMillis(diff_millis));
+                } else {
+                    myParticipationTotal_textView.setText("Nada que mostrar");
+                }
+                // get the reaches
+                reaches = new ArrayList<>();
+                db.collection("activities").document(activityID)
+                        .collection("participations").document(userID)
+                        .collection("beaconReaches")
+                        .get()
+                        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                            @Override
+                            public void onComplete(@NonNull @NotNull Task<QuerySnapshot> task) {
+                                for(QueryDocumentSnapshot documentSnapshot : task.getResult()) {
+                                    BeaconReached reach = documentSnapshot.toObject(BeaconReached.class);
+                                    reaches.add(reach);
+                                }
+                                // set the number of beacons reached and the total number of beacons
+                                if(template.getBeacons() != null) {
+                                    int num_reaches = reaches.size();
+                                    int number_of_beacons = template.getBeacons().size();
+                                    if(num_reaches == number_of_beacons) {
+                                        num_reaches --;
+                                    }
+                                    myParticipationBeacons_textView.setText(num_reaches + "/" + (number_of_beacons - 1));
+                                } else {
+                                    Toast.makeText(MyParticipationActivity.this, "No se pudo recuperar la información de las balizas alcanzadas", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull @NotNull Exception e) {
+                                Toast.makeText(MyParticipationActivity.this, "No se pudo recuperar la información de las balizas", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+            } else {
+                // if the participation has not yet started
+                // all fields empty
+                myParticipationStart_textView.setText("Nada que mostrar");
+                myParticipationFinish_textView.setText("Nada que mostrar");
+                myParticipationTotal_textView.setText("Nada que mostrar");
+                myParticipationBeacons_textView.setText("Nada que mostrar");
+                // enable the button to cancel the inscription
+                //myParticipationInscription_button.setEnabled(true);
+            }
+            // check if we should allow the user to see the track
+            if(participation.getState() == ParticipationState.FINISHED
+                    || participation.getFinishTime() != null
+                    || (activity.getFinishTime().before(new Date(System.currentTimeMillis()))
+                            && participation.getStartTime() != null)) {
+                // if the participation is finished or if there is a finish time or if the activity has finished
+                // we enable the track button
+                myParticipationTrack_button.setEnabled(true);
+            }
+        } else {
+            // if we couldn't receive right the participation
+            Toast.makeText(this, "Ocurrió un error al leer la información. Salga e inténtelo de nuevo", Toast.LENGTH_SHORT).show();
+        }
+
+        // beacons listener
+        myParticipationBeacons_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updateUIReaches();
+            }
+        });
+
+        // track listener
+        myParticipationTrack_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(activity != null && participation != null) {
+                    final ProgressDialog pd = new ProgressDialog(MyParticipationActivity.this);
+                    pd.setTitle("Cargando el mapa...");
+                    pd.show();
+                    StorageReference reference = storageReference.child("maps/" + activity.getTemplate() + ".png");
+                    try {
+                        // try to read the map image from Firebase into a file
+                        File localFile = File.createTempFile("images", "png");
+                        reference.getFile(localFile)
+                                .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+                                    @Override
+                                    public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                                        // if we already have the map image
+                                        // quit the dialog
+                                        pd.dismiss();
+                                        updateUITrackMap(localFile);
+                                    }
+                                })
+                                .addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        pd.dismiss();
+                                    }
+                                })
+                                .addOnProgressListener(new OnProgressListener<FileDownloadTask.TaskSnapshot>() {
+                                    @Override
+                                    public void onProgress(@NonNull @NotNull FileDownloadTask.TaskSnapshot snapshot) {
+                                        double progressPercent = (100.00 * snapshot.getBytesTransferred() / snapshot.getTotalByteCount());
+                                        pd.setMessage("Progreso: " + (int) progressPercent + "%");
+                                    }
+                                });
+                    } catch (IOException e) {
+                        pd.dismiss();
+                    }
+                }
+            }
+        });
+
+    }
+
+    private void updateUITrackMap(File localFileMap) {
+        Intent intent = new Intent(MyParticipationActivity.this, TrackActivity.class);
+        intent.putExtra("map", localFileMap);
+        intent.putExtra("template", template);
+        intent.putExtra("activity", activity);
+        //intent.putExtra("participation", participation);
+        intent.putExtra("participantID", participation.getParticipant());
+        startActivity(intent);
+    }
+
+    private void updateUIReaches() {
+        if(template != null && activity != null && userID != null
+            && (userID.equals(participation.getParticipant()))) {
+            Intent intent = new Intent(MyParticipationActivity.this, ReachesActivity.class);
+            intent.putExtra("activity", activity);
+            intent.putExtra("template", template);
+            intent.putExtra("participantID", userID);
+            startActivity(intent);
+        }
+    }
+
+    private String formatMillis (long millis) {
+        long seconds = millis / 1000;
+        long minutes = seconds / 60;
+        long hours = minutes / 60;
+        String time = hours % 24 + "h " + minutes % 60 + "m " + seconds % 60 + "s";
+        return time;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                this.finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+}

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group
+        android:id="@+id/group1">
+        <item
+            android:id="@+id/subtitle1"
+            android:title="Acciones">
+            <menu>
+                <item
+                    android:title="Mis actividades"
+                    android:icon="@drawable/ic_home"
+                    android:id="@+id/my_activities_item"/>
+                <item
+                    android:title="Organizar actividad"
+                    android:icon="@drawable/ic_map"
+                    android:id="@+id/organize_activity_item"/>
+                <item
+                    android:title="Configuración"
+                    android:icon="@drawable/ic_settings"
+                    android:id="@+id/profile_settings_item"/>
+            </menu>
+        </item>
+    </group>
+
+    <group
+        android:id="@+id/group2">
+        <item
+            android:id="@+id/subtitle2"
+            android:title="Sesión">
+            <menu>
+                <item
+                    android:title="Cerrar sesión"
+                    android:icon="@drawable/ic_log_out"
+                    android:id="@+id/log_out_item"/>
+            </menu>
+        </item>
+    </group>
+
+</menu>
