@@ -16,17 +16,40 @@
             android:id="@+id/map"
             android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+            android:layout_height="match_parent" />
 
-       <com.google.android.material.floatingactionbutton.FloatingActionButton
-           android:layout_width="wrap_content"
-           android:layout_height="wrap_content"
-           android:clickable="true"
-           android:focusable="true"
-           android:layout_marginEnd="15dp"
-           android:layout_marginBottom="15dp"
-           android:layout_gravity="bottom|right"
-           android:src="@drawable/ic_current_location"/>
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/map_progressIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:indeterminate="true"
+            android:visibility="gone" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/mapLocationOff_fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|right"
+            android:layout_margin="15dp"
+            android:clickable="true"
+            android:enabled="false"
+            android:focusable="true"
+            android:src="@drawable/ic_location_off"
+            android:visibility="gone" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/map_fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|right"
+            android:layout_marginEnd="15dp"
+            android:layout_marginBottom="15dp"
+            android:clickable="true"
+            android:enabled="false"
+            android:focusable="true"
+            android:src="@drawable/ic_current_location"
+            android:visibility="gone" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

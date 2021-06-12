@@ -88,10 +88,14 @@ public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.
                             holder.email_textView.setText(user.getEmail());
                             holder.name_textView.setText(user.getName());
                             if (participation.getStartTime() != null) {
-                                holder.start_textView.append(df_hour.format(participation.getStartTime()));
+                                holder.start_textView.setText("Salida: " + df_hour.format(participation.getStartTime()));
+                            } else {
+                                holder.start_textView.setText("Salida: sin salida registrada");
                             }
                             if (participation.getFinishTime() != null) {
-                                holder.finish_textView.append(df_hour.format(participation.getFinishTime()));
+                                holder.finish_textView.setText("Llegada" + df_hour.format(participation.getFinishTime()));
+                            } else {
+                                holder.finish_textView.setText("Llegada: sin llegada registrada");
                             }
                             StorageReference ref = holder.storageReference.child("profileImages/" + user.getId());
                             Glide.with(context)
