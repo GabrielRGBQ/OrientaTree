@@ -58,7 +58,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private TextView reachesMap_textView, map_timer_textView;
     private MaterialButton mapBeacons_button;
-    private FloatingActionButton map_fab;
+    private FloatingActionButton map_fab, mapLocationOff_fab;
     private CircularProgressIndicator map_progressIndicator;
 
     private GoogleMap mMap;
@@ -120,6 +120,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         map_timer_textView = findViewById(R.id.map_timer_textView);
         map_fab = findViewById(R.id.map_fab);
         map_progressIndicator = findViewById(R.id.map_progressIndicator);
+        mapLocationOff_fab = findViewById(R.id.mapLocationOff_fab);
 
         // set listener to the beacons button
         mapBeacons_button.setOnClickListener(new View.OnClickListener() {
@@ -131,7 +132,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         // realtime listener to display the timer
         if (activity != null && template != null && userID != null
-                /*&& template.getType() == TemplateType.DEPORTIVA*/) {
+            /*&& template.getType() == TemplateType.DEPORTIVA*/) {
             db.collection("activities").document(activity.getId())
                     .collection("participations").document(userID)
                     .addSnapshotListener(new EventListener<DocumentSnapshot>() {
@@ -193,6 +194,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                             }
                         }
                     });
+            if (activity.isLocation_help()) {
+                // if location is allowed in this activity...
+                map_fab.setEnabled(true);
+                map_fab.setVisibility(View.VISIBLE);
+            }
         }
 
         // realtime listener to display the number of beacons already reached
@@ -224,15 +230,47 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         map_fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //enableLocation();
+                enableLocation();
             }
         });
+
+        mapLocationOff_fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                disableLocation();
+            }
+        });
+    }
+
+    private void disableLocation() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            if(mMap != null) {
+                // hide location off fab
+                mapLocationOff_fab.setVisibility(View.GONE);
+                mapLocationOff_fab.setEnabled(false);
+                // show location fab
+                map_fab.setEnabled(true);
+                map_fab.setVisibility(View.VISIBLE);
+                // disable location
+                mMap.setMyLocationEnabled(false);
+            }
+        } else {
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+        }
     }
 
     private void enableLocation() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             if (mMap != null) {
+                // hide location fab
+                map_fab.setVisibility(View.GONE);
+                map_fab.setEnabled(false);
+                // show location off fab
+                mapLocationOff_fab.setEnabled(true);
+                mapLocationOff_fab.setVisibility(View.VISIBLE);
+                // enable location
                 mMap.setMyLocationEnabled(true);
             }
         } else {
@@ -264,7 +302,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mMap = googleMap;
 
         // setting styles...
-        /*try {
+        try {
             boolean success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style));
             if (!success) {
                 Toast.makeText(this, "Algo salió mal al configurar el mapa", Toast.LENGTH_SHORT).show();
@@ -323,7 +361,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     });
         } else {
             Toast.makeText(this, "Algo salió mal al cargar el mapa", Toast.LENGTH_SHORT).show();
-        }*/
+        }
     }
 
     public static int calculateInSampleSize(

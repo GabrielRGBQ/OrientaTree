@@ -89,7 +89,7 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
     private Polyline polyline;
 
     // max number of points that are shown at the same time in the track
-    private static final int RANGE = 3;
+    private static final int RANGE = 60;
 
     // Firebase services
     FirebaseFirestore db;

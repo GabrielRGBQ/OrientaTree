@@ -14,6 +14,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -227,7 +228,7 @@ public class NowActivity extends AppCompatActivity {
                             if (template != null) {
                                 // get the data from the template
                                 nowType_textView.setText(template.getType().toString());
-                                if(template.getType() == TemplateType.EDUCATIVA &&
+                                if (template.getType() == TemplateType.EDUCATIVA &&
                                         template.getColor() != null) {
                                     nowType_textView.append(" " + template.getColor());
                                 }
@@ -394,7 +395,7 @@ public class NowActivity extends AppCompatActivity {
                     // check that the activity has not finished yet (it could have, in the meantime while
                     // the user was reading the rules, for example)
                     Date current_time = new Date(System.currentTimeMillis());
-                    if(current_time.before(activity.getFinishTime())) {
+                    if (current_time.before(activity.getFinishTime())) {
                         // if the activity has not yet finished
                         new MaterialAlertDialogBuilder(NowActivity.this)
                                 .setMessage("¿Deseas comenzar/retomar la actividad? Solo deberías " +
@@ -426,6 +427,8 @@ public class NowActivity extends AppCompatActivity {
                                                                     try {
                                                                         // try to read the map image from Firebase into a file
                                                                         File localFile = File.createTempFile("images", "png");
+                                                                        Log.d("TAG", localFile.getAbsolutePath());
+                                                                        Log.d("TAG", localFile.getPath());
                                                                         reference.getFile(localFile)
                                                                                 .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
                                                                                     @Override
@@ -511,6 +514,7 @@ public class NowActivity extends AppCompatActivity {
                                                                         pd.dismiss();
                                                                         showSnackBar("Algo salió mal al cargar el mapa. Sal y vuelve a intentarlo.");
                                                                     }
+
                                                                 } else {
                                                                     // too far from the start spot
                                                                     now_progressIndicator.setVisibility(View.GONE);
@@ -531,10 +535,10 @@ public class NowActivity extends AppCompatActivity {
                                 })
                                 .show();
                     } else {
-                       // if the activity has already finished
+                        // if the activity has already finished
                         nowParticipant_extendedFab.setEnabled(false);
                         nowParticipant_extendedFab.setVisibility(View.GONE);
-                       showSnackBar("Esta actividad ya ha terminado");
+                        showSnackBar("Esta actividad ya ha terminado");
                     }
                 } else {
                     // if we don't have the permissions we ask for them
