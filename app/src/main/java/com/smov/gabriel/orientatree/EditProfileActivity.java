@@ -284,6 +284,9 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
             case R.id.organize_activity_item:
                 updateUIFindTemplate();
                 break;
+            case R.id.credits_item:
+                updateUICredits();
+                break;
             case R.id.profile_settings_item:
                 break;
             case R.id.log_out_item:
@@ -323,5 +326,10 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
         Intent intent = new Intent(EditProfileActivity.this, IdentificationActivity.class);
         startActivity(intent);
         finish();
+    }
+
+    private void updateUICredits() {
+        Intent intent = new Intent(EditProfileActivity.this, CreditsActivity.class);
+        startActivity(intent);
     }
 }

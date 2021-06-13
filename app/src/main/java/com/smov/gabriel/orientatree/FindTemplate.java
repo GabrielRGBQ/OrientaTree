@@ -169,6 +169,9 @@ public class FindTemplate extends AppCompatActivity implements NavigationView.On
             case R.id.profile_settings_item:
                 updateUIEditProfile();
                 break;
+            case R.id.credits_item:
+                updateUICredits();
+                break;
             case R.id.log_out_item:
                 logOut();
                 break;
@@ -190,6 +193,11 @@ public class FindTemplate extends AppCompatActivity implements NavigationView.On
                 })
                 .setNegativeButton("Cancelar", null)
                 .show();
+    }
+
+    private void updateUICredits() {
+        Intent intent = new Intent(FindTemplate.this, CreditsActivity.class);
+        startActivity(intent);
     }
 
     private void updateUIIdentification() {

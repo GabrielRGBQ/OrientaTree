@@ -241,6 +241,9 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             case R.id.organize_activity_item:
                 updateUIFindTemplate();
                 break;
+            case R.id.credits_item:
+                updateUICredits();
+                break;
             case R.id.log_out_item:
                 logOut();
                 break;
@@ -383,14 +386,8 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         startActivity(intent);
     }
 
-    /*private void showSnackBar(String msg) {
-        Snackbar.make(home_constraintLayout, msg, Snackbar.LENGTH_LONG)
-                .setAction("OK", new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                    }
-                })
-                .setDuration(8000)
-                .show();
-    }*/
+    private void updateUICredits() {
+        Intent intent = new Intent(HomeActivity.this, CreditsActivity.class);
+        startActivity(intent);
+    }
 }
