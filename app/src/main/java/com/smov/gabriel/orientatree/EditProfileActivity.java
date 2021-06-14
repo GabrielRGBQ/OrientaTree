@@ -323,7 +323,7 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
     }
 
     private void updateUIIdentification() {
-        Intent intent = new Intent(EditProfileActivity.this, IdentificationActivity.class);
+        Intent intent = new Intent(EditProfileActivity.this, LogInActivity.class);
         startActivity(intent);
         finish();
     }

@@ -366,7 +366,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     }
 
     public void updateUIIdentification() {
-        Intent intent = new Intent(HomeActivity.this, IdentificationActivity.class);
+        Intent intent = new Intent(HomeActivity.this, LogInActivity.class);
         startActivity(intent);
         finish();
     }

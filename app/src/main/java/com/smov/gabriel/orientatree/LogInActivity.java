@@ -13,8 +13,10 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
@@ -22,16 +24,20 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.smov.gabriel.orientatree.model.User;
+
+import org.jetbrains.annotations.NotNull;
 
 public class LogInActivity extends AppCompatActivity {
 
     private TextInputLayout email_textfield, password_textfield;
     private Button logIn_button;
     private CircularProgressIndicator progress_circular;
+    private MaterialButton logInPassword_button, logInRegistry_button, logInConfirmation_email;
 
     private Toolbar toolbar;
 
@@ -49,19 +55,23 @@ public class LogInActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
+        if(mAuth.getCurrentUser() != null && mAuth.getCurrentUser().isEmailVerified()) {
+            updateUIHome();
+        }
+
         email_textfield = findViewById(R.id.email_textfield);
         password_textfield = findViewById(R.id.password_textfield);
         logIn_button = findViewById(R.id.logIn_button);
         progress_circular = findViewById(R.id.progress_circular);
+        logInPassword_button = findViewById(R.id.logInPassword_button);
+        logInRegistry_button = findViewById(R.id.logInRegistry_button);
+        logInConfirmation_email = findViewById(R.id.logInConfirmation_button);
 
         // needed to show the snackbar at right place
         final View viewPos = findViewById(R.id.logIn_coordinator_snackBar);
 
         toolbar = findViewById(R.id.logIn_toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-        //logIn_layout = findViewById(R.id.logIn_layout);
 
         logIn_button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -94,12 +104,20 @@ public class LogInActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if(task.isSuccessful()) {
-                            name = mAuth.getCurrentUser().getDisplayName();
+                            progress_circular.setVisibility(View.GONE);
+                            FirebaseUser user = mAuth.getCurrentUser();
+                            name = user.getDisplayName();
                             if(name == null || name.equals("")) {
                                 name = "usuario";
                                 Toast.makeText(LogInActivity.this, "No pudieron obtenerse los datos del usuario", Toast.LENGTH_SHORT).show();
                             }
-                            updateUIHome();
+                            if(user.isEmailVerified()) {
+                                // if the user is verified
+                                updateUIWelcome();
+                            } else {
+                               // if the user is not verified
+                                showVerificationSnackBar(viewPos);
+                            }
                         } else {
                             try {
                                 throw task.getException();
@@ -118,6 +136,20 @@ public class LogInActivity extends AppCompatActivity {
             }
         });
 
+        logInRegistry_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updateUISignUp();
+            }
+        });
+
+        logInConfirmation_email.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendVerificationEmail();
+            }
+        });
+
     }
 
     private void showSnackBar(View viewPos) {
@@ -131,14 +163,57 @@ public class LogInActivity extends AppCompatActivity {
              .show();
     }
 
+    private void showVerificationSnackBar(View viewPos) {
+        Snackbar.make(viewPos, "Su correo no está verificado. Envie email de verificación", Snackbar.LENGTH_LONG)
+                .setAction("Enviar", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        sendVerificationEmail();
+                    }
+                })
+                .setDuration(8000)
+                .show();
+    }
+
     private void updateUIHome() {
+        Intent intent = new Intent(LogInActivity.this, HomeActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
+    private void sendVerificationEmail() {
+        progress_circular.setVisibility(View.VISIBLE);
+        logInConfirmation_email.setEnabled(true);
+        logInConfirmation_email.setVisibility(View.VISIBLE);
+        FirebaseUser user = mAuth.getCurrentUser();
+        user.sendEmailVerification().addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void unused) {
+                progress_circular.setVisibility(View.GONE);
+                Toast.makeText(LogInActivity.this, "Mensaje de confirmación enviado", Toast.LENGTH_SHORT).show();
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull @NotNull Exception e) {
+                progress_circular.setVisibility(View.GONE);
+                Toast.makeText(LogInActivity.this, "No se pudo enviar mensaje de confirmación. " +
+                        "espere unos minutos y vuelva a intentarlo", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void updateUIWelcome() {
         Intent intent = new Intent(LogInActivity.this, WelcomeActivity.class);
         Bundle b = new Bundle();
         b.putString("name", name);
         b.putInt("previousActivity", 1); // flag to signal in next activity wether we come from log-in or sign-up
         intent.putExtras(b);
-        IdentificationActivity.iAct.finish(); // finish IdentificationActivity
         startActivity(intent);
         finish();
+    }
+
+    private void updateUISignUp() {
+        Intent intent = new Intent(LogInActivity.this, SignUpActivity.class);
+        startActivity(intent);
     }
 }

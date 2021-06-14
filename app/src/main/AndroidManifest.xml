@@ -84,12 +84,12 @@
         <activity
             android:name=".LogInActivity"
             android:label="Iniciar sesión"
-            android:parentActivityName=".IdentificationActivity"
+            android:parentActivityName=".MainActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".SignUpActivity"
             android:label="Registrarse"
-            android:parentActivityName=".IdentificationActivity"
+            android:parentActivityName=".LogInActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".IdentificationActivity"

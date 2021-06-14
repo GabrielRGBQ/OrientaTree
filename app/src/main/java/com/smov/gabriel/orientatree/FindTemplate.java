@@ -201,7 +201,7 @@ public class FindTemplate extends AppCompatActivity implements NavigationView.On
     }
 
     private void updateUIIdentification() {
-        Intent intent = new Intent(FindTemplate.this, IdentificationActivity.class);
+        Intent intent = new Intent(FindTemplate.this, LogInActivity.class);
         startActivity(intent);
         finish();
     }
