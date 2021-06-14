@@ -9,9 +9,13 @@ import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
@@ -54,6 +58,7 @@ import com.smov.gabriel.orientatree.services.LocationService;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -65,8 +70,9 @@ public class NowActivity extends AppCompatActivity {
     private TextView nowType_textView, nowTitle_textView, nowTime_textView, nowOrganizer_textView,
             nowTemplate_textView, nowDescription_textView, nowNorms_textView,
             nowLocation_textView, nowMode_textView, nowState_textView;
-    private ExtendedFloatingActionButton nowParticipant_extendedFab, nowSeeParticipants_extendedFab;
-    private MaterialButton nowCredentials_button;
+    private ExtendedFloatingActionButton nowParticipant_extendedFab, nowSeeParticipants_extendedFab,
+            nowDownloadMap_extendedFab;
+    private MaterialButton nowCredentials_button, nowMap_button;
     private Toolbar toolbar;
     private ImageView now_imageView;
     private CoordinatorLayout now_coordinatorLayout;
@@ -147,6 +153,8 @@ public class NowActivity extends AppCompatActivity {
         nowState_textView = findViewById(R.id.nowState_textView);
         nowMode_textView = findViewById(R.id.nowMode_textView);
         now_progressIndicator = findViewById(R.id.now_progressIndicator);
+        nowDownloadMap_extendedFab = findViewById(R.id.nowDownloadMap_extendedFab);
+        nowMap_button = findViewById(R.id.nowMap_button);
 
         // set the toolbar
         toolbar = findViewById(R.id.now_toolbar);
@@ -311,32 +319,34 @@ public class NowActivity extends AppCompatActivity {
                                                     }
                                                     if (snapshot != null && snapshot.exists()) {
                                                         participation = snapshot.toObject(Participation.class);
-                                                        switch (participation.getState()) {
-                                                            case NOT_YET:
-                                                                nowState_textView.setText("Estado: no comenzada");
-                                                                if (activityTime == ActivityTime.ONGOING) {
-                                                                    nowParticipant_extendedFab.setEnabled(true);
-                                                                    nowParticipant_extendedFab.setVisibility(View.VISIBLE);
-                                                                    nowParticipant_extendedFab.setText("Comenzar");
+                                                        //only fot testing
+                                                        /*if(mapDownloaded()) {
+                                                            deleteMap();
+                                                        }*/
+                                                        if (activityTime == ActivityTime.ONGOING) {
+                                                            if (mapDownloaded()) {
+                                                                // if map already downloaded
+                                                                enableRightParticipantOptions();
+                                                            } else {
+                                                                // if map not yet downloaded
+                                                                // we only enable the option of downloading the map
+                                                                nowDownloadMap_extendedFab.setEnabled(true);
+                                                                nowDownloadMap_extendedFab.setVisibility(View.VISIBLE);
+                                                                switch (participation.getState()) {
+                                                                    case NOT_YET:
+                                                                        nowState_textView.setText("Estado: no comenzada");
+                                                                        break;
+                                                                    case NOW:
+                                                                        nowState_textView.setText("Estado: aún no terminada");
+                                                                        break;
+                                                                    case FINISHED:
+                                                                        nowState_textView.setText("Estado: terminada");
+                                                                        break;
                                                                 }
-                                                                break;
-                                                            case NOW:
-                                                                nowState_textView.setText("Estado: aún no terminada");
-                                                                if (!LocationService.executing) {
-                                                                    if (activityTime == ActivityTime.ONGOING) {
-                                                                        nowParticipant_extendedFab.setEnabled(true);
-                                                                        nowParticipant_extendedFab.setVisibility(View.VISIBLE);
-                                                                        nowParticipant_extendedFab.setText("Continuar");
-                                                                    }
-                                                                }
-                                                                break;
-                                                            case FINISHED:
-                                                                nowState_textView.setText("Estado: terminada");
-                                                                nowParticipant_extendedFab.setEnabled(false);
-                                                                nowParticipant_extendedFab.setVisibility(View.GONE);
-                                                                break;
-                                                            default:
-                                                                break;
+
+                                                            }
+                                                        } else {
+                                                            enableRightParticipantOptions();
                                                         }
                                                     } else {
                                                         Toast.makeText(NowActivity.this, "Algo salió mal al obtener la participación. " +
@@ -420,101 +430,66 @@ public class NowActivity extends AppCompatActivity {
                                                                         && participation.getState() == ParticipationState.NOT_YET)
                                                                         || participation.getState() == ParticipationState.NOW) {
                                                                     // 3) if we are near enough, or if we had already started, continue to charge the map
-                                                                    final ProgressDialog pd = new ProgressDialog(NowActivity.this);
-                                                                    pd.setTitle("Cargando el mapa...");
-                                                                    pd.show();
                                                                     StorageReference reference = storageReference.child("maps/" + activity.getTemplate() + ".png");
-                                                                    try {
-                                                                        // try to read the map image from Firebase into a file
-                                                                        File localFile = File.createTempFile("images", "png");
-                                                                        Log.d("TAG", localFile.getAbsolutePath());
-                                                                        Log.d("TAG", localFile.getPath());
-                                                                        reference.getFile(localFile)
-                                                                                .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                                                                                    @Override
-                                                                                    public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                                                                                        // if we already have the map image
-                                                                                        // quit the dialog
-                                                                                        pd.dismiss();
-                                                                                        // check that the service is not already being executed
-                                                                                        if (!LocationService.executing) {
-                                                                                            // now we have to do different things depending on whether the participation
-                                                                                            // is at NOT_YET or at NOW
-                                                                                            switch (participation.getState()) {
-                                                                                                case NOT_YET:
-                                                                                                    // get current time
-                                                                                                    long millis = System.currentTimeMillis();
-                                                                                                    Date current_time = new Date(millis);
-                                                                                                    // update the start time
-                                                                                                    db.collection("activities").document(activity.getId())
-                                                                                                            .collection("participations").document(userID)
-                                                                                                            .update("state", ParticipationState.NOW,
-                                                                                                                    "startTime", current_time)
-                                                                                                            .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                                                                                                @Override
-                                                                                                                public void onSuccess(Void unused) {
-                                                                                                                    now_progressIndicator.setVisibility(View.GONE);
-                                                                                                                    // hide the button
-                                                                                                                    nowParticipant_extendedFab.setEnabled(false);
-                                                                                                                    nowParticipant_extendedFab.setVisibility(View.GONE);
-                                                                                                                    // start service
-                                                                                                                    locationServiceIntent.putExtra("activity", activity);
-                                                                                                                    startService(locationServiceIntent);
-                                                                                                                    // update UI
-                                                                                                                    updateUIMap(localFile);
-                                                                                                                }
-                                                                                                            })
-                                                                                                            .addOnFailureListener(new OnFailureListener() {
-                                                                                                                @Override
-                                                                                                                public void onFailure(@NonNull @NotNull Exception e) {
-                                                                                                                    now_progressIndicator.setVisibility(View.GONE);
-                                                                                                                    showSnackBar("Error al comenzar la actividad. Inténtalo de nuevo.");
-                                                                                                                }
-                                                                                                            });
-                                                                                                    break;
-                                                                                                case NOW:
-                                                                                                    now_progressIndicator.setVisibility(View.GONE);
-                                                                                                    // hide button
-                                                                                                    nowParticipant_extendedFab.setEnabled(false);
-                                                                                                    nowParticipant_extendedFab.setVisibility(View.GONE);
-                                                                                                    // start service
-                                                                                                    locationServiceIntent.putExtra("activity", activity);
-                                                                                                    startService(locationServiceIntent);
-                                                                                                    // update UI
-                                                                                                    updateUIMap(localFile);
-                                                                                                    break;
-                                                                                                default:
-                                                                                                    now_progressIndicator.setVisibility(View.GONE);
-                                                                                                    Toast.makeText(NowActivity.this, "Parece que la actividad ya ha terminado", Toast.LENGTH_SHORT).show();
-                                                                                                    break;
+                                                                    if (!LocationService.executing) {
+                                                                        // now we have to do different things depending on whether the participation
+                                                                        // is at NOT_YET or at NOW
+                                                                        switch (participation.getState()) {
+                                                                            case NOT_YET:
+                                                                                // get current time
+                                                                                long millis = System.currentTimeMillis();
+                                                                                Date current_time = new Date(millis);
+                                                                                // update the start time
+                                                                                db.collection("activities").document(activity.getId())
+                                                                                        .collection("participations").document(userID)
+                                                                                        .update("state", ParticipationState.NOW,
+                                                                                                "startTime", current_time)
+                                                                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                                                            @Override
+                                                                                            public void onSuccess(Void unused) {
+                                                                                                now_progressIndicator.setVisibility(View.GONE);
+                                                                                                // hide the button
+                                                                                                nowParticipant_extendedFab.setEnabled(false);
+                                                                                                nowParticipant_extendedFab.setVisibility(View.GONE);
+                                                                                                // start service
+                                                                                                locationServiceIntent.putExtra("activity", activity);
+                                                                                                startService(locationServiceIntent);
+                                                                                                // enable see map button (just in case that the user wants
+                                                                                                // to go back and forth between this and the map activity)
+                                                                                                nowMap_button.setEnabled(true);
+                                                                                                nowMap_button.setVisibility(View.VISIBLE);
+                                                                                                // update UI
+                                                                                                updateUIMap();
                                                                                             }
-                                                                                        } else {
-                                                                                            now_progressIndicator.setVisibility(View.GONE);
-                                                                                            Toast.makeText(NowActivity.this, "No se pudo iniciar la actividad... ya ha un servicio ejecutándose", Toast.LENGTH_SHORT).show();
-                                                                                        }
-                                                                                    }
-                                                                                })
-                                                                                .addOnFailureListener(new OnFailureListener() {
-                                                                                    @Override
-                                                                                    public void onFailure(@NonNull Exception e) {
-                                                                                        now_progressIndicator.setVisibility(View.GONE);
-                                                                                        pd.dismiss();
-                                                                                        showSnackBar("Algo salió mal al cargar el mapa. Sal y vuelve a intentarlo.");
-                                                                                    }
-                                                                                })
-                                                                                .addOnProgressListener(new OnProgressListener<FileDownloadTask.TaskSnapshot>() {
-                                                                                    @Override
-                                                                                    public void onProgress(@NonNull @NotNull FileDownloadTask.TaskSnapshot snapshot) {
-                                                                                        double progressPercent = (100.00 * snapshot.getBytesTransferred() / snapshot.getTotalByteCount());
-                                                                                        pd.setMessage("Progreso: " + (int) progressPercent + "%");
-                                                                                    }
-                                                                                });
-                                                                    } catch (IOException e) {
+                                                                                        })
+                                                                                        .addOnFailureListener(new OnFailureListener() {
+                                                                                            @Override
+                                                                                            public void onFailure(@NonNull @NotNull Exception e) {
+                                                                                                now_progressIndicator.setVisibility(View.GONE);
+                                                                                                showSnackBar("Error al comenzar la actividad. Inténtalo de nuevo.");
+                                                                                            }
+                                                                                        });
+                                                                                break;
+                                                                            case NOW:
+                                                                                now_progressIndicator.setVisibility(View.GONE);
+                                                                                // hide button
+                                                                                nowParticipant_extendedFab.setEnabled(false);
+                                                                                nowParticipant_extendedFab.setVisibility(View.GONE);
+                                                                                // start service
+                                                                                locationServiceIntent.putExtra("activity", activity);
+                                                                                startService(locationServiceIntent);
+                                                                                // update UI
+                                                                                updateUIMap();
+                                                                                break;
+                                                                            default:
+                                                                                now_progressIndicator.setVisibility(View.GONE);
+                                                                                Toast.makeText(NowActivity.this, "Parece que la actividad ya ha terminado", Toast.LENGTH_SHORT).show();
+                                                                                break;
+                                                                        }
+                                                                    } else {
                                                                         now_progressIndicator.setVisibility(View.GONE);
-                                                                        pd.dismiss();
-                                                                        showSnackBar("Algo salió mal al cargar el mapa. Sal y vuelve a intentarlo.");
+                                                                        Toast.makeText(NowActivity.this, "No se pudo iniciar la actividad... ya ha un servicio ejecutándose", Toast.LENGTH_SHORT).show();
                                                                     }
-
                                                                 } else {
                                                                     // too far from the start spot
                                                                     now_progressIndicator.setVisibility(View.GONE);
@@ -559,6 +534,152 @@ public class NowActivity extends AppCompatActivity {
             }
         });
 
+        // download map listener
+        nowDownloadMap_extendedFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final ProgressDialog pd = new ProgressDialog(NowActivity.this);
+                pd.setTitle("Cargando el mapa...");
+                pd.show();
+                StorageReference reference = storageReference.child("maps/" + activity.getTemplate() + ".png");
+                try {
+                    // try to read the map image from Firebase into a file
+                    File localFile = File.createTempFile("images", "png");
+                    reference.getFile(localFile)
+                            .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+                                @Override
+                                public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                                    // we downloaded the map successfully
+                                    // read the downloaded file into a bitmap
+                                    Bitmap bmp = BitmapFactory.decodeFile(localFile.getAbsolutePath());
+                                    // save the bitmap to a file
+                                    ContextWrapper cw = new ContextWrapper(getApplicationContext());
+                                    // path to /data/data/yourapp/app_data/imageDir
+                                    File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+                                    // Create imageDir
+                                    File mypath = new File(directory, activity.getId() + ".png");
+                                    FileOutputStream fos = null;
+                                    try {
+                                        fos = new FileOutputStream(mypath);
+                                        // Use the compress method on the BitMap object to write image to the OutputStream
+                                        bmp.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                                        showSnackBar("Mapa descargado con éxito, ya puedes comenzar la actividad");
+                                        // disable the download map option and enable the others
+                                        nowDownloadMap_extendedFab.setVisibility(View.GONE);
+                                        nowDownloadMap_extendedFab.setEnabled(false);
+                                        enableRightParticipantOptions();
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                        showSnackBar("Algo salió mal al cargar el mapa. Sal y vuelve a intentarlo.");
+                                    } finally {
+                                        try {
+                                            fos.close();
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                    pd.dismiss();
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    pd.dismiss();
+                                    showSnackBar("Algo salió mal al cargar el mapa. Sal y vuelve a intentarlo.");
+                                }
+                            })
+                            .addOnProgressListener(new OnProgressListener<FileDownloadTask.TaskSnapshot>() {
+                                @Override
+                                public void onProgress(@NonNull @NotNull FileDownloadTask.TaskSnapshot snapshot) {
+                                    double progressPercent = (100.00 * snapshot.getBytesTransferred() / snapshot.getTotalByteCount());
+                                    if (progressPercent <= 90) {
+                                        pd.setMessage("Progreso: " + (int) progressPercent + "%");
+                                    } else {
+                                        pd.setMessage("Descargado. Espera unos instantes mientras el mapa se guarda en el dispositivo");
+                                    }
+                                }
+                            });
+                } catch (IOException e) {
+                    pd.dismiss();
+                    showSnackBar("Algo salió mal al cargar el mapa. Sal y vuelve a intentarlo.");
+                }
+            }
+        });
+
+        // see map button listener
+        nowMap_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                switch (participation.getState()) {
+                    case NOT_YET:
+                        // TODO (do nothing by now)
+                        break;
+                    case NOW:
+                        if (!LocationService.executing) {
+                            // if the service is not being executed now, show dialog to alert
+                            new MaterialAlertDialogBuilder(NowActivity.this)
+                                    .setTitle("Aviso sobre el mapa")
+                                    .setMessage("Esta acción te mostrará el mapa de la actividad, pero " +
+                                            "el servicio que rastrea tu ubicación no está activo, por lo que" +
+                                            " no se registrará tu paso por las balizas. Si lo que quieres es retomar " +
+                                            "la actividad, cancela esta acción y pulsa el botón de Continuar")
+                                    .setNegativeButton("Cancelar", null)
+                                    .setPositiveButton("Ver mapa", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            if (mapDownloaded()) {
+                                                updateUIMap();
+                                            } else {
+                                                // if for some reason the map is not downloaded then
+                                                // show the download button instead and warn the user
+                                                nowParticipant_extendedFab.setVisibility(View.GONE);
+                                                nowParticipant_extendedFab.setEnabled(false);
+                                                nowDownloadMap_extendedFab.setEnabled(true);
+                                                nowDownloadMap_extendedFab.setVisibility(View.VISIBLE);
+                                                showSnackBar("El mapa no está descargado. Descárgalo y vuelve a intentarlo");
+                                                nowMap_button.setVisibility(View.GONE);
+                                                nowMap_button.setEnabled(false);
+                                            }
+                                        }
+                                    })
+                                    .show();
+                        } else {
+                            // if the service is being executed now
+                            if (mapDownloaded()) {
+                                updateUIMap();
+                            } else {
+                                // if for some reason the map is not downloaded then
+                                // show the download button instead and warn the user
+                                nowParticipant_extendedFab.setVisibility(View.GONE);
+                                nowParticipant_extendedFab.setEnabled(false);
+                                nowDownloadMap_extendedFab.setEnabled(true);
+                                nowDownloadMap_extendedFab.setVisibility(View.VISIBLE);
+                                showSnackBar("El mapa no está descargado. Descárgalo y vuelve a intentarlo");
+                                nowMap_button.setVisibility(View.GONE);
+                                nowMap_button.setEnabled(false);
+                            }
+                        }
+                        break;
+                    case FINISHED:
+                        if (mapDownloaded()) {
+                            updateUIMap();
+                        } else {
+                            // if for some reason the map is not downloaded then
+                            // show the download button instead and warn the user
+                            nowParticipant_extendedFab.setVisibility(View.GONE);
+                            nowParticipant_extendedFab.setEnabled(false);
+                            nowDownloadMap_extendedFab.setEnabled(true);
+                            nowDownloadMap_extendedFab.setVisibility(View.VISIBLE);
+                            showSnackBar("El mapa no está descargado. Descárgalo y vuelve a intentarlo");
+                            nowMap_button.setVisibility(View.GONE);
+                            nowMap_button.setEnabled(false);
+                        }
+                        break;
+                }
+            }
+        });
+
+        // credentials button listener
         nowCredentials_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -579,9 +700,8 @@ public class NowActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private void updateUIMap(File map) {
+    private void updateUIMap() {
         Intent intent = new Intent(NowActivity.this, MapActivity.class);
-        intent.putExtra("map", map);
         intent.putExtra("template", template);
         intent.putExtra("activity", activity);
         startActivity(intent);
@@ -681,4 +801,61 @@ public class NowActivity extends AppCompatActivity {
         float dist = (float) (earthRadius * c);
         return dist;
     }
+
+    private void enableRightParticipantOptions() {
+        switch (participation.getState()) {
+            case NOT_YET:
+                nowState_textView.setText("Estado: no comenzada");
+                if (activityTime == ActivityTime.ONGOING) {
+                    nowParticipant_extendedFab.setEnabled(true);
+                    nowParticipant_extendedFab.setVisibility(View.VISIBLE);
+                    nowParticipant_extendedFab.setText("Comenzar");
+                }
+                break;
+            case NOW:
+                nowState_textView.setText("Estado: aún no terminada");
+                // allow to click the see map button
+                nowMap_button.setEnabled(true);
+                nowMap_button.setVisibility(View.VISIBLE);
+                if (!LocationService.executing) {
+                    if (activityTime == ActivityTime.ONGOING) {
+                        nowParticipant_extendedFab.setEnabled(true);
+                        nowParticipant_extendedFab.setVisibility(View.VISIBLE);
+                        nowParticipant_extendedFab.setText("Continuar");
+                    }
+                }
+                break;
+            case FINISHED:
+                nowState_textView.setText("Estado: terminada");
+                // allow to click the see map button
+                nowMap_button.setEnabled(true);
+                nowMap_button.setVisibility(View.VISIBLE);
+                nowParticipant_extendedFab.setEnabled(false);
+                nowParticipant_extendedFab.setVisibility(View.GONE);
+                break;
+            default:
+                break;
+        }
+    }
+
+    public boolean mapDownloaded() {
+        boolean res = false;
+        ContextWrapper cw = new ContextWrapper(getApplicationContext());
+        File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+        File mypath = new File(directory, activity.getId() + ".png");
+        if (mypath.exists()) {
+            res = true;
+        }
+        return res;
+    }
+
+    // only for testing
+    /*private void deleteMap() {
+        ContextWrapper cw = new ContextWrapper(getApplicationContext());
+        File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+        File mypath = new File(directory, activity.getId() + ".png");
+        if (mypath.exists()) {
+            mypath.delete();
+        }
+    }*/
 }

@@ -263,7 +263,7 @@ public class LocationService extends Service {
                 } else {
                     // there are still beacons to be reached, so we play
                     // update the current location (needed to see the track later)
-                    updateCurrentLocation(lat1, lng1, current_time);
+                    //updateCurrentLocation(lat1, lng1, current_time);
                     if (activity.isScore()) {
                         playScore(lat1, lng1, current_time);
                     } else {
