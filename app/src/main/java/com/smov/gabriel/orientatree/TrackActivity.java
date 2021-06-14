@@ -4,6 +4,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -70,9 +72,6 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
     private Map templateMap;
     //private Participation participation;
 
-    // file containing the map
-    private File mapFile;
-
     // useful IDs
     private String userID;
     private String activityID;
@@ -108,7 +107,6 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
 
         // getting the intent
         Intent intent = getIntent();
-        mapFile = (File) intent.getSerializableExtra("map");
         template = (Template) intent.getSerializableExtra("template");
         activity = (Activity) intent.getSerializableExtra("activity");
         //participation = (Participation) intent.getSerializableExtra("participation");
@@ -181,7 +179,7 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
             Toast.makeText(this, "Algo salió mal al configurar el mapa", Toast.LENGTH_SHORT).show();
         }
 
-        if (template != null && mapFile != null) {
+        if (template != null) {
             db.collection("maps").document(template.getMap_id())
                     .get()
                     .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
@@ -195,7 +193,10 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
                                     templateMap.getCentering_point().getLongitude());
 
                             // get the map image from a file and reduce its size
-                            Bitmap image_bitmap = decodeFile(mapFile, 540, 960);
+                            ContextWrapper cw = new ContextWrapper(getApplicationContext());
+                            File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+                            File mypath = new File(directory, activity.getId() + ".png");
+                            Bitmap image_bitmap = decodeFile(mypath, 540, 960);
                             BitmapDescriptor image = BitmapDescriptorFactory.fromBitmap(image_bitmap);
 
                             LatLngBounds overlay_bounds = new LatLngBounds(
