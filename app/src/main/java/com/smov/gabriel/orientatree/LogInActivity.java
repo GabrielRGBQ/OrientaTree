@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -17,6 +18,7 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
@@ -55,7 +57,7 @@ public class LogInActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        if(mAuth.getCurrentUser() != null && mAuth.getCurrentUser().isEmailVerified()) {
+        if(mAuth.getCurrentUser() != null /*&& mAuth.getCurrentUser().isEmailVerified()*/) {
             updateUIHome();
         }
 
@@ -111,13 +113,13 @@ public class LogInActivity extends AppCompatActivity {
                                 name = "usuario";
                                 Toast.makeText(LogInActivity.this, "No pudieron obtenerse los datos del usuario", Toast.LENGTH_SHORT).show();
                             }
-                            if(user.isEmailVerified()) {
+                            //if(user.isEmailVerified()) {
                                 // if the user is verified
                                 updateUIWelcome();
-                            } else {
+                            //} else {
                                // if the user is not verified
-                                showVerificationSnackBar(viewPos);
-                            }
+                                //showVerificationSnackBar(viewPos);
+                            //}
                         } else {
                             try {
                                 throw task.getException();
@@ -147,6 +149,51 @@ public class LogInActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 sendVerificationEmail();
+            }
+        });
+
+        logInPassword_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                email = email_textfield.getEditText().getText().toString().trim();
+                if(TextUtils.isEmpty(email)) {
+                    email_textfield.setError("e-mail obligatorio");
+                }else {
+                    if(email_textfield.isErrorEnabled()) {
+                        email_textfield.setErrorEnabled(false);
+                    }
+                    new MaterialAlertDialogBuilder(LogInActivity.this)
+                            .setMessage("Enviar correo de recuperación de contraseña a " + 
+                                    email)
+                            .setTitle("Recuperación de contraseña")
+                            .setNegativeButton("Cancelar", null)
+                            .setPositiveButton("Enviar", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    if(mAuth != null) {
+                                        progress_circular.setVisibility(View.VISIBLE);
+                                        mAuth.sendPasswordResetEmail(email)
+                                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                    @Override
+                                                    public void onSuccess(Void unused) {
+                                                        progress_circular.setVisibility(View.GONE);
+                                                        Toast.makeText(LogInActivity.this, "E-mail de recuperación enviado", Toast.LENGTH_SHORT).show();
+                                                    }
+                                                })
+                                                .addOnFailureListener(new OnFailureListener() {
+                                                    @Override
+                                                    public void onFailure(@NonNull @NotNull Exception e) {
+                                                        progress_circular.setVisibility(View.GONE);
+                                                        Toast.makeText(LogInActivity.this, "Error al enviar el e-mail de recuperación, vuelve a intentarlo", Toast.LENGTH_SHORT).show();
+                                                    }
+                                                });
+                                    } else {
+                                        Toast.makeText(LogInActivity.this, "Algo salió mal, vuelve a intentarlo", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            })
+                            .show();
+                }
             }
         });
 

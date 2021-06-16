@@ -161,8 +161,8 @@
                     style="?attr/borderlessButtonStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="ver track"
-                    android:enabled="false"/>
+                    android:enabled="false"
+                    android:text="ver track" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/myParticipationBeacons_button"
@@ -192,9 +192,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
+                android:enabled="false"
                 android:text="Anular inscripción"
-                app:icon="@drawable/ic_log_out"
-                android:enabled="false"/>
+                app:icon="@drawable/ic_log_out" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/myParticipationDelete_button"
@@ -202,12 +202,20 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
+                android:enabled="false"
                 android:text="Eliminar de mis actividades"
-                app:icon="@drawable/ic_delete"
-                android:enabled="false" />
+                app:icon="@drawable/ic_delete" />
 
         </LinearLayout>
 
     </ScrollView>
+
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/myParticipation_progressIndicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:indeterminate="true"
+        android:visibility="invisible" />
 
 </LinearLayout>

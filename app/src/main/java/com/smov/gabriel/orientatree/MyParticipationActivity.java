@@ -21,6 +21,7 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -54,6 +55,7 @@ public class MyParticipationActivity extends AppCompatActivity {
             myParticipationTotal_textView, myParticipationBeacons_textView;
     private MaterialButton myParticipationBeacons_button, myParticipationTrack_button,
             myParticipationInscription_button, myParticipationDelete_button;
+    private CircularProgressIndicator myParticipation_progressIndicator;
 
     // model objects
     private Participation participation;
@@ -96,6 +98,7 @@ public class MyParticipationActivity extends AppCompatActivity {
         myParticipationBeacons_button = findViewById(R.id.myParticipationBeacons_button);
         myParticipationDelete_button = findViewById(R.id.myParticipationDelete_button);
         myParticipationInscription_button = findViewById(R.id.myParticipationInscription_button);
+        myParticipation_progressIndicator = findViewById(R.id.myParticipation_progressIndicator);
 
         // initialize Firebase services
         db = FirebaseFirestore.getInstance();
@@ -175,8 +178,10 @@ public class MyParticipationActivity extends AppCompatActivity {
                 myParticipationFinish_textView.setText("Nada que mostrar");
                 myParticipationTotal_textView.setText("Nada que mostrar");
                 myParticipationBeacons_textView.setText("Nada que mostrar");
-                // enable the button to cancel the inscription
-                //myParticipationInscription_button.setEnabled(true);
+                // check if we should enable the button to cancel the inscription
+                if(inscriptionCancelable()) {
+                    myParticipationInscription_button.setEnabled(true);
+                }
             }
             // check if we should allow the user to see the track
             if(participation.getState() == ParticipationState.FINISHED
@@ -277,6 +282,63 @@ public class MyParticipationActivity extends AppCompatActivity {
             }
         });
 
+        // here the second action should be performed by a cloud functions
+        myParticipationInscription_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // check that it is possible to cancel the inscription
+                if(inscriptionCancelable()) {
+                    myParticipation_progressIndicator.setVisibility(View.VISIBLE);
+                    ArrayList<String> participants = activity.getParticipants();
+                    participants.remove(userID);
+                    // update the list with the participants in the activity
+                    db.collection("activities").document(activityID)
+                            .update("participants", participants)
+                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                @Override
+                                public void onSuccess(Void unused) {
+                                    // updated the list, now
+                                    // remove the participation document
+                                    db.collection("activities").document(activityID)
+                                            .collection("participations").document(userID)
+                                            .delete()
+                                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                @Override
+                                                public void onSuccess(Void unused) {
+                                                    myParticipation_progressIndicator.setVisibility(View.GONE);
+                                                    updateUIHome();
+                                                }
+                                            })
+                                            .addOnFailureListener(new OnFailureListener() {
+                                                @Override
+                                                public void onFailure(@NonNull @NotNull Exception e) {
+                                                    // we couldn't remove the participation object
+                                                    // at this point we updated the participants list but did not remove the participation object
+                                                    // on the eyes of the user there would be no difference, the only problem is that the information
+                                                    // still occupies space in the database
+                                                    myParticipation_progressIndicator.setVisibility(View.GONE);
+                                                    updateUIHome();
+                                                }
+                                            });
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull @NotNull Exception e) {
+                                    // we couldn't update the activity
+                                    myParticipation_progressIndicator.setVisibility(View.GONE);
+                                    Toast.makeText(MyParticipationActivity.this, "Algo falló al eliminar su subscripción, vuelva a intentarlo", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                } else {
+                    // if not cancelable any more
+                    myParticipationInscription_button.setEnabled(false);
+                    Toast.makeText(MyParticipationActivity.this, "No se pudo completar la acción." +
+                            " La actividad está en curso o ya has comenzado tu participación", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
     }
 
     private void updateUITrackMap() {
@@ -296,6 +358,12 @@ public class MyParticipationActivity extends AppCompatActivity {
             intent.putExtra("participantID", userID);
             startActivity(intent);
         }
+    }
+    
+    private void updateUIHome() {
+        Intent intent = new Intent(MyParticipationActivity.this, HomeActivity.class);
+        startActivity(intent);
+        finish();
     }
 
     private String formatMillis (long millis) {
@@ -323,6 +391,29 @@ public class MyParticipationActivity extends AppCompatActivity {
         File mypath = new File(directory, activity.getId() + ".png");
         if (mypath.exists()) {
             res = true;
+        }
+        return res;
+    }
+
+    // allows us to know whether is possible to cancel a subscription in an activity or not
+    // given that the participation must have not been yet started and that the
+    // activity must be in the future
+    private boolean inscriptionCancelable() {
+        boolean res = false;
+        // first we check that neither the activity nor the participation are null
+        if(activity == null || participation == null) {
+            // if any of the are null, we return false
+            return res;
+        } else {
+            if(participation.getState() == ParticipationState.NOT_YET) {
+               Date current_time = new Date(System.currentTimeMillis());
+               if(current_time.before(activity.getStartTime())) {
+                   // if the participation has NOT_YET started
+                   // and current time is before the activity starts
+                   // it should be possible to cancel the inscription
+                   res = true;
+               }
+            }
         }
         return res;
     }

@@ -313,8 +313,8 @@ public class NowActivity extends AppCompatActivity {
                                                 public void onEvent(@Nullable DocumentSnapshot snapshot,
                                                                     @Nullable FirebaseFirestoreException e) {
                                                     if (e != null) {
-                                                        Toast.makeText(NowActivity.this, "Algo salió mal al obtener la participación. " +
-                                                                "Sal y vuelve a intentarlo.", Toast.LENGTH_SHORT).show();
+                                                        /*Toast.makeText(NowActivity.this, "Algo salió mal al obtener la participación. " +
+                                                                "Sal y vuelve a intentarlo.", Toast.LENGTH_SHORT).show();*/
                                                         return;
                                                     }
                                                     if (snapshot != null && snapshot.exists()) {
@@ -349,8 +349,8 @@ public class NowActivity extends AppCompatActivity {
                                                             enableRightParticipantOptions();
                                                         }
                                                     } else {
-                                                        Toast.makeText(NowActivity.this, "Algo salió mal al obtener la participación. " +
-                                                                "Sal y vuelve a intentarlo.", Toast.LENGTH_SHORT).show();
+                                                        /*Toast.makeText(NowActivity.this, "Algo salió mal al obtener la participación. " +
+                                                                "Sal y vuelve a intentarlo.", Toast.LENGTH_SHORT).show();*/
                                                     }
                                                 }
                                             });
