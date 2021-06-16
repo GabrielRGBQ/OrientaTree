@@ -2,11 +2,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/participation_activity"
-        android:title="Mi participación"></item>
-
-    <item
-        android:id="@+id/remove_participant_activity"
+        android:id="@+id/organizer_remove_activity"
         android:title="Eliminar actividad"></item>
 
 </menu>

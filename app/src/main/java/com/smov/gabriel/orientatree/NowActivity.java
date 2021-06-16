@@ -707,6 +707,12 @@ public class NowActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    private void updateUIHome() {
+        Intent intent = new Intent(NowActivity.this, HomeActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
     private void updateUIMyParticipation() {
         Intent intent = new Intent(NowActivity.this, MyParticipationActivity.class);
         intent.putExtra("participation", participation);
@@ -750,6 +756,8 @@ public class NowActivity extends AppCompatActivity {
         if (activity != null && userID != null) {
             if (!activity.getPlanner_id().equals(userID)) {
                 getMenuInflater().inflate(R.menu.now_overflow_menu, menu);
+            } else {
+                getMenuInflater().inflate(R.menu.now_overflow_organizer_menu, menu);
             }
         } else {
             Toast.makeText(this, "Se produjo un error al carga las opciones del menú", Toast.LENGTH_SHORT).show();
@@ -766,12 +774,57 @@ public class NowActivity extends AppCompatActivity {
                     case R.id.participation_activity:
                         updateUIMyParticipation();
                         break;
+                    case R.id.remove_participant_activity:
+                        // TODO remove only for participant
+                    default:
+                        break;
+                }
+            } else if (activity.getPlanner_id().equals(userID)) {
+                switch (item.getItemId()) {
+                    case R.id.organizer_remove_activity:
+                        removeActivity();
+                        break;
                     default:
                         break;
                 }
             }
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void removeActivity() {
+        new MaterialAlertDialogBuilder(NowActivity.this)
+                .setTitle("Eliminar actividad")
+                .setMessage("Se borrará la actividad y todos sus datos. Los participantes tampoco " +
+                        "podrán acceder a ella. ¿Estás seguro/a de que quieres continuar?")
+                .setNegativeButton("Cancelar", null)
+                .setPositiveButton("Sí", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        now_progressIndicator.setVisibility(View.VISIBLE);
+                        if (activity.getId() != null) {
+                            db.collection("activities").document(activity.getId())
+                                    .delete()
+                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                        @Override
+                                        public void onSuccess(Void unused) {
+                                            now_progressIndicator.setVisibility(View.GONE);
+                                            updateUIHome();
+                                        }
+                                    })
+                                    .addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull @NotNull Exception e) {
+                                            now_progressIndicator.setVisibility(View.GONE);
+                                            Toast.makeText(NowActivity.this, "Se produjo un error al eliminar la actividad", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                        } else {
+                            Toast.makeText(NowActivity.this, "No se pudo eliminar la actividad. Sal y vuelve a intentarlo", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                })
+                .show();
     }
 
     private ActivityTime getActivityTime() {
