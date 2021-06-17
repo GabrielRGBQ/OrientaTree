@@ -28,6 +28,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -56,6 +57,7 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
     private TextInputLayout name_textInputLayout, surname_textInputLayout;
     private TextInputEditText editName_editText, editSurname_editText;
     private CircleImageView profileCircleImageView;
+    private CircularProgressIndicator profile_progressIndicator;
 
     // to show the navigation drawer
     private DrawerLayout drawerLayout;
@@ -66,7 +68,7 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
     private CircleImageView profile_circleImageView;
     // user data stored in Auth user, and that is shown in the navigation drawer
 
-    private String userID, userEmail, userName;
+    private String userID, userEmail, userName, userSurname;
 
     private User currentUser;
 
@@ -107,6 +109,7 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
         profileCircleImageView = findViewById(R.id.editProfile_circleImageView);
         editName_editText = findViewById(R.id.editName_editText);
         editSurname_editText = findViewById(R.id.editSurname_editText);
+        profile_progressIndicator = findViewById(R.id.profile_progressIndicator);
 
         // setting the navigation drawer...
         drawerLayout = findViewById(R.id.drawer_layout_profile);
@@ -152,6 +155,7 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
                         currentUser = documentSnapshot.toObject(User.class);
                         if (currentUser.getSurname() != null) {
                             editSurname_editText.setText(currentUser.getSurname());
+                            userSurname = currentUser.getSurname();
                         }
                     }
                 })
@@ -175,6 +179,33 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
             public void onClick(View v) {
                 if (imageChanged) { // if user changed the picture, upload it
                     uploadPicture();
+                }
+                String name = name_textInputLayout.getEditText().getText().toString().trim();
+                String surname = surname_textInputLayout.getEditText().getText().toString().trim();
+                if(!name.equals(userName) || !surname.equals(userSurname)) {
+                    // update name and surname
+                    profile_progressIndicator.setVisibility(View.VISIBLE);
+                    db.collection("users").document(userID)
+                            .update("name", name,
+                                    "surname", surname)
+                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                @Override
+                                public void onSuccess(Void unused) {
+                                    profile_progressIndicator.setVisibility(View.GONE);
+                                    userName = name;
+                                    userSurname = surname;
+                                    Toast.makeText(EditProfileActivity.this, "Nombre y apellidos actualizados", Toast.LENGTH_SHORT).show();
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull @NotNull Exception e) {
+                                    profile_progressIndicator.setVisibility(View.GONE);
+                                    Toast.makeText(EditProfileActivity.this, "Algo salió mal al actualizar el nombre y los apellidos. Vuelva a intentarlo", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                } else {
+                    Toast.makeText(EditProfileActivity.this, "Los datos son iguales a los que ya había", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -208,7 +239,6 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
                         profileCircleImageView.setImageURI(galleryImageUri); // set image view
                         profile_circleImageView.setImageURI(galleryImageUri); // set drawer image view
                         imageChanged = true;
-                        // uploadPicture();
                 }
             }
         }
@@ -224,7 +254,6 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
-                        //Toast.makeText(EditProfileActivity.this, "Uri set successfully", Toast.LENGTH_SHORT).show();
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -254,9 +283,8 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                         pd.dismiss();
-                        //Toast.makeText(EditProfileActivity.this, "", Toast.LENGTH_SHORT).show();
-                        //Snackbar.make(findViewById(android.R.id.content), "Image uploaded", Snackbar.LENGTH_LONG).show();
                         setUserProfileUrl(galleryImageUri);
+                        imageChanged = false;
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
