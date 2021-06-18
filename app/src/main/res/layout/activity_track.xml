@@ -60,6 +60,14 @@
             android:enabled="false"
             map:labelBehavior="gone"/>
 
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:checked="false"
+            android:text="Mostrar track completo"
+            android:id="@+id/trackComplete_switch"/>
+
     </LinearLayout>
 
 </LinearLayout>

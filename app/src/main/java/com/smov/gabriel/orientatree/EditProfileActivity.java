@@ -17,6 +17,8 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -27,8 +29,10 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.navigation.NavigationView;
@@ -99,7 +103,7 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
         registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                Log.d("onReceive","Logout in progress");
+                Log.d("onReceive", "Logout in progress");
                 //At this point you should start the login activity and finish this one
                 updateUIIdentification();
             }
@@ -199,30 +203,57 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
                 }
                 String name = name_textInputLayout.getEditText().getText().toString().trim();
                 String surname = surname_textInputLayout.getEditText().getText().toString().trim();
-                if(!name.equals(userName) || !surname.equals(userSurname)) {
+                if (!name.equals(userName) || !surname.equals(userSurname)) {
+                    if(name.length() <= 0) {
+                        name_textInputLayout.setError("Campo obligatorio");
+                        name_textInputLayout.setErrorEnabled(true);
+                        return;
+                    } else {
+                        name_textInputLayout.setErrorEnabled(false);
+                    }
+                    if(surname.length() <= 0) {
+                        surname_textInputLayout.setError("Campo obligatorio");
+                        surname_textInputLayout.setErrorEnabled(true);
+                        return;
+                    } else {
+                        surname_textInputLayout.setErrorEnabled(false);
+                    }
                     // update name and surname
                     profile_progressIndicator.setVisibility(View.VISIBLE);
-                    db.collection("users").document(userID)
-                            .update("name", name,
-                                    "surname", surname)
-                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    // update the information in Auth
+                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                    // set the data that is stored in the user object of Firebase Auth
+                    UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                            .setDisplayName(name).build();
+                    user.updateProfile(profileUpdates)
+                            .addOnCompleteListener(new OnCompleteListener<Void>() {
                                 @Override
-                                public void onSuccess(Void unused) {
-                                    profile_progressIndicator.setVisibility(View.GONE);
-                                    userName = name;
-                                    userSurname = surname;
-                                    Toast.makeText(EditProfileActivity.this, "Nombre y apellidos actualizados", Toast.LENGTH_SHORT).show();
-                                }
-                            })
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull @NotNull Exception e) {
-                                    profile_progressIndicator.setVisibility(View.GONE);
-                                    Toast.makeText(EditProfileActivity.this, "Algo salió mal al actualizar el nombre y los apellidos. Vuelva a intentarlo", Toast.LENGTH_SHORT).show();
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    if (task.isSuccessful()) {
+                                        // if Firebase Auth data successfully set
+                                        // update Firestore object data
+                                        db.collection("users").document(userID)
+                                                .update("name", name,
+                                                        "surname", surname)
+                                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                    @Override
+                                                    public void onSuccess(Void unused) {
+                                                        profile_progressIndicator.setVisibility(View.GONE);
+                                                        userName = name;
+                                                        userSurname = surname;
+                                                        Toast.makeText(EditProfileActivity.this, "Nombre y apellidos actualizados", Toast.LENGTH_SHORT).show();
+                                                    }
+                                                })
+                                                .addOnFailureListener(new OnFailureListener() {
+                                                    @Override
+                                                    public void onFailure(@NonNull @NotNull Exception e) {
+                                                        profile_progressIndicator.setVisibility(View.GONE);
+                                                        Toast.makeText(EditProfileActivity.this, "Algo salió mal al actualizar el nombre y los apellidos. Vuelva a intentarlo", Toast.LENGTH_SHORT).show();
+                                                    }
+                                                });
+                                    }
                                 }
                             });
-                } else {
-                    Toast.makeText(EditProfileActivity.this, "Los datos son iguales a los que ya había", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -241,6 +272,7 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
                 logOut();
                 break;
             case R.id.delete_account_item:
+                deleteAccount();
                 break;
         }
         return super.onOptionsItemSelected(item);
@@ -358,6 +390,67 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
                 })
                 .setNegativeButton("Cancelar", null)
                 .show();
+    }
+
+    private void deleteAccount() {
+        new MaterialAlertDialogBuilder(this)
+                .setMessage("¿Realmente desea eliminar su perfil y todos sus datos de manera permanente? " +
+                        "(la acción no es reversible)")
+                .setPositiveButton("Sí", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // on first place we try to delete the profile picture
+                        deleteProfilePicture();
+                    }
+                })
+                .setNegativeButton("No", null)
+                .show();
+    }
+
+    private void deleteProfilePicture() {
+        profile_progressIndicator.setVisibility(View.VISIBLE);
+        StorageReference ref = storageReference.child("profileImages/" + userID);
+        ref.delete().addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull @NotNull Task<Void> task) {
+                // both if the deletion was successful or not, we delete the user data in Firestore
+                deleteUserData();
+            }
+        });
+    }
+
+    private void deleteUserData() {
+        db.collection("users").document(userID)
+                .delete()
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull @NotNull Task<Void> task) {
+                        // both if the deletion was successful or not, we delete the user in Auth
+                        deleteAuth();
+                    }
+                });
+    }
+
+    private void deleteAuth() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        user.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                profile_progressIndicator.setVisibility(View.GONE);
+                Intent broadcastIntent = new Intent();
+                broadcastIntent.setAction("com.package.ACTION_LOGOUT");
+                sendBroadcast(broadcastIntent);
+                updateUIIdentification();
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                profile_progressIndicator.setVisibility(View.GONE);
+                Toast.makeText(EditProfileActivity.this, "Algo salió mal al eliminar su cuenta. Vuelva a intentarlo", Toast.LENGTH_SHORT).show();
+                Log.d("TAG", e.toString());
+                Log.d("TAG", e.getMessage());
+            }
+        });
     }
 
     private void updateUIFindTemplate() {

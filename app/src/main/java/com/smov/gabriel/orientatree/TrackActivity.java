@@ -11,8 +11,8 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MenuItem;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,6 +33,7 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.slider.Slider;
+import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
@@ -43,7 +44,6 @@ import com.smov.gabriel.orientatree.databinding.ActivityTrackBinding;
 import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Location;
 import com.smov.gabriel.orientatree.model.Map;
-import com.smov.gabriel.orientatree.model.Participation;
 import com.smov.gabriel.orientatree.model.Template;
 
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +54,6 @@ import java.io.FileNotFoundException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 
 public class TrackActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -65,6 +64,7 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
     private Toolbar toolbar;
     private Slider track_slider;
     private TextView trackHour_textView;
+    private SwitchMaterial trackCompleto_switch;
 
     // useful model objects
     private Template template;
@@ -85,7 +85,8 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
 
     // objects needed to show the track
     private PolylineOptions polylineOptions;
-    private Polyline polyline;
+    private Polyline polyline1; // (partial track)
+    private Polyline polyline2; // (complete track)
 
     // max number of points that are shown at the same time in the track
     private static final int RANGE = 60;
@@ -109,7 +110,6 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
         Intent intent = getIntent();
         template = (Template) intent.getSerializableExtra("template");
         activity = (Activity) intent.getSerializableExtra("activity");
-        //participation = (Participation) intent.getSerializableExtra("participation");
         userID = intent.getExtras().getString("participantID");
 
         // get the important IDs
@@ -122,6 +122,7 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
         toolbar = findViewById(R.id.track_toolbar);
         track_slider = findViewById(R.id.track_slider);
         trackHour_textView = findViewById(R.id.trackHour_textView);
+        trackCompleto_switch = findViewById(R.id.trackComplete_switch);
 
         // set the toolbar
         setSupportActionBar(toolbar);
@@ -133,7 +134,7 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
         track_slider.addOnChangeListener(new Slider.OnChangeListener() {
             @Override
             public void onValueChange(@NonNull @NotNull Slider slider, float value, boolean fromUser) {
-                if(polyline != null && locations != null) {
+                if(polyline1 != null && locations != null) {
                     ArrayList<LatLng> points = new ArrayList<>();
                     int index = (int) value;
                     for(int i = index - RANGE; i < index; i ++) {
@@ -148,8 +149,21 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
                     LatLng p = new LatLng(locations.get(index).getLocation().getLatitude(),
                             locations.get(index).getLocation().getLongitude());
                     points.add(p);
-                    polyline.setPoints(points);
+                    polyline1.setPoints(points);
                     trackHour_textView.setText(df_hour.format(locations.get(index).getTime()));
+                }
+            }
+        });
+
+        trackCompleto_switch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    if(polyline2 != null && locations != null) {
+                        polyline2.setVisible(true);
+                    }
+                } else {
+                    polyline2.setVisible(false);
                 }
             }
         });
@@ -247,6 +261,7 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
                                                     locations.add(location);
                                                 }
                                                 if(locations != null && locations.size() >= 1) {
+                                                    // setting partial track
                                                     // set slider parameters
                                                     track_slider.setValueFrom(0);
                                                     track_slider.setValueTo(locations.size() - 1);
@@ -255,10 +270,23 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
                                                         polylineOptions = new PolylineOptions()
                                                                 .add(new LatLng(locations.get(0).getLocation().getLatitude(),
                                                                         locations.get(0).getLocation().getLongitude()));
-                                                        polyline = mMap.addPolyline(polylineOptions); // draw point at the start
-                                                        if(polyline != null) {
+                                                        polyline1 = mMap.addPolyline(polylineOptions); // draw point at the start (partial track)
+                                                        polyline1.setWidth(15);
+                                                        if(polyline1 != null) {
                                                             track_slider.setEnabled(true); // enable slider
                                                         }
+                                                        // setting complete track
+                                                        polyline2 = mMap.addPolyline(polylineOptions); // draw point at the start (complete track)
+                                                        polyline2.setVisible(false);
+                                                        polyline2.setColor(R.color.primary_color);
+                                                        polyline2.setWidth(10);
+                                                        ArrayList<LatLng> points = new ArrayList<>();
+                                                        for (Location location : locations) {
+                                                            LatLng p = new LatLng(location.getLocation().getLatitude(),
+                                                                    location.getLocation().getLongitude());
+                                                            points.add(p);
+                                                        }
+                                                        polyline2.setPoints(points);
                                                     }
                                                 } else {
                                                     Toast.makeText(TrackActivity.this, "No se han encontrado datos que mostrar", Toast.LENGTH_SHORT).show();
