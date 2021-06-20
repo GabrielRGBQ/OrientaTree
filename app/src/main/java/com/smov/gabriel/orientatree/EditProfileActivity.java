@@ -199,6 +199,7 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
             @Override
             public void onClick(View v) {
                 if (imageChanged) { // if user changed the picture, upload it
+                    currentUser.setHasPhoto(true);
                     uploadPicture();
                 }
                 String name = name_textInputLayout.getEditText().getText().toString().trim();
@@ -334,6 +335,15 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
                         pd.dismiss();
                         setUserProfileUrl(galleryImageUri);
                         imageChanged = false;
+                        // update the attribute to signal if the user has or not photo
+                        db.collection("users").document(userID)
+                                .update("hasPhoto", currentUser.isHasPhoto())
+                                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                    @Override
+                                    public void onComplete(@NonNull @NotNull Task<Void> task) {
+                                        // TODO
+                                    }
+                                });
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {

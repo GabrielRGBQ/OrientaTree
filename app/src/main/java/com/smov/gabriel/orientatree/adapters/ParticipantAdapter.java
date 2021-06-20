@@ -97,12 +97,14 @@ public class ParticipantAdapter extends RecyclerView.Adapter<ParticipantAdapter.
                             } else {
                                 holder.finish_textView.setText("Llegada: sin llegada registrada");
                             }
-                            StorageReference ref = holder.storageReference.child("profileImages/" + user.getId());
-                            Glide.with(context)
-                                    .load(ref)
-                                    .diskCacheStrategy(DiskCacheStrategy.NONE ) // prevent caching
-                                    .skipMemoryCache(true) // prevent caching
-                                    .into(holder.participant_circleImageView);
+                            if(user.isHasPhoto()) {
+                                StorageReference ref = holder.storageReference.child("profileImages/" + user.getId());
+                                Glide.with(context)
+                                        .load(ref)
+                                        .diskCacheStrategy(DiskCacheStrategy.NONE ) // prevent caching
+                                        .skipMemoryCache(true) // prevent caching
+                                        .into(holder.participant_circleImageView);
+                            }
                         }
                     }
                 });
