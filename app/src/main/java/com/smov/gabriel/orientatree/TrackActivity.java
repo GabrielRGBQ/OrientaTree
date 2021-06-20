@@ -209,7 +209,8 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
                             // get the map image from a file and reduce its size
                             ContextWrapper cw = new ContextWrapper(getApplicationContext());
                             File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
-                            File mypath = new File(directory, activity.getId() + ".png");
+                            //File mypath = new File(directory, activity.getId() + ".png");
+                            File mypath = new File(directory, activity.getTemplate() + ".png");
                             Bitmap image_bitmap = decodeFile(mypath, 540, 960);
                             BitmapDescriptor image = BitmapDescriptorFactory.fromBitmap(image_bitmap);
 

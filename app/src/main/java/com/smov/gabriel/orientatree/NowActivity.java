@@ -254,8 +254,11 @@ public class NowActivity extends AppCompatActivity {
                                     nowState_textView.setVisibility(View.GONE);
                                     // 2) enable options that are in any case enabled for organizer
                                     // always enable the button to see the credentials
+                                    // always enable see map button
                                     nowCredentials_button.setEnabled(true);
                                     nowCredentials_button.setVisibility(View.VISIBLE);
+                                    nowMap_button.setEnabled(true);
+                                    nowMap_button.setVisibility(View.VISIBLE);
                                     // 2.1) check if we need to change the text of the see participants FAB
                                     switch (activityTime) {
                                         case PAST:
@@ -557,7 +560,8 @@ public class NowActivity extends AppCompatActivity {
                                     // path to /data/data/yourapp/app_data/imageDir
                                     File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
                                     // Create imageDir
-                                    File mypath = new File(directory, activity.getId() + ".png");
+                                    //File mypath = new File(directory, activity.getId() + ".png");
+                                    File mypath = new File(directory, activity.getTemplate() + ".png");
                                     FileOutputStream fos = null;
                                     try {
                                         fos = new FileOutputStream(mypath);
@@ -610,41 +614,128 @@ public class NowActivity extends AppCompatActivity {
         nowMap_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                switch (participation.getState()) {
-                    case NOT_YET:
-                        // TODO (do nothing by now)
-                        break;
-                    case NOW:
-                        if (!LocationService.executing) {
-                            // if the service is not being executed now, show dialog to alert
-                            new MaterialAlertDialogBuilder(NowActivity.this)
-                                    .setTitle("Aviso sobre el mapa")
-                                    .setMessage("Esta acción te mostrará el mapa de la actividad, pero " +
-                                            "el servicio que rastrea tu ubicación no está activo, por lo que" +
-                                            " no se registrará tu paso por las balizas. Si lo que quieres es retomar " +
-                                            "la actividad, cancela esta acción y pulsa el botón de Continuar")
-                                    .setNegativeButton("Cancelar", null)
-                                    .setPositiveButton("Ver mapa", new DialogInterface.OnClickListener() {
+                if(activity.getPlanner_id().equals(userID)) {
+                    // if current user is the organizer
+                    if(mapDownloaded()) {
+                        // if the map is already downloaded
+                        updateUIOrganizerMap();
+                    } else {
+                        // if the map is not yet downloaded
+                        final ProgressDialog pd = new ProgressDialog(NowActivity.this);
+                        pd.setTitle("Cargando el mapa...");
+                        pd.show();
+                        StorageReference reference = storageReference.child("maps/" + activity.getTemplate() + ".png");
+                        try {
+                            // try to read the map image from Firebase into a file
+                            File localFile = File.createTempFile("images", "png");
+                            reference.getFile(localFile)
+                                    .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
                                         @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            if (mapDownloaded()) {
-                                                updateUIMap();
-                                            } else {
-                                                // if for some reason the map is not downloaded then
-                                                // show the download button instead and warn the user
-                                                nowParticipant_extendedFab.setVisibility(View.GONE);
-                                                nowParticipant_extendedFab.setEnabled(false);
-                                                nowDownloadMap_extendedFab.setEnabled(true);
-                                                nowDownloadMap_extendedFab.setVisibility(View.VISIBLE);
-                                                showSnackBar("El mapa no está descargado. Descárgalo y vuelve a intentarlo");
-                                                nowMap_button.setVisibility(View.GONE);
-                                                nowMap_button.setEnabled(false);
+                                        public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                                            // we downloaded the map successfully
+                                            // read the downloaded file into a bitmap
+                                            Bitmap bmp = BitmapFactory.decodeFile(localFile.getAbsolutePath());
+                                            // save the bitmap to a file
+                                            ContextWrapper cw = new ContextWrapper(getApplicationContext());
+                                            // path to /data/data/yourapp/app_data/imageDir
+                                            File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+                                            // Create imageDir
+                                            //File mypath = new File(directory, activity.getId() + ".png");
+                                            File mypath = new File(directory, activity.getTemplate() + ".png");
+                                            FileOutputStream fos = null;
+                                            try {
+                                                fos = new FileOutputStream(mypath);
+                                                // Use the compress method on the BitMap object to write image to the OutputStream
+                                                bmp.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                                                updateUIOrganizerMap();
+                                            } catch (Exception e) {
+                                                e.printStackTrace();
+                                                showSnackBar("Algo salió mal al cargar el mapa. Sal y vuelve a intentarlo.");
+                                            } finally {
+                                                try {
+                                                    fos.close();
+                                                } catch (IOException e) {
+                                                    e.printStackTrace();
+                                                }
                                             }
+                                            pd.dismiss();
                                         }
                                     })
-                                    .show();
-                        } else {
-                            // if the service is being executed now
+                                    .addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+                                            pd.dismiss();
+                                            showSnackBar("Algo salió mal al cargar el mapa. Sal y vuelve a intentarlo.");
+                                        }
+                                    })
+                                    .addOnProgressListener(new OnProgressListener<FileDownloadTask.TaskSnapshot>() {
+                                        @Override
+                                        public void onProgress(@NonNull @NotNull FileDownloadTask.TaskSnapshot snapshot) {
+                                            double progressPercent = (100.00 * snapshot.getBytesTransferred() / snapshot.getTotalByteCount());
+                                            if (progressPercent <= 90) {
+                                                pd.setMessage("Progreso: " + (int) progressPercent + "%");
+                                            } else {
+                                                pd.setMessage("Descargado. Espera unos instantes mientras el mapa se guarda en el dispositivo");
+                                            }
+                                        }
+                                    });
+                        } catch (IOException e) {
+                            pd.dismiss();
+                            showSnackBar("Algo salió mal al cargar el mapa. Sal y vuelve a intentarlo.");
+                        }
+                    }
+                } else if(activity.getParticipants().contains(userID)) {
+                    // if current user is a participant
+                    switch (participation.getState()) {
+                        case NOT_YET:
+                            break;
+                        case NOW:
+                            if (!LocationService.executing) {
+                                // if the service is not being executed now, show dialog to alert
+                                new MaterialAlertDialogBuilder(NowActivity.this)
+                                        .setTitle("Aviso sobre el mapa")
+                                        .setMessage("Esta acción te mostrará el mapa de la actividad, pero " +
+                                                "el servicio que rastrea tu ubicación no está activo, por lo que" +
+                                                " no se registrará tu paso por las balizas. Si lo que quieres es retomar " +
+                                                "la actividad, cancela esta acción y pulsa el botón de Continuar")
+                                        .setNegativeButton("Cancelar", null)
+                                        .setPositiveButton("Ver mapa", new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialog, int which) {
+                                                if (mapDownloaded()) {
+                                                    updateUIMap();
+                                                } else {
+                                                    // if for some reason the map is not downloaded then
+                                                    // show the download button instead and warn the user
+                                                    nowParticipant_extendedFab.setVisibility(View.GONE);
+                                                    nowParticipant_extendedFab.setEnabled(false);
+                                                    nowDownloadMap_extendedFab.setEnabled(true);
+                                                    nowDownloadMap_extendedFab.setVisibility(View.VISIBLE);
+                                                    showSnackBar("El mapa no está descargado. Descárgalo y vuelve a intentarlo");
+                                                    nowMap_button.setVisibility(View.GONE);
+                                                    nowMap_button.setEnabled(false);
+                                                }
+                                            }
+                                        })
+                                        .show();
+                            } else {
+                                // if the service is being executed now
+                                if (mapDownloaded()) {
+                                    updateUIMap();
+                                } else {
+                                    // if for some reason the map is not downloaded then
+                                    // show the download button instead and warn the user
+                                    nowParticipant_extendedFab.setVisibility(View.GONE);
+                                    nowParticipant_extendedFab.setEnabled(false);
+                                    nowDownloadMap_extendedFab.setEnabled(true);
+                                    nowDownloadMap_extendedFab.setVisibility(View.VISIBLE);
+                                    showSnackBar("El mapa no está descargado. Descárgalo y vuelve a intentarlo");
+                                    nowMap_button.setVisibility(View.GONE);
+                                    nowMap_button.setEnabled(false);
+                                }
+                            }
+                            break;
+                        case FINISHED:
                             if (mapDownloaded()) {
                                 updateUIMap();
                             } else {
@@ -658,23 +749,8 @@ public class NowActivity extends AppCompatActivity {
                                 nowMap_button.setVisibility(View.GONE);
                                 nowMap_button.setEnabled(false);
                             }
-                        }
-                        break;
-                    case FINISHED:
-                        if (mapDownloaded()) {
-                            updateUIMap();
-                        } else {
-                            // if for some reason the map is not downloaded then
-                            // show the download button instead and warn the user
-                            nowParticipant_extendedFab.setVisibility(View.GONE);
-                            nowParticipant_extendedFab.setEnabled(false);
-                            nowDownloadMap_extendedFab.setEnabled(true);
-                            nowDownloadMap_extendedFab.setVisibility(View.VISIBLE);
-                            showSnackBar("El mapa no está descargado. Descárgalo y vuelve a intentarlo");
-                            nowMap_button.setVisibility(View.GONE);
-                            nowMap_button.setEnabled(false);
-                        }
-                        break;
+                            break;
+                    }
                 }
             }
         });
@@ -691,6 +767,13 @@ public class NowActivity extends AppCompatActivity {
                         .show();
             }
         });
+    }
+
+    private void updateUIOrganizerMap() {
+        Intent intent = new Intent(NowActivity.this, OrganizerMapActivity.class);
+        intent.putExtra("activity", activity);
+        intent.putExtra("template", template);
+        startActivity(intent);
     }
 
     private void updateUIParticipants() {
@@ -895,7 +978,8 @@ public class NowActivity extends AppCompatActivity {
         boolean res = false;
         ContextWrapper cw = new ContextWrapper(getApplicationContext());
         File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
-        File mypath = new File(directory, activity.getId() + ".png");
+        //File mypath = new File(directory, activity.getId() + ".png");
+        File mypath = new File(directory, activity.getTemplate() + ".png");
         if (mypath.exists()) {
             res = true;
         }

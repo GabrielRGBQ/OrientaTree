@@ -4,8 +4,13 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Parcel;
@@ -23,6 +28,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.datepicker.CalendarConstraints;
 import com.google.android.material.datepicker.MaterialDatePicker;
@@ -39,11 +45,18 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Template;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -65,6 +78,7 @@ public class SelectedTemplateActivity extends AppCompatActivity {
     private Button program_button;
     private SwitchMaterial switchHelp;
     private RadioButton classic_radioButton, score_radioButton;
+    private MaterialButton templateMap_button;
 
     private String template_id;
 
@@ -120,6 +134,7 @@ public class SelectedTemplateActivity extends AppCompatActivity {
         classic_radioButton = findViewById(R.id.radio_button_1);
         score_radioButton = findViewById(R.id.radio_button_2);
         templateLocation_textView = findViewById(R.id.template_location_textView);
+        templateMap_button = findViewById(R.id.templateMap_button);
 
         // need this to display the chosen date and hour on the chips
         String pattern_date = "dd/MM/yyyy";
@@ -351,6 +366,88 @@ public class SelectedTemplateActivity extends AppCompatActivity {
             }
         });
 
+        templateMap_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(template != null) {
+                    if(mapDownloaded()) {
+                        // if we already have the map downloaded
+                        updateUIOrganizerMap();
+                    } else {
+                        // if we do not have the map downloaded
+                        final ProgressDialog pd = new ProgressDialog(SelectedTemplateActivity.this);
+                        pd.setTitle("Cargando el mapa...");
+                        pd.show();
+                        StorageReference reference = storageReference.child("maps/" + template_id + ".png");
+                        try {
+                            // try to read the map image from Firebase into a file
+                            File localFile = File.createTempFile("images", "png");
+                            reference.getFile(localFile)
+                                    .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+                                        @Override
+                                        public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                                            // we downloaded the map successfully
+                                            // read the downloaded file into a bitmap
+                                            Bitmap bmp = BitmapFactory.decodeFile(localFile.getAbsolutePath());
+                                            // save the bitmap to a file
+                                            ContextWrapper cw = new ContextWrapper(getApplicationContext());
+                                            // path to /data/data/yourapp/app_data/imageDir
+                                            File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+                                            // Create imageDir
+                                            //File mypath = new File(directory, activity.getId() + ".png");
+                                            File mypath = new File(directory, template_id + ".png");
+                                            FileOutputStream fos = null;
+                                            try {
+                                                fos = new FileOutputStream(mypath);
+                                                // Use the compress method on the BitMap object to write image to the OutputStream
+                                                bmp.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                                                updateUIOrganizerMap();
+                                            } catch (Exception e) {
+                                                e.printStackTrace();
+                                                showSnackBar("Algo salió mal al cargar el mapa. Sal y vuelve a intentarlo.");
+                                            } finally {
+                                                try {
+                                                    fos.close();
+                                                } catch (IOException e) {
+                                                    e.printStackTrace();
+                                                }
+                                            }
+                                            pd.dismiss();
+                                        }
+                                    })
+                                    .addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+                                            pd.dismiss();
+                                            showSnackBar("Algo salió mal al cargar el mapa. Sal y vuelve a intentarlo.");
+                                        }
+                                    })
+                                    .addOnProgressListener(new OnProgressListener<FileDownloadTask.TaskSnapshot>() {
+                                        @Override
+                                        public void onProgress(@NonNull @NotNull FileDownloadTask.TaskSnapshot snapshot) {
+                                            double progressPercent = (100.00 * snapshot.getBytesTransferred() / snapshot.getTotalByteCount());
+                                            if (progressPercent <= 90) {
+                                                pd.setMessage("Progreso: " + (int) progressPercent + "%");
+                                            } else {
+                                                pd.setMessage("Descargado. Espera unos instantes mientras el mapa se guarda en el dispositivo");
+                                            }
+                                        }
+                                    });
+                        } catch (IOException e) {
+                            pd.dismiss();
+                            showSnackBar("Algo salió mal al cargar el mapa. Sal y vuelve a intentarlo.");
+                        }
+                    }
+                }
+            }
+        });
+
+    }
+
+    private void updateUIOrganizerMap() {
+        Intent intent = new Intent(SelectedTemplateActivity.this, OrganizerMapActivity.class);
+        intent.putExtra("template", template);
+        startActivity(intent);
     }
 
     private void showTitleDialog() {
@@ -441,5 +538,17 @@ public class SelectedTemplateActivity extends AppCompatActivity {
         Intent intent = new Intent(SelectedTemplateActivity.this, FindTemplate.class);
         startActivity(intent);
         finish();
+    }
+
+    public boolean mapDownloaded() {
+        boolean res = false;
+        ContextWrapper cw = new ContextWrapper(getApplicationContext());
+        File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+        //File mypath = new File(directory, activity.getId() + ".png");
+        File mypath = new File(directory, template_id + ".png");
+        if (mypath.exists()) {
+            res = true;
+        }
+        return res;
     }
 }

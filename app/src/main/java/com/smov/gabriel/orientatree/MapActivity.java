@@ -3,6 +3,7 @@ package com.smov.gabriel.orientatree;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
@@ -15,6 +16,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -62,6 +64,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private MaterialButton mapBeacons_button;
     private FloatingActionButton map_fab, mapLocationOff_fab;
     private CircularProgressIndicator map_progressIndicator;
+    private Toolbar toolbar;
 
     private GoogleMap mMap;
 
@@ -119,6 +122,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         map_fab = findViewById(R.id.map_fab);
         map_progressIndicator = findViewById(R.id.map_progressIndicator);
         mapLocationOff_fab = findViewById(R.id.mapLocationOff_fab);
+        toolbar = findViewById(R.id.map_toolbar);
+
+        // set the toolbar
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         // set listener to the beacons button
         mapBeacons_button.setOnClickListener(new View.OnClickListener() {
@@ -325,7 +333,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                             // get the map image from a file and reduce its size
                             ContextWrapper cw = new ContextWrapper(getApplicationContext());
                             File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
-                            File mypath = new File(directory, activity.getId() + ".png");
+                            //File mypath = new File(directory, activity.getId() + ".png");
+                            File mypath = new File(directory, activity.getTemplate() + ".png");
                             Bitmap image_bitmap = decodeFile(mypath, 540, 960);
                             BitmapDescriptor image = BitmapDescriptorFactory.fromBitmap(image_bitmap);
 
@@ -442,5 +451,15 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     //showSnackBar("Es necesario dar permiso para poder participar en la actividad");
                 }
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                this.finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
