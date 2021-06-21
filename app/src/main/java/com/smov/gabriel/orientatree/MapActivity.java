@@ -222,12 +222,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                                     return;
                                 }
                                 beacons_reached = value.size();
-                                int show_reaches = beacons_reached;
-                                if (beacons_reached > (num_beacons - 1)) {
-                                    show_reaches = num_beacons - 1;
-                                }
-                                reachesMap_textView.setText(show_reaches + "/"
-                                        + (num_beacons - 1));
+                                reachesMap_textView.setText(beacons_reached + "/"
+                                        + num_beacons);
                             }
                         });
             }

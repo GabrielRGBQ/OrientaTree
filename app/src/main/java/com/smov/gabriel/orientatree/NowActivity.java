@@ -456,6 +456,7 @@ public class NowActivity extends AppCompatActivity {
                                                                                                 nowParticipant_extendedFab.setVisibility(View.GONE);
                                                                                                 // start service
                                                                                                 locationServiceIntent.putExtra("activity", activity);
+                                                                                                locationServiceIntent.putExtra("template", template);
                                                                                                 startService(locationServiceIntent);
                                                                                                 // enable see map button (just in case that the user wants
                                                                                                 // to go back and forth between this and the map activity)
@@ -480,6 +481,7 @@ public class NowActivity extends AppCompatActivity {
                                                                                 nowParticipant_extendedFab.setVisibility(View.GONE);
                                                                                 // start service
                                                                                 locationServiceIntent.putExtra("activity", activity);
+                                                                                locationServiceIntent.putExtra("template", template);
                                                                                 startService(locationServiceIntent);
                                                                                 // update UI
                                                                                 updateUIMap();

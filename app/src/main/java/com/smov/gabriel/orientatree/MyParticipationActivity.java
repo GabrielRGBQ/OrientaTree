@@ -156,10 +156,7 @@ public class MyParticipationActivity extends AppCompatActivity {
                                 if(template.getBeacons() != null) {
                                     int num_reaches = reaches.size();
                                     int number_of_beacons = template.getBeacons().size();
-                                    if(num_reaches == number_of_beacons) {
-                                        num_reaches --;
-                                    }
-                                    myParticipationBeacons_textView.setText(num_reaches + "/" + (number_of_beacons - 1));
+                                    myParticipationBeacons_textView.setText(num_reaches + "/" + number_of_beacons);
                                 } else {
                                     Toast.makeText(MyParticipationActivity.this, "No se pudo recuperar la información de las balizas alcanzadas", Toast.LENGTH_SHORT).show();
                                 }
