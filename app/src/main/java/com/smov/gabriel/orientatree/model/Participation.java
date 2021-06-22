@@ -95,42 +95,18 @@ public class Participation implements Comparator<Participation>, Serializable {
                 return 0;
             }
         } else {
-            // non of them are completed, so we look for the number of reaches
-            if(o1.getReaches().size() > o2.getReaches().size()){
+            // none of them is completed
+            // first the one that already started
+            if((o1.getState() == ParticipationState.NOW
+                    || o1.getState() == ParticipationState.FINISHED)
+                    && o2.getState() == ParticipationState.NOT_YET) {
                 return -1;
-            } else if(o1.getReaches().size() < o2.getReaches().size()) {
+            } else if ((o2.getState() == ParticipationState.NOW
+                    || o2.getState() == ParticipationState.FINISHED)
+                    && o1.getState() == ParticipationState.NOT_YET) {
                 return 1;
             } else {
-                // both have the same number of reaches, check if they both started
-                if(o1.getStartTime() != null && o2.getStartTime() == null) {
-                    return -1;
-                } else if(o1.getStartTime() == null && o2.getStartTime() != null) {
-                    return 1;
-                } else if(o1.getStartTime() != null && o2.getStartTime() != null) {
-                    // both of them started, check if they both finished
-                    if(o1.getFinishTime() != null && o2.getFinishTime() == null) {
-                        return -1;
-                    } else if(o1.getFinishTime() == null && o2.getFinishTime() != null) {
-                        return 1;
-                    } else if(o1.getFinishTime() != null && o2.getFinishTime() != null) {
-                        // both of them started and finished, check the total time
-                        long o1_total = Math.abs(o1.startTime.getTime() - o1.finishTime.getTime());
-                        long o2_total = Math.abs(o2.startTime.getTime() - o2.finishTime.getTime());
-                        if(o1_total < o2_total) {
-                            return -1;
-                        } else if(o1_total > o2_total) {
-                            return 1;
-                        } else {
-                            return 0;
-                        }
-                    } else {
-                        // both started but none of them finished
-                        return 0;
-                    }
-                } else {
-                    // non of them even started
-                    return 0;
-                }
+                return 0;
             }
         }
     }

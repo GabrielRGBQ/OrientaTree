@@ -163,7 +163,9 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
                         polyline2.setVisible(true);
                     }
                 } else {
-                    polyline2.setVisible(false);
+                    if(polyline2 != null && locations != null) {
+                        polyline2.setVisible(false);
+                    }
                 }
             }
         });
