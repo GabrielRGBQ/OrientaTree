@@ -841,6 +841,16 @@ public class NowActivity extends AppCompatActivity {
         if (activity != null && userID != null) {
             if (!activity.getPlanner_id().equals(userID)) {
                 getMenuInflater().inflate(R.menu.now_overflow_menu, menu);
+                // check if we have to enable the abandon activity option
+                Date current_time = new Date(System.currentTimeMillis());
+                if(!current_time.after(activity.getStartTime())
+                        || !current_time.before(activity.getFinishTime())) {
+                    menu.getItem(1).setEnabled(false);
+                    menu.getItem(1).setVisible(false);
+                } else {
+                    menu.getItem(1).setEnabled(true);
+                    menu.getItem(1).setVisible(true);
+                }
             } else {
                 getMenuInflater().inflate(R.menu.now_overflow_organizer_menu, menu);
             }
@@ -859,8 +869,9 @@ public class NowActivity extends AppCompatActivity {
                     case R.id.participation_activity:
                         updateUIMyParticipation();
                         break;
-                    case R.id.remove_participant_activity:
-                        // TODO remove only for participant
+                    case R.id.quit_activity:
+                        abandonActivity();
+                        break;
                     default:
                         break;
                 }
@@ -875,6 +886,69 @@ public class NowActivity extends AppCompatActivity {
             }
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void abandonActivity() {
+        new MaterialAlertDialogBuilder(NowActivity.this)
+                .setTitle("Abandonar actividad")
+                .setMessage("¿Estás seguro/a de que quieres abandonar esta actividad en curso?")
+                .setNegativeButton("Cancelar", null)
+                .setPositiveButton("Sí", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Date current_time = new Date(System.currentTimeMillis());
+                        if(current_time.after(activity.getStartTime())
+                                && current_time.before(activity.getFinishTime())
+                                && participation != null) {
+                            switch (participation.getState()) {
+                                case NOT_YET:
+                                    new MaterialAlertDialogBuilder(NowActivity.this)
+                                            .setTitle("La acción no se puede realizar")
+                                            .setMessage("Tu participación aún no ha comenzado. Si no quieres " +
+                                                    "tomar parte de la actividad, puedes desinscribirte en " +
+                                                    "Mi Participación")
+                                            .setPositiveButton("OK", null)
+                                            .show();
+                                    break;
+                                case NOW:
+                                    now_progressIndicator.setVisibility(View.VISIBLE);
+                                    db.collection("activities").document(activity.getId())
+                                            .collection("participations").document(userID)
+                                            .update("state", ParticipationState.FINISHED,
+                                                    "finishTime", current_time,
+                                                    "completed", false)
+                                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                @Override
+                                                public void onSuccess(Void unused) {
+                                                    now_progressIndicator.setVisibility(View.GONE);
+                                                    // once updated the document of the participation, check
+                                                    // if we also need to finish the service
+                                                    if(LocationService.executing) {
+                                                        stopService(new Intent(NowActivity.this, LocationService.class));
+                                                    }
+                                                    showSnackBar("Has abandonado la actividad.");
+                                                }
+                                            })
+                                            .addOnFailureListener(new OnFailureListener() {
+                                                @Override
+                                                public void onFailure(@NonNull @NotNull Exception e) {
+                                                    now_progressIndicator.setVisibility(View.GONE);
+                                                    Toast.makeText(NowActivity.this, "Algo salió mal al terminar la actividad. Vuelve a intentarlo.", Toast.LENGTH_SHORT).show();
+                                                }
+                                            });
+                                    break;
+                                case FINISHED:
+                                    Toast.makeText(NowActivity.this, "La acción no se pudo completar" +
+                                            " porque ya has terminado tu participación", Toast.LENGTH_SHORT).show();
+                                    break;
+                            }
+                        } else {
+                            // the activity is not on going any more
+                            Toast.makeText(NowActivity.this, "La acción no se pudo completar. ", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                })
+                .show();
     }
 
     private void removeActivity() {

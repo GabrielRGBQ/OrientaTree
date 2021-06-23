@@ -7,6 +7,7 @@ import androidx.appcompat.widget.Toolbar;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -21,6 +22,7 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -188,6 +190,8 @@ public class MyParticipationActivity extends AppCompatActivity {
                 // if the participation is finished or if there is a finish time or if the activity has finished
                 // we enable the track button
                 myParticipationTrack_button.setEnabled(true);
+            } else {
+                myParticipationTrack_button.setEnabled(false);
             }
         } else {
             // if we couldn't receive right the participation
@@ -231,7 +235,7 @@ public class MyParticipationActivity extends AppCompatActivity {
                                             // path to /data/data/yourapp/app_data/imageDir
                                             File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
                                             // Create imageDir
-                                            File mypath = new File(directory, activity.getId() + ".png");
+                                            File mypath = new File(directory, activity.getTemplate() + ".png");
                                             FileOutputStream fos = null;
                                             try {
                                                 fos = new FileOutputStream(mypath);
@@ -285,48 +289,59 @@ public class MyParticipationActivity extends AppCompatActivity {
             public void onClick(View v) {
                 // check that it is possible to cancel the inscription
                 if(inscriptionCancelable()) {
-                    myParticipation_progressIndicator.setVisibility(View.VISIBLE);
-                    ArrayList<String> participants = activity.getParticipants();
-                    participants.remove(userID);
-                    // update the list with the participants in the activity
-                    db.collection("activities").document(activityID)
-                            .update("participants", participants)
-                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    new MaterialAlertDialogBuilder(MyParticipationActivity.this)
+                            .setTitle("Eliminar mi inscripción")
+                            .setTitle("¿Estás seguro/a de que quieres desinscribirte" +
+                                    " de esta actividad?")
+                            .setNegativeButton("Cancelar", null)
+                            .setPositiveButton("Sí", new DialogInterface.OnClickListener() {
                                 @Override
-                                public void onSuccess(Void unused) {
-                                    // updated the list, now
-                                    // remove the participation document
+                                public void onClick(DialogInterface dialog, int which) {
+                                    myParticipation_progressIndicator.setVisibility(View.VISIBLE);
+                                    ArrayList<String> participants = activity.getParticipants();
+                                    participants.remove(userID);
+                                    // update the list with the participants in the activity
                                     db.collection("activities").document(activityID)
-                                            .collection("participations").document(userID)
-                                            .delete()
+                                            .update("participants", participants)
                                             .addOnSuccessListener(new OnSuccessListener<Void>() {
                                                 @Override
                                                 public void onSuccess(Void unused) {
-                                                    myParticipation_progressIndicator.setVisibility(View.GONE);
-                                                    updateUIHome();
+                                                    // updated the list, now
+                                                    // remove the participation document
+                                                    db.collection("activities").document(activityID)
+                                                            .collection("participations").document(userID)
+                                                            .delete()
+                                                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                                @Override
+                                                                public void onSuccess(Void unused) {
+                                                                    myParticipation_progressIndicator.setVisibility(View.GONE);
+                                                                    updateUIHome();
+                                                                }
+                                                            })
+                                                            .addOnFailureListener(new OnFailureListener() {
+                                                                @Override
+                                                                public void onFailure(@NonNull @NotNull Exception e) {
+                                                                    // we couldn't remove the participation object
+                                                                    // at this point we updated the participants list but did not remove the participation object
+                                                                    // on the eyes of the user there would be no difference, the only problem is that the information
+                                                                    // still occupies space in the database
+                                                                    myParticipation_progressIndicator.setVisibility(View.GONE);
+                                                                    updateUIHome();
+                                                                }
+                                                            });
                                                 }
                                             })
                                             .addOnFailureListener(new OnFailureListener() {
                                                 @Override
                                                 public void onFailure(@NonNull @NotNull Exception e) {
-                                                    // we couldn't remove the participation object
-                                                    // at this point we updated the participants list but did not remove the participation object
-                                                    // on the eyes of the user there would be no difference, the only problem is that the information
-                                                    // still occupies space in the database
+                                                    // we couldn't update the activity
                                                     myParticipation_progressIndicator.setVisibility(View.GONE);
-                                                    updateUIHome();
+                                                    Toast.makeText(MyParticipationActivity.this, "Algo falló al eliminar su subscripción, vuelva a intentarlo", Toast.LENGTH_SHORT).show();
                                                 }
                                             });
                                 }
                             })
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull @NotNull Exception e) {
-                                    // we couldn't update the activity
-                                    myParticipation_progressIndicator.setVisibility(View.GONE);
-                                    Toast.makeText(MyParticipationActivity.this, "Algo falló al eliminar su subscripción, vuelva a intentarlo", Toast.LENGTH_SHORT).show();
-                                }
-                            });
+                            .show();
                 } else {
                     // if not cancelable any more
                     myParticipationInscription_button.setEnabled(false);
@@ -385,7 +400,7 @@ public class MyParticipationActivity extends AppCompatActivity {
         boolean res = false;
         ContextWrapper cw = new ContextWrapper(getApplicationContext());
         File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
-        File mypath = new File(directory, activity.getId() + ".png");
+        File mypath = new File(directory, template.getTemplate_id() + ".png");
         if (mypath.exists()) {
             res = true;
         }
@@ -403,13 +418,14 @@ public class MyParticipationActivity extends AppCompatActivity {
             return res;
         } else {
             if(participation.getState() == ParticipationState.NOT_YET) {
-               Date current_time = new Date(System.currentTimeMillis());
+                res = true;
+               /*Date current_time = new Date(System.currentTimeMillis());
                if(current_time.before(activity.getStartTime())) {
                    // if the participation has NOT_YET started
                    // and current time is before the activity starts
                    // it should be possible to cancel the inscription
                    res = true;
-               }
+               }*/
             }
         }
         return res;
