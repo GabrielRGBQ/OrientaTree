@@ -18,6 +18,7 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,6 +34,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.badge.BadgeDrawable;
+import com.google.android.material.badge.BadgeUtils;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -44,6 +47,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.smov.gabriel.orientatree.model.Activity;
+import com.smov.gabriel.orientatree.model.BeaconReached;
 import com.smov.gabriel.orientatree.model.Map;
 import com.smov.gabriel.orientatree.model.Participation;
 import com.smov.gabriel.orientatree.model.Template;
@@ -54,13 +58,17 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static com.google.android.material.badge.BadgeDrawable.TOP_END;
+
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback/*, GoogleMap.OnMapLongClickListener*/ {
 
-    private TextView reachesMap_textView, map_timer_textView;
+    private TextView reachesMap_textView, map_timer_textView,
+                mapBeaconsBadge_textView;
     private MaterialButton mapBeacons_button;
     private FloatingActionButton map_fab, mapLocationOff_fab;
     private CircularProgressIndicator map_progressIndicator;
@@ -123,6 +131,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         map_progressIndicator = findViewById(R.id.map_progressIndicator);
         mapLocationOff_fab = findViewById(R.id.mapLocationOff_fab);
         toolbar = findViewById(R.id.map_toolbar);
+        mapBeaconsBadge_textView = findViewById(R.id.mapBeaconsBadge_textView);
 
         // set the toolbar
         setSupportActionBar(toolbar);
@@ -224,6 +233,26 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                                 beacons_reached = value.size();
                                 reachesMap_textView.setText(beacons_reached + "/"
                                         + num_beacons);
+                                // count how many of them are not answered yet
+                                if(beacons_reached > 0 && template.getType() == TemplateType.EDUCATIVA) {
+                                    int not_answered = 0;
+                                    for(DocumentSnapshot documentSnapshot : value) {
+                                        BeaconReached beaconReached = documentSnapshot.toObject(BeaconReached.class);
+                                        if(!beaconReached.isAnswered()) {
+                                            not_answered ++;
+                                        }
+                                    }
+                                    if(not_answered > 0) {
+                                        mapBeaconsBadge_textView.setText(String.valueOf(not_answered));
+                                        mapBeaconsBadge_textView.setVisibility(View.VISIBLE);
+                                    } else {
+                                        // no beacons reached without being answered
+                                        mapBeaconsBadge_textView.setVisibility(View.INVISIBLE);
+                                    }
+                                } else {
+                                    // no beacons reached
+                                    mapBeaconsBadge_textView.setVisibility(View.INVISIBLE);
+                                }
                             }
                         });
             }
