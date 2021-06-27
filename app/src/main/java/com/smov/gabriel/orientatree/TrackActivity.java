@@ -290,6 +290,7 @@ public class TrackActivity extends AppCompatActivity implements OnMapReadyCallba
                                                             points.add(p);
                                                         }
                                                         polyline2.setPoints(points);
+                                                        trackCompleto_switch.setEnabled(true);
                                                     }
                                                 } else {
                                                     Toast.makeText(TrackActivity.this, "No se han encontrado datos que mostrar", Toast.LENGTH_SHORT).show();

@@ -105,6 +105,28 @@
                     app:layout_constraintBottom_toBottomOf="@id/myParticipationTotal"
                     app:layout_constraintStart_toStartOf="@+id/myParticipationFinish_textView" />
 
+
+                <TextView
+                    android:id="@+id/myParticipationCompleted"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:drawableLeft="@drawable/ic_trophy"
+                    android:drawablePadding="10dp"
+                    android:text="Completada"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/myParticipationTotal" />
+
+                <TextView
+                    android:id="@+id/myParticipationCompleted_textView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"
+                    app:layout_constraintBottom_toBottomOf="@id/myParticipationCompleted"
+                    app:layout_constraintStart_toStartOf="@+id/myParticipationFinish_textView" />
+
             </androidx.constraintlayout.widget.ConstraintLayout>
 
 

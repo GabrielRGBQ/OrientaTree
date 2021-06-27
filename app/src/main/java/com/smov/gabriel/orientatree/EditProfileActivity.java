@@ -14,11 +14,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -37,7 +34,6 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
@@ -50,10 +46,9 @@ import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.smov.gabriel.orientatree.model.User;
+import com.smov.gabriel.orientatree.services.LocationService;
 
 import org.jetbrains.annotations.NotNull;
-
-import java.io.ByteArrayOutputStream;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -395,6 +390,9 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
                         Intent broadcastIntent = new Intent();
                         broadcastIntent.setAction("com.package.ACTION_LOGOUT");
                         sendBroadcast(broadcastIntent);
+                        if(LocationService.executing) {
+                            stopService(new Intent(EditProfileActivity.this, LocationService.class));
+                        }
                         updateUIIdentification();
                     }
                 })
@@ -464,7 +462,7 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
     }
 
     private void updateUIFindTemplate() {
-        Intent intent = new Intent(EditProfileActivity.this, FindTemplate.class);
+        Intent intent = new Intent(EditProfileActivity.this, FindTemplateActivity.class);
         startActivity(intent);
     }
 

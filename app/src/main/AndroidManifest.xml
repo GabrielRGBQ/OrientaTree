@@ -71,10 +71,10 @@
             android:windowSoftInputMode="adjustNothing" />
         <activity
             android:name=".SelectedTemplateActivity"
-            android:parentActivityName=".FindTemplate"
+            android:parentActivityName=".FindTemplateActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".FindTemplate"
+            android:name=".FindTemplateActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".EditProfileActivity"

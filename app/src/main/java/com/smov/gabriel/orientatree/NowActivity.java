@@ -829,7 +829,7 @@ public class NowActivity extends AppCompatActivity {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // user gave us the permission...
                     havePermissions = true;
-                    Toast.makeText(this, "Ahora ya puedes comenzar la actividad", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Ahora ya puedes usar toda la funcionalidad", Toast.LENGTH_SHORT).show();
                 } else {
                     showSnackBar("Es necesario dar permiso para poder participar en la actividad");
                 }

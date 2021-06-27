@@ -57,7 +57,7 @@ public class LogInActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        if(mAuth.getCurrentUser() != null /*&& mAuth.getCurrentUser().isEmailVerified()*/) {
+        if(mAuth.getCurrentUser() != null && mAuth.getCurrentUser().isEmailVerified()) {
             updateUIHome();
         }
 
@@ -113,13 +113,13 @@ public class LogInActivity extends AppCompatActivity {
                                 name = "usuario";
                                 Toast.makeText(LogInActivity.this, "No pudieron obtenerse los datos del usuario", Toast.LENGTH_SHORT).show();
                             }
-                            //if(user.isEmailVerified()) {
+                            if(user.isEmailVerified()) {
                                 // if the user is verified
                                 updateUIWelcome();
-                            //} else {
+                            } else {
                                // if the user is not verified
-                                //showVerificationSnackBar(viewPos);
-                            //}
+                                showVerificationSnackBar(viewPos);
+                            }
                         } else {
                             try {
                                 throw task.getException();

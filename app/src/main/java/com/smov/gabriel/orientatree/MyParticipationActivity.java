@@ -54,7 +54,8 @@ public class MyParticipationActivity extends AppCompatActivity {
     // UI elements
     private Toolbar toolbar;
     private TextView myParticipationStart_textView, myParticipationFinish_textView,
-            myParticipationTotal_textView, myParticipationBeacons_textView;
+            myParticipationTotal_textView, myParticipationBeacons_textView,
+            myParticipationCompleted_textView;
     private MaterialButton myParticipationBeacons_button, myParticipationTrack_button,
             myParticipationInscription_button, myParticipationDelete_button;
     private CircularProgressIndicator myParticipation_progressIndicator;
@@ -101,6 +102,7 @@ public class MyParticipationActivity extends AppCompatActivity {
         myParticipationDelete_button = findViewById(R.id.myParticipationDelete_button);
         myParticipationInscription_button = findViewById(R.id.myParticipationInscription_button);
         myParticipation_progressIndicator = findViewById(R.id.myParticipation_progressIndicator);
+        myParticipationCompleted_textView = findViewById(R.id.myParticipationCompleted_textView);
 
         // initialize Firebase services
         db = FirebaseFirestore.getInstance();
@@ -140,6 +142,11 @@ public class MyParticipationActivity extends AppCompatActivity {
                     myParticipationTotal_textView.setText(formatMillis(diff_millis));
                 } else {
                     myParticipationTotal_textView.setText("Nada que mostrar");
+                }
+                if(participation.isCompleted()) {
+                    myParticipationCompleted_textView.setText("Sí");
+                } else {
+                    myParticipationCompleted_textView.setText("No");
                 }
                 // get the reaches
                 reaches = new ArrayList<>();

@@ -224,15 +224,13 @@ public class SignUpActivity extends AppCompatActivity {
             @Override
             public void onSuccess(Void unused) {
                 progress_circular.setVisibility(View.GONE);
-                showSnackBar("Se ha enviado un correo de confirmación para verificar su email." +
-                        " Una vez verificado, podrá iniciar sesión", viewPos);
+                showSnackBar("Correo de verificación enviado.", viewPos);
             }
         }).addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull @NotNull Exception e) {
                         progress_circular.setVisibility(View.GONE);
-                        showSnackBar("Algo salió mal al enviar el correo de confirmación. Pulse el botón" +
-                                " para volver a intentarlo", viewPos);
+                        showSnackBar("Error al enviar el correo. Vuelva a intentarlo.", viewPos);
                     }
                 });
     }
