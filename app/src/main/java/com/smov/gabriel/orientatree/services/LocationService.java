@@ -64,7 +64,7 @@ public class LocationService extends Service {
 
     private static final String TAG = "Location Service";
 
-    private static final float LOCATION_PRECISION = 25000f;
+    private static final float LOCATION_PRECISION = 25f;
 
     private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 3000;
     private static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
@@ -383,47 +383,49 @@ public class LocationService extends Service {
         // DEBUG
         Log.d(TAG, "La actividad es clásica");
         //
-        // get the beacons that we have to reach next
-        int searchedBeaconIndex = beaconsReached.size();
-        Beacon searchedBeacon = beacons.get(searchedBeaconIndex);
-        // DEBUG
-        Log.d(TAG, "Ahora mismo hay " + searchedBeaconIndex + " balizas alcanzadas " +
-                "por lo tanto, la siguiente que tenemos que alcanzar es: " + searchedBeacon.getName());
-        //
-        double lat2 = searchedBeacon.getLocation().getLatitude();
-        double lng2 = searchedBeacon.getLocation().getLongitude();
-        float dist = getDistance(lat1, lat2, lng1, lng2);
-        if (dist <= LOCATION_PRECISION && !uploadingReach) {
-            // if we are close enough and not in the middle of an uploading operation...
-            BeaconReached beaconReached = new BeaconReached(current_time, searchedBeacon.getBeacon_id(),
-                    false/*, searchedBeacon.isGoal()*/); // create a new BeaconReached
-            uploadingReach = true; // uploading...
-            db.collection("activities").document(activity.getId())
-                    .collection("participations").document(userID)
-                    .collection("beaconReaches").document(beaconReached.getBeacon_id())
-                    .set(beaconReached)
-                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-                        @Override
-                        public void onSuccess(Void unused) {
-                            // BeaconReached added to Firestore
-                            // DEBUG
-                            Log.d(TAG, "Alcanzada: " + searchedBeacon.getName());
-                            //
-                            beaconsReached.add(searchedBeacon.getBeacon_id()); // update the set with the reaches
-                            String name = searchedBeacon.getName();
-                            int number = searchedBeacon.getNumber();
-                            String message = "Has alcanzado la baliza " + name;
-                            sendBeaconNotification(message, name, number);
-                            uploadingReach = false;
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull @NotNull Exception e) {
-                            uploadingReach = false; // not uploading any more
-                            // don't update nextBeacon, so we will try it again
-                        }
-                    });
+        if(beaconsReached.size() < beacons.size()) {
+            // get the beacons that we have to reach next
+            int searchedBeaconIndex = beaconsReached.size();
+            Beacon searchedBeacon = beacons.get(searchedBeaconIndex);
+            // DEBUG
+            Log.d(TAG, "Ahora mismo hay " + searchedBeaconIndex + " balizas alcanzadas " +
+                    "por lo tanto, la siguiente que tenemos que alcanzar es: " + searchedBeacon.getName());
+            //
+            double lat2 = searchedBeacon.getLocation().getLatitude();
+            double lng2 = searchedBeacon.getLocation().getLongitude();
+            float dist = getDistance(lat1, lat2, lng1, lng2);
+            if (dist <= LOCATION_PRECISION && !uploadingReach) {
+                // if we are close enough and not in the middle of an uploading operation...
+                BeaconReached beaconReached = new BeaconReached(current_time, searchedBeacon.getBeacon_id(),
+                        false/*, searchedBeacon.isGoal()*/); // create a new BeaconReached
+                uploadingReach = true; // uploading...
+                db.collection("activities").document(activity.getId())
+                        .collection("participations").document(userID)
+                        .collection("beaconReaches").document(beaconReached.getBeacon_id())
+                        .set(beaconReached)
+                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void unused) {
+                                // BeaconReached added to Firestore
+                                // DEBUG
+                                Log.d(TAG, "Alcanzada: " + searchedBeacon.getName());
+                                //
+                                beaconsReached.add(searchedBeacon.getBeacon_id()); // update the set with the reaches
+                                String name = searchedBeacon.getName();
+                                int number = searchedBeacon.getNumber();
+                                String message = "Has alcanzado la baliza " + name;
+                                sendBeaconNotification(message, name, number);
+                                uploadingReach = false;
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull @NotNull Exception e) {
+                                uploadingReach = false; // not uploading any more
+                                // don't update nextBeacon, so we will try it again
+                            }
+                        });
+            }
         }
     }
 
