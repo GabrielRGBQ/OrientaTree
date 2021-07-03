@@ -1,6 +1,7 @@
 package com.smov.gabriel.orientatree;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
 
 import android.content.Intent;
@@ -25,6 +26,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // prevent using dark theme which causes a bug
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
 
         // Set status bar to white in this activity
         Window window = this.getWindow();
@@ -53,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                Intent intent = new Intent(MainActivity.this, IdentificationActivity.class);
+                Intent intent = new Intent(MainActivity.this, LogInActivity.class);
                 startActivity(intent);
                 finish();
             }

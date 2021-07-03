@@ -5,7 +5,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.ContextWrapper;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,6 +22,8 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -35,6 +42,7 @@ import com.smov.gabriel.orientatree.services.LocationService;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -46,9 +54,11 @@ public class MyParticipationActivity extends AppCompatActivity {
     // UI elements
     private Toolbar toolbar;
     private TextView myParticipationStart_textView, myParticipationFinish_textView,
-            myParticipationTotal_textView, myParticipationBeacons_textView;
+            myParticipationTotal_textView, myParticipationBeacons_textView,
+            myParticipationCompleted_textView;
     private MaterialButton myParticipationBeacons_button, myParticipationTrack_button,
             myParticipationInscription_button, myParticipationDelete_button;
+    private CircularProgressIndicator myParticipation_progressIndicator;
 
     // model objects
     private Participation participation;
@@ -91,6 +101,8 @@ public class MyParticipationActivity extends AppCompatActivity {
         myParticipationBeacons_button = findViewById(R.id.myParticipationBeacons_button);
         myParticipationDelete_button = findViewById(R.id.myParticipationDelete_button);
         myParticipationInscription_button = findViewById(R.id.myParticipationInscription_button);
+        myParticipation_progressIndicator = findViewById(R.id.myParticipation_progressIndicator);
+        myParticipationCompleted_textView = findViewById(R.id.myParticipationCompleted_textView);
 
         // initialize Firebase services
         db = FirebaseFirestore.getInstance();
@@ -131,6 +143,11 @@ public class MyParticipationActivity extends AppCompatActivity {
                 } else {
                     myParticipationTotal_textView.setText("Nada que mostrar");
                 }
+                if(participation.isCompleted()) {
+                    myParticipationCompleted_textView.setText("Sí");
+                } else {
+                    myParticipationCompleted_textView.setText("No");
+                }
                 // get the reaches
                 reaches = new ArrayList<>();
                 db.collection("activities").document(activityID)
@@ -148,10 +165,7 @@ public class MyParticipationActivity extends AppCompatActivity {
                                 if(template.getBeacons() != null) {
                                     int num_reaches = reaches.size();
                                     int number_of_beacons = template.getBeacons().size();
-                                    if(num_reaches == number_of_beacons) {
-                                        num_reaches --;
-                                    }
-                                    myParticipationBeacons_textView.setText(num_reaches + "/" + (number_of_beacons - 1));
+                                    myParticipationBeacons_textView.setText(num_reaches + "/" + number_of_beacons);
                                 } else {
                                     Toast.makeText(MyParticipationActivity.this, "No se pudo recuperar la información de las balizas alcanzadas", Toast.LENGTH_SHORT).show();
                                 }
@@ -170,8 +184,10 @@ public class MyParticipationActivity extends AppCompatActivity {
                 myParticipationFinish_textView.setText("Nada que mostrar");
                 myParticipationTotal_textView.setText("Nada que mostrar");
                 myParticipationBeacons_textView.setText("Nada que mostrar");
-                // enable the button to cancel the inscription
-                //myParticipationInscription_button.setEnabled(true);
+                // check if we should enable the button to cancel the inscription
+                if(inscriptionCancelable()) {
+                    myParticipationInscription_button.setEnabled(true);
+                }
             }
             // check if we should allow the user to see the track
             if(participation.getState() == ParticipationState.FINISHED
@@ -181,6 +197,8 @@ public class MyParticipationActivity extends AppCompatActivity {
                 // if the participation is finished or if there is a finish time or if the activity has finished
                 // we enable the track button
                 myParticipationTrack_button.setEnabled(true);
+            } else {
+                myParticipationTrack_button.setEnabled(false);
             }
         } else {
             // if we couldn't receive right the participation
@@ -200,51 +218,152 @@ public class MyParticipationActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if(activity != null && participation != null) {
-                    final ProgressDialog pd = new ProgressDialog(MyParticipationActivity.this);
-                    pd.setTitle("Cargando el mapa...");
-                    pd.show();
-                    StorageReference reference = storageReference.child("maps/" + activity.getTemplate() + ".png");
-                    try {
-                        // try to read the map image from Firebase into a file
-                        File localFile = File.createTempFile("images", "png");
-                        reference.getFile(localFile)
-                                .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                                    @Override
-                                    public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                                        // if we already have the map image
-                                        // quit the dialog
-                                        pd.dismiss();
-                                        updateUITrackMap(localFile);
-                                    }
-                                })
-                                .addOnFailureListener(new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-                                        pd.dismiss();
-                                    }
-                                })
-                                .addOnProgressListener(new OnProgressListener<FileDownloadTask.TaskSnapshot>() {
-                                    @Override
-                                    public void onProgress(@NonNull @NotNull FileDownloadTask.TaskSnapshot snapshot) {
-                                        double progressPercent = (100.00 * snapshot.getBytesTransferred() / snapshot.getTotalByteCount());
-                                        pd.setMessage("Progreso: " + (int) progressPercent + "%");
-                                    }
-                                });
-                    } catch (IOException e) {
-                        pd.dismiss();
+                    if(mapDownloaded()) {
+                        // if we already have the map downloaded
+                        updateUITrackMap();
+                    } else {
+                        // if we don't have the map downloaded
+                        final ProgressDialog pd = new ProgressDialog(MyParticipationActivity.this);
+                        pd.setTitle("Cargando el mapa...");
+                        pd.show();
+                        StorageReference reference = storageReference.child("maps/" + activity.getTemplate() + ".png");
+                        try {
+                            // try to read the map image from Firebase into a file
+                            File localFile = File.createTempFile("images", "png");
+                            reference.getFile(localFile)
+                                    .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+                                        @Override
+                                        public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                                            // we downloaded the map successfully
+                                            // read the downloaded file into a bitmap
+                                            Bitmap bmp = BitmapFactory.decodeFile(localFile.getAbsolutePath());
+                                            // save the bitmap to a file
+                                            ContextWrapper cw = new ContextWrapper(getApplicationContext());
+                                            // path to /data/data/yourapp/app_data/imageDir
+                                            File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+                                            // Create imageDir
+                                            File mypath = new File(directory, activity.getTemplate() + ".png");
+                                            FileOutputStream fos = null;
+                                            try {
+                                                fos = new FileOutputStream(mypath);
+                                                // Use the compress method on the BitMap object to write image to the OutputStream
+                                                bmp.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                                            } catch (Exception e) {
+                                                e.printStackTrace();
+                                                Toast.makeText(MyParticipationActivity.this, "Algo salió mal al descargar el mapa", Toast.LENGTH_SHORT).show();
+                                            } finally {
+                                                try {
+                                                    fos.close();
+                                                } catch (IOException e) {
+                                                    e.printStackTrace();
+                                                }
+                                            }
+                                            pd.dismiss();
+                                            if(mapDownloaded()) {
+                                                updateUITrackMap();
+                                            }
+                                        }
+                                    })
+                                    .addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+                                            pd.dismiss();
+                                            Toast.makeText(MyParticipationActivity.this, "Algo salió mal al descargar el mapa", Toast.LENGTH_SHORT).show();
+                                        }
+                                    })
+                                    .addOnProgressListener(new OnProgressListener<FileDownloadTask.TaskSnapshot>() {
+                                        @Override
+                                        public void onProgress(@NonNull @NotNull FileDownloadTask.TaskSnapshot snapshot) {
+                                            double progressPercent = (100.00 * snapshot.getBytesTransferred() / snapshot.getTotalByteCount());
+                                            if (progressPercent <= 90) {
+                                                pd.setMessage("Progreso: " + (int) progressPercent + "%");
+                                            } else {
+                                                pd.setMessage("Descargado. Espera unos instantes mientras el mapa se guarda en el dispositivo");
+                                            }
+                                        }
+                                    });
+                        } catch (IOException e) {
+                            pd.dismiss();
+                        }
                     }
+                }
+            }
+        });
+
+        // here the second action should be performed by a cloud functions
+        myParticipationInscription_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // check that it is possible to cancel the inscription
+                if(inscriptionCancelable()) {
+                    new MaterialAlertDialogBuilder(MyParticipationActivity.this)
+                            .setTitle("Eliminar mi inscripción")
+                            .setTitle("¿Estás seguro/a de que quieres desinscribirte" +
+                                    " de esta actividad?")
+                            .setNegativeButton("Cancelar", null)
+                            .setPositiveButton("Sí", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    myParticipation_progressIndicator.setVisibility(View.VISIBLE);
+                                    ArrayList<String> participants = activity.getParticipants();
+                                    participants.remove(userID);
+                                    // update the list with the participants in the activity
+                                    db.collection("activities").document(activityID)
+                                            .update("participants", participants)
+                                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                @Override
+                                                public void onSuccess(Void unused) {
+                                                    // updated the list, now
+                                                    // remove the participation document
+                                                    db.collection("activities").document(activityID)
+                                                            .collection("participations").document(userID)
+                                                            .delete()
+                                                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                                @Override
+                                                                public void onSuccess(Void unused) {
+                                                                    myParticipation_progressIndicator.setVisibility(View.GONE);
+                                                                    updateUIHome();
+                                                                }
+                                                            })
+                                                            .addOnFailureListener(new OnFailureListener() {
+                                                                @Override
+                                                                public void onFailure(@NonNull @NotNull Exception e) {
+                                                                    // we couldn't remove the participation object
+                                                                    // at this point we updated the participants list but did not remove the participation object
+                                                                    // on the eyes of the user there would be no difference, the only problem is that the information
+                                                                    // still occupies space in the database
+                                                                    myParticipation_progressIndicator.setVisibility(View.GONE);
+                                                                    updateUIHome();
+                                                                }
+                                                            });
+                                                }
+                                            })
+                                            .addOnFailureListener(new OnFailureListener() {
+                                                @Override
+                                                public void onFailure(@NonNull @NotNull Exception e) {
+                                                    // we couldn't update the activity
+                                                    myParticipation_progressIndicator.setVisibility(View.GONE);
+                                                    Toast.makeText(MyParticipationActivity.this, "Algo falló al eliminar su subscripción, vuelva a intentarlo", Toast.LENGTH_SHORT).show();
+                                                }
+                                            });
+                                }
+                            })
+                            .show();
+                } else {
+                    // if not cancelable any more
+                    myParticipationInscription_button.setEnabled(false);
+                    Toast.makeText(MyParticipationActivity.this, "No se pudo completar la acción." +
+                            " La actividad está en curso o ya has comenzado tu participación", Toast.LENGTH_SHORT).show();
                 }
             }
         });
 
     }
 
-    private void updateUITrackMap(File localFileMap) {
+    private void updateUITrackMap() {
         Intent intent = new Intent(MyParticipationActivity.this, TrackActivity.class);
-        intent.putExtra("map", localFileMap);
         intent.putExtra("template", template);
         intent.putExtra("activity", activity);
-        //intent.putExtra("participation", participation);
         intent.putExtra("participantID", participation.getParticipant());
         startActivity(intent);
     }
@@ -258,6 +377,12 @@ public class MyParticipationActivity extends AppCompatActivity {
             intent.putExtra("participantID", userID);
             startActivity(intent);
         }
+    }
+    
+    private void updateUIHome() {
+        Intent intent = new Intent(MyParticipationActivity.this, HomeActivity.class);
+        startActivity(intent);
+        finish();
     }
 
     private String formatMillis (long millis) {
@@ -276,5 +401,40 @@ public class MyParticipationActivity extends AppCompatActivity {
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public boolean mapDownloaded() {
+        boolean res = false;
+        ContextWrapper cw = new ContextWrapper(getApplicationContext());
+        File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+        File mypath = new File(directory, template.getTemplate_id() + ".png");
+        if (mypath.exists()) {
+            res = true;
+        }
+        return res;
+    }
+
+    // allows us to know whether is possible to cancel a subscription in an activity or not
+    // given that the participation must have not been yet started and that the
+    // activity must be in the future
+    private boolean inscriptionCancelable() {
+        boolean res = false;
+        // first we check that neither the activity nor the participation are null
+        if(activity == null || participation == null) {
+            // if any of the are null, we return false
+            return res;
+        } else {
+            if(participation.getState() == ParticipationState.NOT_YET) {
+                res = true;
+               /*Date current_time = new Date(System.currentTimeMillis());
+               if(current_time.before(activity.getStartTime())) {
+                   // if the participation has NOT_YET started
+                   // and current time is before the activity starts
+                   // it should be possible to cancel the inscription
+                   res = true;
+               }*/
+            }
+        }
+        return res;
     }
 }

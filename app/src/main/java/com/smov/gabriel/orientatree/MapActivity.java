@@ -3,20 +3,28 @@ package com.smov.gabriel.orientatree;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
+import android.content.Context;
+import android.content.ContextWrapper;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.internal.Constants;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -28,8 +36,12 @@ import com.google.android.gms.maps.model.GroundOverlayOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.badge.BadgeDrawable;
+import com.google.android.material.badge.BadgeUtils;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
@@ -40,26 +52,36 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.smov.gabriel.orientatree.model.Activity;
+import com.smov.gabriel.orientatree.model.BeaconReached;
 import com.smov.gabriel.orientatree.model.Map;
 import com.smov.gabriel.orientatree.model.Participation;
+import com.smov.gabriel.orientatree.model.ParticipationState;
 import com.smov.gabriel.orientatree.model.Template;
 import com.smov.gabriel.orientatree.model.TemplateType;
+import com.smov.gabriel.orientatree.services.LocationService;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static com.google.android.material.badge.BadgeDrawable.TOP_END;
+
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback/*, GoogleMap.OnMapLongClickListener*/ {
 
-    private TextView reachesMap_textView, map_timer_textView;
+    private TextView reachesMap_textView, map_timer_textView,
+            mapBeaconsBadge_textView;
     private MaterialButton mapBeacons_button;
     private FloatingActionButton map_fab, mapLocationOff_fab;
     private CircularProgressIndicator map_progressIndicator;
+    private Toolbar toolbar;
 
     private GoogleMap mMap;
 
@@ -82,9 +104,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     // useful IDs
     private String userID;
-
-    // file containing the map
-    private File mapFile;
 
     // Firebase services
     private FirebaseFirestore db;
@@ -110,7 +129,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         //get map file
         Intent intent = getIntent();
-        mapFile = (File) intent.getSerializableExtra("map");
         template = (Template) intent.getSerializableExtra("template");
         activity = (Activity) intent.getSerializableExtra("activity");
 
@@ -121,6 +139,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         map_fab = findViewById(R.id.map_fab);
         map_progressIndicator = findViewById(R.id.map_progressIndicator);
         mapLocationOff_fab = findViewById(R.id.mapLocationOff_fab);
+        toolbar = findViewById(R.id.map_toolbar);
+        mapBeaconsBadge_textView = findViewById(R.id.mapBeaconsBadge_textView);
+
+        // set the toolbar
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         // set listener to the beacons button
         mapBeacons_button.setOnClickListener(new View.OnClickListener() {
@@ -216,12 +240,28 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                                     return;
                                 }
                                 beacons_reached = value.size();
-                                int show_reaches = beacons_reached;
-                                if (beacons_reached > (num_beacons - 1)) {
-                                    show_reaches = num_beacons - 1;
+                                reachesMap_textView.setText(beacons_reached + "/"
+                                        + num_beacons);
+                                // count how many of them are not answered yet
+                                if (beacons_reached > 0 && template.getType() == TemplateType.EDUCATIVA) {
+                                    int not_answered = 0;
+                                    for (DocumentSnapshot documentSnapshot : value) {
+                                        BeaconReached beaconReached = documentSnapshot.toObject(BeaconReached.class);
+                                        if (!beaconReached.isAnswered()) {
+                                            not_answered++;
+                                        }
+                                    }
+                                    if (not_answered > 0) {
+                                        mapBeaconsBadge_textView.setText(String.valueOf(not_answered));
+                                        mapBeaconsBadge_textView.setVisibility(View.VISIBLE);
+                                    } else {
+                                        // no beacons reached without being answered
+                                        mapBeaconsBadge_textView.setVisibility(View.INVISIBLE);
+                                    }
+                                } else {
+                                    // no beacons reached
+                                    mapBeaconsBadge_textView.setVisibility(View.INVISIBLE);
                                 }
-                                reachesMap_textView.setText(show_reaches + "/"
-                                        + (num_beacons - 1));
                             }
                         });
             }
@@ -245,7 +285,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private void disableLocation() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
-            if(mMap != null) {
+            if (mMap != null) {
                 // hide location off fab
                 mapLocationOff_fab.setVisibility(View.GONE);
                 mapLocationOff_fab.setEnabled(false);
@@ -311,7 +351,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             Toast.makeText(this, "Algo salió mal al configurar el mapa", Toast.LENGTH_SHORT).show();
         }
 
-        if (template != null && mapFile != null) {
+        if (template != null) {
             db.collection("maps").document(template.getMap_id())
                     .get()
                     .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
@@ -325,7 +365,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                                     templateMap.getCentering_point().getLongitude());
 
                             // get the map image from a file and reduce its size
-                            Bitmap image_bitmap = decodeFile(mapFile, 540, 960);
+                            ContextWrapper cw = new ContextWrapper(getApplicationContext());
+                            File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+                            //File mypath = new File(directory, activity.getId() + ".png");
+                            File mypath = new File(directory, activity.getTemplate() + ".png");
+                            Bitmap image_bitmap = decodeFile(mypath, 540, 960);
                             BitmapDescriptor image = BitmapDescriptorFactory.fromBitmap(image_bitmap);
 
                             LatLngBounds overlay_bounds = new LatLngBounds(
@@ -441,5 +485,15 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     //showSnackBar("Es necesario dar permiso para poder participar en la actividad");
                 }
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                this.finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

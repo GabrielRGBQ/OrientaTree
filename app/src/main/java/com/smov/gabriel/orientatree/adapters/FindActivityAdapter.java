@@ -108,33 +108,6 @@ public class FindActivityAdapter extends RecyclerView.Adapter<FindActivityAdapte
                 checkKeyDialog(activity, holder);
             }
         });
-
-        /*holder.unsubscribe_button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                holder.circularProgressIndicator.setVisibility(View.VISIBLE);
-                activity.removeParticipant(holder.userID);
-                holder.db.collection("activities").document(activity.getId())
-                        .set(activity)
-                        .addOnSuccessListener(new OnSuccessListener<Void>() {
-                            @Override
-                            public void onSuccess(Void aVoid) {
-                                holder.db.collection("activities").document(activity.getId())
-                                        .collection("participations").document(holder.userID)
-                                        .delete()
-                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                            @Override
-                                            public void onSuccess(Void aVoid) {
-                                                holder.circularProgressIndicator.setVisibility(View.INVISIBLE);
-                                                holder.find_subscribed_textView.setText("No inscrito");
-                                                holder.subscribe_button.setEnabled(true);
-                                                holder.unsubscribe_button.setEnabled(false);
-                                            }
-                                        });
-                            }
-                        });
-            }
-        });*/
     }
 
     @Override

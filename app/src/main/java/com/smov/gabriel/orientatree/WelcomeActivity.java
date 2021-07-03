@@ -51,7 +51,9 @@ public class WelcomeActivity extends AppCompatActivity {
 
         welcome_textView.setText("Hola " + name + ",");
 
-        switch (previousActivity) {
+        message_textView.setText("bienvenido/a a OrientaTree");
+
+        /*switch (previousActivity) {
             case 0:
                 message_textView.setText("hemos completado tu registro");
                 break;
@@ -61,7 +63,7 @@ public class WelcomeActivity extends AppCompatActivity {
             default:
                 message_textView.setText("nos alegra verte de nuevo");
                 break;
-        }
+        }*/
 
         animationFadeIn = AnimationUtils.loadAnimation(this, R.anim.animation_fade_in);
 

@@ -2,12 +2,14 @@ package com.smov.gabriel.orientatree.adapters;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageView;
@@ -20,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.R;
@@ -65,7 +68,36 @@ public class TemplateAdapter extends RecyclerView.Adapter<TemplateAdapter.MyView
         holder.row_template_layout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                updateUISelectedTemplate(template);
+                if(template.getPassword() != null) {
+                    // if the template is protected with password, show dialog
+                    final EditText input = new EditText(context);
+                    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.MATCH_PARENT);
+                    input.setLayoutParams(lp);
+                    new MaterialAlertDialogBuilder(context)
+                            .setTitle("Plantilla protegida")
+                            .setMessage("Introduzca a continuación la contraseña para acceder a esta plantilla")
+                            .setView(input)
+                            .setNegativeButton("Cancelar", null)
+                            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    String input_key = input.getText().toString().trim();
+                                    if(input_key.equals(template.getPassword())) {
+                                        // right password
+                                        updateUISelectedTemplate(template);
+                                    } else {
+                                        // wrong password
+                                        Toast.makeText(context, "Contraseña incorrecta", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            })
+                            .show();
+                } else {
+                    // if template is not protected with password
+                    updateUISelectedTemplate(template);
+                }
             }
         });
 

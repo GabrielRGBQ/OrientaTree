@@ -4,9 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.appcompat.widget.Toolbar;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -14,61 +12,32 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
-import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.Movie;
-import android.net.Uri;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.Registry;
-import com.bumptech.glide.annotation.GlideModule;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.module.AppGlideModule;
-import com.firebase.ui.storage.images.FirebaseImageLoader;
-import com.google.android.gms.tasks.Continuation;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
-import com.google.common.net.PercentEscaper;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.functions.FirebaseFunctions;
-import com.google.firebase.functions.FirebaseFunctionsException;
-import com.google.firebase.functions.HttpsCallableResult;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
+import com.smov.gabriel.orientatree.services.LocationService;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
-import java.io.InputStream;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -114,6 +83,19 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+
+        /** secure against not logged access **/
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("com.package.ACTION_LOGOUT");
+        registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.d("onReceive","Logout in progress");
+                //At this point you should start the login activity and finish this one
+                updateUIIdentification();
+            }
+        }, intentFilter);
+        //** **//
 
         mAuth = FirebaseAuth.getInstance();
         user = mAuth.getCurrentUser();
@@ -241,6 +223,9 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             case R.id.organize_activity_item:
                 updateUIFindTemplate();
                 break;
+            case R.id.credits_item:
+                updateUICredits();
+                break;
             case R.id.log_out_item:
                 logOut();
                 break;
@@ -317,6 +302,12 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         mAuth.signOut();
+                        Intent broadcastIntent = new Intent();
+                        broadcastIntent.setAction("com.package.ACTION_LOGOUT");
+                        sendBroadcast(broadcastIntent);
+                        if(LocationService.executing) {
+                            stopService(new Intent(HomeActivity.this, LocationService.class));
+                        }
                         updateUIIdentification();
                     }
                 })
@@ -363,7 +354,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     }
 
     public void updateUIIdentification() {
-        Intent intent = new Intent(HomeActivity.this, IdentificationActivity.class);
+        Intent intent = new Intent(HomeActivity.this, LogInActivity.class);
         startActivity(intent);
         finish();
     }
@@ -374,7 +365,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void updateUIFindTemplate() {
-        Intent intent = new Intent(HomeActivity.this, FindTemplate.class);
+        Intent intent = new Intent(HomeActivity.this, FindTemplateActivity.class);
         startActivity(intent);
     }
 
@@ -383,14 +374,8 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         startActivity(intent);
     }
 
-    /*private void showSnackBar(String msg) {
-        Snackbar.make(home_constraintLayout, msg, Snackbar.LENGTH_LONG)
-                .setAction("OK", new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                    }
-                })
-                .setDuration(8000)
-                .show();
-    }*/
+    private void updateUICredits() {
+        Intent intent = new Intent(HomeActivity.this, CreditsActivity.class);
+        startActivity(intent);
+    }
 }

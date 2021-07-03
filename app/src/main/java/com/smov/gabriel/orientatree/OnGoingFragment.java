@@ -5,6 +5,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -12,6 +13,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -19,6 +21,8 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.smov.gabriel.orientatree.adapters.ActivityAdapter;
 import com.smov.gabriel.orientatree.model.Activity;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -91,7 +95,7 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_on_going, container, false);
 
-        homeActivity = (HomeActivity)getActivity();
+        homeActivity = (HomeActivity) getActivity();
 
         onGoing_pull_layout = view.findViewById(R.id.onGoing_pull_layout);
 
@@ -118,8 +122,8 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
         ultimate_selection = new ArrayList<>(); // and this one stores the ultimate one
         no_duplicates_activities = new ArrayList<>();
 
-        long millis=System.currentTimeMillis();
-        Date date = new Date(millis );
+        long millis = System.currentTimeMillis();
+        Date date = new Date(millis);
 
         homeActivity.db.collection("activities")
                 .whereGreaterThanOrEqualTo("finishTime", date)
@@ -147,23 +151,23 @@ public class OnGoingFragment extends Fragment implements View.OnClickListener {
                                         for (Activity activity : first_selection) {
                                             // and here we polish the selection by not choosing those that have not started neither, and
                                             // henceforth, they are future activities
-                                            if(date.after(activity.getStartTime())) {
+                                            if (date.after(activity.getStartTime())) {
                                                 ultimate_selection.add(activity);
                                             }
                                         }
                                         // removing duplicates due to being both organizer and participant
-                                        for(Activity a : ultimate_selection) {
+                                        for (Activity a : ultimate_selection) {
                                             boolean isFound = false;
                                             for (Activity b : no_duplicates_activities) {
-                                                if(b.equals(a)) {
+                                                if (b.equals(a)) {
                                                     isFound = true;
                                                     break;
                                                 }
                                             }
-                                            if(!isFound) no_duplicates_activities.add(a);
+                                            if (!isFound) no_duplicates_activities.add(a);
                                         }
                                         Collections.sort(no_duplicates_activities, new Activity());
-                                        if(no_duplicates_activities.size() < 1) {
+                                        if (no_duplicates_activities.size() < 1) {
                                             no_activities_layout.setVisibility(View.VISIBLE);
                                         } else {
                                             no_activities_layout.setVisibility(View.GONE);

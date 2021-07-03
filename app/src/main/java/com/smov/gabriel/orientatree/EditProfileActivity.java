@@ -9,11 +9,14 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Bitmap;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,12 +26,14 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.navigation.NavigationView;
-import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
@@ -41,10 +46,9 @@ import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.smov.gabriel.orientatree.model.User;
+import com.smov.gabriel.orientatree.services.LocationService;
 
 import org.jetbrains.annotations.NotNull;
-
-import java.io.ByteArrayOutputStream;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -56,6 +60,7 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
     private TextInputLayout name_textInputLayout, surname_textInputLayout;
     private TextInputEditText editName_editText, editSurname_editText;
     private CircleImageView profileCircleImageView;
+    private CircularProgressIndicator profile_progressIndicator;
 
     // to show the navigation drawer
     private DrawerLayout drawerLayout;
@@ -66,7 +71,7 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
     private CircleImageView profile_circleImageView;
     // user data stored in Auth user, and that is shown in the navigation drawer
 
-    private String userID, userEmail, userName;
+    private String userID, userEmail, userName, userSurname;
 
     private User currentUser;
 
@@ -86,6 +91,19 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_profile);
+
+        /** secure against not logged access **/
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("com.package.ACTION_LOGOUT");
+        registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.d("onReceive", "Logout in progress");
+                //At this point you should start the login activity and finish this one
+                updateUIIdentification();
+            }
+        }, intentFilter);
+        //** **//
 
         mAuth = FirebaseAuth.getInstance();
         firebaseStorage = FirebaseStorage.getInstance();
@@ -107,6 +125,7 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
         profileCircleImageView = findViewById(R.id.editProfile_circleImageView);
         editName_editText = findViewById(R.id.editName_editText);
         editSurname_editText = findViewById(R.id.editSurname_editText);
+        profile_progressIndicator = findViewById(R.id.profile_progressIndicator);
 
         // setting the navigation drawer...
         drawerLayout = findViewById(R.id.drawer_layout_profile);
@@ -152,6 +171,7 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
                         currentUser = documentSnapshot.toObject(User.class);
                         if (currentUser.getSurname() != null) {
                             editSurname_editText.setText(currentUser.getSurname());
+                            userSurname = currentUser.getSurname();
                         }
                     }
                 })
@@ -174,7 +194,62 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
             @Override
             public void onClick(View v) {
                 if (imageChanged) { // if user changed the picture, upload it
+                    currentUser.setHasPhoto(true);
                     uploadPicture();
+                }
+                String name = name_textInputLayout.getEditText().getText().toString().trim();
+                String surname = surname_textInputLayout.getEditText().getText().toString().trim();
+                if (!name.equals(userName) || !surname.equals(userSurname)) {
+                    if(name.length() <= 0) {
+                        name_textInputLayout.setError("Campo obligatorio");
+                        name_textInputLayout.setErrorEnabled(true);
+                        return;
+                    } else {
+                        name_textInputLayout.setErrorEnabled(false);
+                    }
+                    if(surname.length() <= 0) {
+                        surname_textInputLayout.setError("Campo obligatorio");
+                        surname_textInputLayout.setErrorEnabled(true);
+                        return;
+                    } else {
+                        surname_textInputLayout.setErrorEnabled(false);
+                    }
+                    // update name and surname
+                    profile_progressIndicator.setVisibility(View.VISIBLE);
+                    // update the information in Auth
+                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                    // set the data that is stored in the user object of Firebase Auth
+                    UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                            .setDisplayName(name).build();
+                    user.updateProfile(profileUpdates)
+                            .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    if (task.isSuccessful()) {
+                                        // if Firebase Auth data successfully set
+                                        // update Firestore object data
+                                        db.collection("users").document(userID)
+                                                .update("name", name,
+                                                        "surname", surname)
+                                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                    @Override
+                                                    public void onSuccess(Void unused) {
+                                                        profile_progressIndicator.setVisibility(View.GONE);
+                                                        userName = name;
+                                                        userSurname = surname;
+                                                        Toast.makeText(EditProfileActivity.this, "Nombre y apellidos actualizados", Toast.LENGTH_SHORT).show();
+                                                    }
+                                                })
+                                                .addOnFailureListener(new OnFailureListener() {
+                                                    @Override
+                                                    public void onFailure(@NonNull @NotNull Exception e) {
+                                                        profile_progressIndicator.setVisibility(View.GONE);
+                                                        Toast.makeText(EditProfileActivity.this, "Algo salió mal al actualizar el nombre y los apellidos. Vuelva a intentarlo", Toast.LENGTH_SHORT).show();
+                                                    }
+                                                });
+                                    }
+                                }
+                            });
                 }
             }
         });
@@ -193,6 +268,7 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
                 logOut();
                 break;
             case R.id.delete_account_item:
+                deleteAccount();
                 break;
         }
         return super.onOptionsItemSelected(item);
@@ -208,7 +284,6 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
                         profileCircleImageView.setImageURI(galleryImageUri); // set image view
                         profile_circleImageView.setImageURI(galleryImageUri); // set drawer image view
                         imageChanged = true;
-                        // uploadPicture();
                 }
             }
         }
@@ -224,7 +299,6 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
-                        //Toast.makeText(EditProfileActivity.this, "Uri set successfully", Toast.LENGTH_SHORT).show();
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -254,9 +328,17 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                         pd.dismiss();
-                        //Toast.makeText(EditProfileActivity.this, "", Toast.LENGTH_SHORT).show();
-                        //Snackbar.make(findViewById(android.R.id.content), "Image uploaded", Snackbar.LENGTH_LONG).show();
                         setUserProfileUrl(galleryImageUri);
+                        imageChanged = false;
+                        // update the attribute to signal if the user has or not photo
+                        db.collection("users").document(userID)
+                                .update("hasPhoto", currentUser.isHasPhoto())
+                                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                    @Override
+                                    public void onComplete(@NonNull @NotNull Task<Void> task) {
+                                        // TODO
+                                    }
+                                });
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -284,6 +366,9 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
             case R.id.organize_activity_item:
                 updateUIFindTemplate();
                 break;
+            case R.id.credits_item:
+                updateUICredits();
+                break;
             case R.id.profile_settings_item:
                 break;
             case R.id.log_out_item:
@@ -302,6 +387,12 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         mAuth.signOut();
+                        Intent broadcastIntent = new Intent();
+                        broadcastIntent.setAction("com.package.ACTION_LOGOUT");
+                        sendBroadcast(broadcastIntent);
+                        if(LocationService.executing) {
+                            stopService(new Intent(EditProfileActivity.this, LocationService.class));
+                        }
                         updateUIIdentification();
                     }
                 })
@@ -309,8 +400,69 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
                 .show();
     }
 
+    private void deleteAccount() {
+        new MaterialAlertDialogBuilder(this)
+                .setMessage("¿Realmente desea eliminar su perfil y todos sus datos de manera permanente? " +
+                        "(la acción no es reversible)")
+                .setPositiveButton("Sí", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // on first place we try to delete the profile picture
+                        deleteProfilePicture();
+                    }
+                })
+                .setNegativeButton("No", null)
+                .show();
+    }
+
+    private void deleteProfilePicture() {
+        profile_progressIndicator.setVisibility(View.VISIBLE);
+        StorageReference ref = storageReference.child("profileImages/" + userID);
+        ref.delete().addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull @NotNull Task<Void> task) {
+                // both if the deletion was successful or not, we delete the user data in Firestore
+                deleteUserData();
+            }
+        });
+    }
+
+    private void deleteUserData() {
+        db.collection("users").document(userID)
+                .delete()
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull @NotNull Task<Void> task) {
+                        // both if the deletion was successful or not, we delete the user in Auth
+                        deleteAuth();
+                    }
+                });
+    }
+
+    private void deleteAuth() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        user.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                profile_progressIndicator.setVisibility(View.GONE);
+                Intent broadcastIntent = new Intent();
+                broadcastIntent.setAction("com.package.ACTION_LOGOUT");
+                sendBroadcast(broadcastIntent);
+                updateUIIdentification();
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                profile_progressIndicator.setVisibility(View.GONE);
+                Toast.makeText(EditProfileActivity.this, "Algo salió mal al eliminar su cuenta. Vuelva a intentarlo", Toast.LENGTH_SHORT).show();
+                Log.d("TAG", e.toString());
+                Log.d("TAG", e.getMessage());
+            }
+        });
+    }
+
     private void updateUIFindTemplate() {
-        Intent intent = new Intent(EditProfileActivity.this, FindTemplate.class);
+        Intent intent = new Intent(EditProfileActivity.this, FindTemplateActivity.class);
         startActivity(intent);
     }
 
@@ -320,8 +472,13 @@ public class EditProfileActivity extends AppCompatActivity implements Navigation
     }
 
     private void updateUIIdentification() {
-        Intent intent = new Intent(EditProfileActivity.this, IdentificationActivity.class);
+        Intent intent = new Intent(EditProfileActivity.this, LogInActivity.class);
         startActivity(intent);
         finish();
+    }
+
+    private void updateUICredits() {
+        Intent intent = new Intent(EditProfileActivity.this, CreditsActivity.class);
+        startActivity(intent);
     }
 }

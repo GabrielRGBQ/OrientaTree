@@ -6,6 +6,7 @@ public class User {
     private String surname;
     private String email;
     private String id;
+    private boolean hasPhoto;
 
     public User() {
     }
@@ -47,5 +48,13 @@ public class User {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public boolean isHasPhoto() {
+        return hasPhoto;
+    }
+
+    public void setHasPhoto(boolean hasPhoto) {
+        this.hasPhoto = hasPhoto;
     }
 }

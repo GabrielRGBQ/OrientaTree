@@ -9,7 +9,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
@@ -43,6 +47,7 @@ import com.smov.gabriel.orientatree.model.Template;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -171,39 +176,75 @@ public class ReachesActivity extends AppCompatActivity {
         reachesTrack_fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(activity != null && participantID != null) {
-                    final ProgressDialog pd = new ProgressDialog(ReachesActivity.this);
-                    pd.setTitle("Cargando el mapa...");
-                    pd.show();
-                    StorageReference reference = storageReference.child("maps/" + activity.getTemplate() + ".png");
-                    try {
-                        // try to read the map image from Firebase into a file
-                        File localFile = File.createTempFile("images", "png");
-                        reference.getFile(localFile)
-                                .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                                    @Override
-                                    public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                                        // if we already have the map image
-                                        // quit the dialog
-                                        pd.dismiss();
-                                        updateUITrackMap(localFile);
-                                    }
-                                })
-                                .addOnFailureListener(new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-                                        pd.dismiss();
-                                    }
-                                })
-                                .addOnProgressListener(new OnProgressListener<FileDownloadTask.TaskSnapshot>() {
-                                    @Override
-                                    public void onProgress(@NonNull @NotNull FileDownloadTask.TaskSnapshot snapshot) {
-                                        double progressPercent = (100.00 * snapshot.getBytesTransferred() / snapshot.getTotalByteCount());
-                                        pd.setMessage("Progreso: " + (int) progressPercent + "%");
-                                    }
-                                });
-                    } catch (IOException e) {
-                        pd.dismiss();
+                if(activity != null) {
+                    if(mapDownloaded()) {
+                        // if we already have the map downloaded
+                        updateUITrackMap();
+                    } else {
+                        // if we don't have the map downloaded
+                        final ProgressDialog pd = new ProgressDialog(ReachesActivity.this);
+                        pd.setTitle("Cargando el mapa...");
+                        pd.show();
+                        StorageReference reference = storageReference.child("maps/" + activity.getTemplate() + ".png");
+                        try {
+                            // try to read the map image from Firebase into a file
+                            File localFile = File.createTempFile("images", "png");
+                            reference.getFile(localFile)
+                                    .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+                                        @Override
+                                        public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                                            // we downloaded the map successfully
+                                            // read the downloaded file into a bitmap
+                                            Bitmap bmp = BitmapFactory.decodeFile(localFile.getAbsolutePath());
+                                            // save the bitmap to a file
+                                            ContextWrapper cw = new ContextWrapper(getApplicationContext());
+                                            // path to /data/data/yourapp/app_data/imageDir
+                                            File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+                                            // Create imageDir
+                                            //File mypath = new File(directory, activity.getId() + ".png");
+                                            File mypath = new File(directory, activity.getTemplate() + ".png");
+                                            FileOutputStream fos = null;
+                                            try {
+                                                fos = new FileOutputStream(mypath);
+                                                // Use the compress method on the BitMap object to write image to the OutputStream
+                                                bmp.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                                            } catch (Exception e) {
+                                                e.printStackTrace();
+                                                Toast.makeText(ReachesActivity.this, "Algo salió mal al descargar el mapa", Toast.LENGTH_SHORT).show();
+                                            } finally {
+                                                try {
+                                                    fos.close();
+                                                } catch (IOException e) {
+                                                    e.printStackTrace();
+                                                }
+                                            }
+                                            pd.dismiss();
+                                            if(mapDownloaded()) {
+                                                updateUITrackMap();
+                                            }
+                                        }
+                                    })
+                                    .addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+                                            pd.dismiss();
+                                            Toast.makeText(ReachesActivity.this, "Algo salió mal al descargar el mapa", Toast.LENGTH_SHORT).show();
+                                        }
+                                    })
+                                    .addOnProgressListener(new OnProgressListener<FileDownloadTask.TaskSnapshot>() {
+                                        @Override
+                                        public void onProgress(@NonNull @NotNull FileDownloadTask.TaskSnapshot snapshot) {
+                                            double progressPercent = (100.00 * snapshot.getBytesTransferred() / snapshot.getTotalByteCount());
+                                            if (progressPercent <= 90) {
+                                                pd.setMessage("Progreso: " + (int) progressPercent + "%");
+                                            } else {
+                                                pd.setMessage("Descargado. Espera unos instantes mientras el mapa se guarda en el dispositivo");
+                                            }
+                                        }
+                                    });
+                        } catch (IOException e) {
+                            pd.dismiss();
+                        }
                     }
                 }
             }
@@ -211,9 +252,8 @@ public class ReachesActivity extends AppCompatActivity {
 
     }
 
-    private void updateUITrackMap(File localFileMap) {
+    private void updateUITrackMap() {
         Intent intent = new Intent(ReachesActivity.this, TrackActivity.class);
-        intent.putExtra("map", localFileMap);
         intent.putExtra("template", template);
         intent.putExtra("activity", activity);
         intent.putExtra("participantID", participantID);
@@ -229,5 +269,17 @@ public class ReachesActivity extends AppCompatActivity {
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public boolean mapDownloaded() {
+        boolean res = false;
+        ContextWrapper cw = new ContextWrapper(getApplicationContext());
+        File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+        //File mypath = new File(directory, activity.getId() + ".png");
+        File mypath = new File(directory, activity.getTemplate() + ".png");
+        if (mypath.exists()) {
+            res = true;
+        }
+        return res;
     }
 }

@@ -17,6 +17,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
@@ -31,15 +33,19 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.smov.gabriel.orientatree.model.User;
 
+import org.jetbrains.annotations.NotNull;
+
 public class SignUpActivity extends AppCompatActivity {
 
     private TextInputLayout name_textfield, surname_textfield, email_textfield, password_textfield;
-    private Button signUp_button;
+    private ExtendedFloatingActionButton signUp_fab;
     private CircularProgressIndicator progress_circular;
+    private MaterialButton signUpConfirmation_button;
 
     private Toolbar toolbar;
 
     private LinearLayout signUp_layout;
+    private View viewPos;
 
     private String name, surname, email, password;
     private String userID;
@@ -57,19 +63,20 @@ public class SignUpActivity extends AppCompatActivity {
 
         db = FirebaseFirestore.getInstance();
 
-        if (mAuth.getCurrentUser() != null) {
+        /*if (mAuth.getCurrentUser() != null) {
             updateUIHome();
-        }
+        }*/
 
         name_textfield = findViewById(R.id.name_textfield);
         surname_textfield = findViewById(R.id.surname_textfield);
         email_textfield = findViewById(R.id.email_textfield);
         password_textfield = findViewById(R.id.password_textfield);
-        signUp_button = findViewById(R.id.signUp_button);
+        signUp_fab = findViewById(R.id.signUp_fab);
         progress_circular = findViewById(R.id.progress_circular);
+        signUpConfirmation_button = findViewById(R.id.signUpConfirmation_button);
 
         // needed to show the snackbar at right place
-        final View viewPos = findViewById(R.id.signUp_coordinator_snackBar);
+        viewPos = findViewById(R.id.signUp_coordinator_snackBar);
 
         toolbar = findViewById(R.id.signUp_toolbar);
         setSupportActionBar(toolbar);
@@ -77,7 +84,7 @@ public class SignUpActivity extends AppCompatActivity {
 
         signUp_layout = findViewById(R.id.signUp_layout);
 
-        signUp_button.setOnClickListener(new View.OnClickListener() {
+        signUp_fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 name = name_textfield.getEditText().getText().toString().trim();
@@ -134,8 +141,14 @@ public class SignUpActivity extends AppCompatActivity {
                             @Override
                             public void onComplete(@NonNull Task<AuthResult> task) {
                                 if (task.isSuccessful()) {
-                                    // setting display name...
+                                    // if user created successfully
+                                    // send email verification and enable verification button
+                                    signUpConfirmation_button.setEnabled(true);
+                                    signUpConfirmation_button.setVisibility(View.VISIBLE);
+                                    sendVerificationEmail();
+                                    // update the information in Auth
                                     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                                    // set the data that is stored in the user object of Firebase Auth
                                     UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
                                             .setDisplayName(name).build();
                                     user.updateProfile(profileUpdates)
@@ -143,12 +156,14 @@ public class SignUpActivity extends AppCompatActivity {
                                                 @Override
                                                 public void onComplete(@NonNull Task<Void> task) {
                                                     if (task.isSuccessful()) {
+                                                        // if Firebase Auth data successfully set
+                                                        // update Firestore object data
                                                         updateUserData();
-                                                    } else {
                                                     }
                                                 }
                                             });
                                 } else {
+                                    // if error while creating the user
                                     progress_circular.setVisibility(View.GONE);
                                     try {
                                         throw task.getException();
@@ -170,6 +185,13 @@ public class SignUpActivity extends AppCompatActivity {
                         });
             }
         });
+
+        signUpConfirmation_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendVerificationEmail();
+            }
+        });
     }
 
     private void updateUserData() {
@@ -183,19 +205,37 @@ public class SignUpActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(Void aVoid) {
                         progress_circular.setVisibility(View.GONE);
-                        updateUIHome();
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         progress_circular.setVisibility(View.GONE);
-                        updateUIHome();
+                        Toast.makeText(SignUpActivity.this, "Algo salió mal al guardar " +
+                                "sus datos de usuario. Podrá modificarlos más adelante editando su perfil.", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
 
-    private void updateUIHome() {
+    private void sendVerificationEmail() {
+        progress_circular.setVisibility(View.VISIBLE);
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        user.sendEmailVerification().addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void unused) {
+                progress_circular.setVisibility(View.GONE);
+                showSnackBar("Correo de verificación enviado.", viewPos);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull @NotNull Exception e) {
+                        progress_circular.setVisibility(View.GONE);
+                        showSnackBar("Error al enviar el correo. Vuelva a intentarlo.", viewPos);
+                    }
+                });
+    }
+
+    /*private void updateUIHome() {
         Intent intent = new Intent(SignUpActivity.this, WelcomeActivity.class);
         Bundle b = new Bundle();
         b.putString("name", name);
@@ -204,7 +244,7 @@ public class SignUpActivity extends AppCompatActivity {
         IdentificationActivity.iAct.finish(); // finish IdentificationActivity
         startActivity(intent);
         finish();
-    }
+    }*/
 
     private void showSnackBar(String msg, View viewPos) {
         Snackbar.make(viewPos, msg, Snackbar.LENGTH_LONG)
@@ -214,7 +254,7 @@ public class SignUpActivity extends AppCompatActivity {
                     }
                 })
                 .setDuration(8000)
-                .addCallback(new Snackbar.Callback() {
+                /*.addCallback(new Snackbar.Callback() {
                     @Override
                     public void onDismissed(Snackbar transientBottomBar, int event) {
                         viewPos.setVisibility(View.GONE);
@@ -226,7 +266,7 @@ public class SignUpActivity extends AppCompatActivity {
                         viewPos.setVisibility(View.VISIBLE);
                         super.onShown(sb);
                     }
-                })
+                })*/
                 .show();
     }
 }

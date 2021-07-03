@@ -9,12 +9,15 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -34,14 +37,14 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.adapters.TemplateAdapter;
-import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Template;
+import com.smov.gabriel.orientatree.services.LocationService;
 
 import java.util.ArrayList;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class FindTemplate extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
+public class FindTemplateActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
 
     private Toolbar toolbar;
     private ActionBar ab;
@@ -69,6 +72,19 @@ public class FindTemplate extends AppCompatActivity implements NavigationView.On
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_find_template);
+
+        /** secure against not logged access **/
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("com.package.ACTION_LOGOUT");
+        registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.d("onReceive","Logout in progress");
+                //At this point you should start the login activity and finish this one
+                updateUIIdentification();
+            }
+        }, intentFilter);
+        //** **//
 
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
@@ -127,10 +143,10 @@ public class FindTemplate extends AppCompatActivity implements NavigationView.On
                             Template template = document.toObject(Template.class);
                             templates.add(template);
                         }
-                        templateAdapter = new TemplateAdapter(FindTemplate.this,FindTemplate.this, templates);
+                        templateAdapter = new TemplateAdapter(FindTemplateActivity.this, FindTemplateActivity.this, templates);
                         template_recyclerview = findViewById(R.id.template_recyclerview);
                         template_recyclerview.setAdapter(templateAdapter);
-                        template_recyclerview.setLayoutManager(new GridLayoutManager(FindTemplate.this, 2));
+                        template_recyclerview.setLayoutManager(new GridLayoutManager(FindTemplateActivity.this, 2));
                     }
                 });
     }
@@ -169,6 +185,9 @@ public class FindTemplate extends AppCompatActivity implements NavigationView.On
             case R.id.profile_settings_item:
                 updateUIEditProfile();
                 break;
+            case R.id.credits_item:
+                updateUICredits();
+                break;
             case R.id.log_out_item:
                 logOut();
                 break;
@@ -185,6 +204,12 @@ public class FindTemplate extends AppCompatActivity implements NavigationView.On
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         mAuth.signOut();
+                        Intent broadcastIntent = new Intent();
+                        broadcastIntent.setAction("com.package.ACTION_LOGOUT");
+                        sendBroadcast(broadcastIntent);
+                        if(LocationService.executing) {
+                            stopService(new Intent(FindTemplateActivity.this, LocationService.class));
+                        }
                         updateUIIdentification();
                     }
                 })
@@ -192,19 +217,24 @@ public class FindTemplate extends AppCompatActivity implements NavigationView.On
                 .show();
     }
 
+    private void updateUICredits() {
+        Intent intent = new Intent(FindTemplateActivity.this, CreditsActivity.class);
+        startActivity(intent);
+    }
+
     private void updateUIIdentification() {
-        Intent intent = new Intent(FindTemplate.this, IdentificationActivity.class);
+        Intent intent = new Intent(FindTemplateActivity.this, LogInActivity.class);
         startActivity(intent);
         finish();
     }
 
     private void updateUIEditProfile() {
-        Intent intent = new Intent(FindTemplate.this, EditProfileActivity.class);
+        Intent intent = new Intent(FindTemplateActivity.this, EditProfileActivity.class);
         startActivity(intent);
     }
 
     private void updateUIHome() {
-        Intent intent = new Intent(FindTemplate.this, HomeActivity.class);
+        Intent intent = new Intent(FindTemplateActivity.this, HomeActivity.class);
         startActivity(intent);
     }
 }
