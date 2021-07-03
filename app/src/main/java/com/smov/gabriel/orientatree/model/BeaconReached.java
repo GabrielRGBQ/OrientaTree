@@ -11,17 +11,15 @@ public class BeaconReached implements Comparator<BeaconReached> {
     private String written_answer;
     private boolean answer_right;
     private boolean answered;
-    private boolean goal;
 
     public BeaconReached () {
 
     }
 
-    public BeaconReached(Date reachMoment, String beacon_id, boolean answered, boolean goal) {
+    public BeaconReached(Date reachMoment, String beacon_id, boolean answered) {
         this.reachMoment = reachMoment;
         this.beacon_id = beacon_id;
         this.answered = answered;
-        this.goal = goal;
     }
 
     public BeaconReached(Date reachMoment, String beacon_id, int quiz_answer,
@@ -80,14 +78,6 @@ public class BeaconReached implements Comparator<BeaconReached> {
 
     public void setAnswered(boolean answered) {
         this.answered = answered;
-    }
-
-    public boolean isGoal() {
-        return goal;
-    }
-
-    public void setGoal(boolean goal) {
-        this.goal = goal;
     }
 
     @Override

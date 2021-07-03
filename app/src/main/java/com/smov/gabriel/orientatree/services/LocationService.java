@@ -41,6 +41,7 @@ import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Beacon;
 import com.smov.gabriel.orientatree.model.BeaconReached;
 import com.smov.gabriel.orientatree.model.ParticipationState;
+import com.smov.gabriel.orientatree.model.Template;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -80,6 +81,8 @@ public class LocationService extends Service {
     private String userID;
 
     private Activity activity;
+    // NEW
+    private Template template;
     private ArrayList<Beacon> beacons; // all the beacons
     private Set<String> beaconsReached; // set containing the ids of the beacons already reached
 
@@ -127,6 +130,11 @@ public class LocationService extends Service {
         // get the activity on which the user is taking part and its beacons
         if (intent != null) {
             // (this step is needed because onStart is executed twice)
+            // NEW
+            Template templateTemp = (Template) intent.getSerializableExtra("template");
+            if(templateTemp != null) {
+                template = templateTemp;
+            }
             Activity activityTemp = (Activity) intent.getSerializableExtra("activity");
             if (activityTemp != null) {
                 activity = activityTemp; // here we have the activity
@@ -220,6 +228,11 @@ public class LocationService extends Service {
         // check if we already have the initial data needed to play
         if (activity != null && initialDataSet) {
 
+            // DEBUG
+            Log.d(TAG, "Son las: " + current_time.toString());
+            Log.d(TAG,"La actividad termina a las: " + activity.getFinishTime().toString());
+            //
+
             // check if the activity has already finished
             if (current_time.after(activity.getFinishTime())) {
                 // change the state and set the finish time to that of the activity, because it means that
@@ -227,13 +240,18 @@ public class LocationService extends Service {
                 db.collection("activities").document(activity.getId())
                         .collection("participations").document(userID)
                         .update("state", ParticipationState.FINISHED,
-                                "finishTime", activity.getFinishTime())
+                                "finishTime", activity.getFinishTime(),
+                                "completed", false)
                         .addOnSuccessListener(new OnSuccessListener<Void>() {
                             @Override
                             public void onSuccess(Void aVoid) {
                                 // DEBUG
                                 Log.d(TAG, "Se acabó el tiempo. Terminando la actividad...");
                                 //
+                                String name = "Actividad terminada";
+                                int number = beacons.size() + 2;
+                                String message = "Se agotó el tiempo para terminar la actividad";
+                                sendBeaconNotification(message, name, number);
                                 stopSelf();
                             }
                         });
@@ -242,22 +260,37 @@ public class LocationService extends Service {
                 // DEBUG
                 Log.d(TAG, "Aun queda tiempo de actividad, seguimos jugando");
                 //
-                if ((beacons.size() - beaconsReached.size()) < 1) {
-                    // no beacons left, so we finish the activity
+                float distanceGoal = getDistance(lat1, template.getEnd_lat(), lng1, template.getEnd_lng());
+                if (((beacons.size() - beaconsReached.size()) < 1)
+                        && distanceGoal <= LOCATION_PRECISION && !uploadingReach) {
+                    // no beacons left, and reached the goal, so we finish the activity
                     // DEBUG
                     Log.d(TAG, "No quedan balizas por alcanzar, terminar la actividad");
                     //
+                    uploadingReach = true;
                     db.collection("activities").document(activity.getId())
                             .collection("participations").document(userID)
                             .update("state", ParticipationState.FINISHED,
-                                    "finishTime", current_time)
+                                    "finishTime", current_time,
+                                    "completed", true)
                             .addOnSuccessListener(new OnSuccessListener<Void>() {
                                 @Override
                                 public void onSuccess(Void aVoid) {
+                                    uploadingReach = false;
                                     // DEBUG
                                     Log.d(TAG, "Actividad terminada. Todas las balizas alcanzadas");
                                     //
+                                    String name = "Meta";
+                                    int number = beacons.size() + 1;
+                                    String message = "Has completado la actividad";
+                                    sendBeaconNotification(message, name, number);
                                     stopSelf();
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull @NotNull Exception e) {
+                                    uploadingReach = false;
                                 }
                             });
                 } else {
@@ -303,14 +336,15 @@ public class LocationService extends Service {
                 double lng2 = beacon.getLocation().getLongitude();
                 float dist = getDistance(lat1, lat2, lng1, lng2);
                 if (dist <= LOCATION_PRECISION && !uploadingReach) {
-                    // if we are next to a certain beacon and the service is not already uploading a reach...
-                    if ((beacons.size() - beaconsReached.size()) > 1 && !beacon.isGoal()) {
-                        // if we are not yet looking for the goal and we find a beacon that is not the goal...
+                    // DEBUG
+                    Log.d(TAG, "Estamos cerca de alguna baliza");
+                    //
+                    if ((beacons.size() - beaconsReached.size()) > 0) {
                         // DEBUG
                         Log.d(TAG, "Aún no estamos buscando la meta, y hemos alcanzado una baliza que no es la meta");
                         //
                         BeaconReached beaconReached = new BeaconReached(current_time, beacon.getBeacon_id(),
-                                false, beacon.isGoal()); // create a new BeaconReached
+                                false); // create a new BeaconReached
                         uploadingReach = true; // uploading...
                         db.collection("activities").document(activity.getId())
                                 .collection("participations").document(userID)
@@ -325,7 +359,10 @@ public class LocationService extends Service {
                                                 "que ahora tiene " + beaconsReached.size() + " elementos");
                                         //
                                         uploadingReach = false; // not uploading any more
-                                        sendBeaconNotification(beacon, activity);
+                                        String name = beacon.getName();
+                                        int number = beacon.getNumber();
+                                        String message = "Has alcanzado la baliza " + name;
+                                        sendBeaconNotification(message, name, number);
                                     }
                                 })
                                 .addOnFailureListener(new OnFailureListener() {
@@ -335,59 +372,6 @@ public class LocationService extends Service {
                                         // don't update nextBeacon, so we will try it again in the next location update
                                     }
                                 });
-                    } else if ((beacons.size() - beaconsReached.size()) == 1 && beacon.isGoal()) {
-                        // DEBUG
-                        Log.d(TAG, "Estamos buscando la meta y la hemos encontrado");
-                        //
-                        BeaconReached beaconReached = new BeaconReached(current_time, beacon.getBeacon_id(),
-                                false, beacon.isGoal()); // create a new BeaconReached
-                        uploadingReach = true; // uploading...
-                        db.collection("activities").document(activity.getId())
-                                .collection("participations").document(userID)
-                                .collection("beaconReaches").document(beaconReached.getBeacon_id())
-                                .set(beaconReached)
-                                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                    @Override
-                                    public void onSuccess(Void unused) {
-                                        beaconsReached.add(beacon.getBeacon_id()); // add the current beacon id to the beacons reached during the service
-                                        // DEBUG
-                                        Log.d(TAG, "Hemos llegado a la meta, fin de la participacion y terminar el servicio");
-                                        //
-                                        // ESTO DEBERÍA HACERLO UNA CLOUD FUNCTION
-                                        db.collection("activities").document(activity.getId())
-                                                .collection("participations").document(userID)
-                                                .update("state", ParticipationState.FINISHED,
-                                                        "finishTime", current_time)
-                                                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                                    @Override
-                                                    public void onSuccess(Void aVoid) {
-                                                        // DEBUG
-                                                        Log.d(TAG, "Finalización anotada. Terminando el servicio...");
-                                                        //
-                                                        uploadingReach = false; // not uploading any more
-                                                        sendBeaconNotification(beacon, activity);
-                                                        stopSelf();
-                                                    }
-                                                })
-                                                .addOnFailureListener(new OnFailureListener() {
-                                                    @Override
-                                                    public void onFailure(@NonNull @NotNull Exception e) {
-                                                        uploadingReach = false;
-                                                    }
-                                                });
-                                    }
-                                })
-                                .addOnFailureListener(new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull @NotNull Exception e) {
-                                        uploadingReach = false; // not uploading any more
-                                        // don't update nextBeacon, so we will try it again in the next location update
-                                    }
-                                });
-                    } else {
-                        // DEBUG
-                        Log.d(TAG, "Estamos cerca de la meta, pero no la estamos buscando. O eso, o algo raro pasa");
-                        //
                     }
                     break;
                 }
@@ -399,71 +383,49 @@ public class LocationService extends Service {
         // DEBUG
         Log.d(TAG, "La actividad es clásica");
         //
-        // get the beacons that we have to reach next
-        int searchedBeaconIndex = beaconsReached.size();
-        Beacon searchedBeacon = beacons.get(searchedBeaconIndex);
-        // DEBUG
-        Log.d(TAG, "Ahora mismo hay " + searchedBeaconIndex + " balizas alcanzadas " +
-                "por lo tanto, la siguiente que tenemos que alcanzar es: " + searchedBeacon.getName());
-        //
-        double lat2 = searchedBeacon.getLocation().getLatitude();
-        double lng2 = searchedBeacon.getLocation().getLongitude();
-        float dist = getDistance(lat1, lat2, lng1, lng2);
-        if (dist <= LOCATION_PRECISION && !uploadingReach) {
-            // if we are close enough and not in the middle of an uploading operation...
-            BeaconReached beaconReached = new BeaconReached(current_time, searchedBeacon.getBeacon_id(),
-                    false, searchedBeacon.isGoal()); // create a new BeaconReached
-            uploadingReach = true; // uploading...
-            db.collection("activities").document(activity.getId())
-                    .collection("participations").document(userID)
-                    .collection("beaconReaches").document(beaconReached.getBeacon_id())
-                    .set(beaconReached)
-                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-                        @Override
-                        public void onSuccess(Void unused) {
-                            // BeaconReached added to Firestore
-                            // DEBUG
-                            Log.d(TAG, "Alcanzada: " + searchedBeacon.getName());
-                            //
-                            beaconsReached.add(searchedBeacon.getBeacon_id()); // update the set with the reaches
-                            if(beaconsReached.size() == beacons.size()) {
-                                // ESTO DEBERÍA HACERLO CLOUD FUNCTION
-                                // we reached the goal, so the participation must finish
-                                db.collection("activities").document(activity.getId())
-                                        .collection("participations").document(userID)
-                                        .update("state", ParticipationState.FINISHED,
-                                                "finishTime", current_time)
-                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                            @Override
-                                            public void onSuccess(Void aVoid) {
-                                                // DEBUG
-                                                Log.d(TAG, "Finalización anotada. Terminando el servicio...");
-                                                //
-                                                uploadingReach = false; // not uploading any more
-                                                sendBeaconNotification(searchedBeacon, activity);
-                                                stopSelf();
-                                            }
-                                        })
-                                        .addOnFailureListener(new OnFailureListener() {
-                                            @Override
-                                            public void onFailure(@NonNull @NotNull Exception e) {
-                                                uploadingReach = false;
-                                            }
-                                        });
-                            }else {
-                                // there are still beacons to be reached, so we just continue
-                                uploadingReach = false; // not uploading any more
-                                sendBeaconNotification(searchedBeacon, activity);
+        if(beaconsReached.size() < beacons.size()) {
+            // get the beacons that we have to reach next
+            int searchedBeaconIndex = beaconsReached.size();
+            Beacon searchedBeacon = beacons.get(searchedBeaconIndex);
+            // DEBUG
+            Log.d(TAG, "Ahora mismo hay " + searchedBeaconIndex + " balizas alcanzadas " +
+                    "por lo tanto, la siguiente que tenemos que alcanzar es: " + searchedBeacon.getName());
+            //
+            double lat2 = searchedBeacon.getLocation().getLatitude();
+            double lng2 = searchedBeacon.getLocation().getLongitude();
+            float dist = getDistance(lat1, lat2, lng1, lng2);
+            if (dist <= LOCATION_PRECISION && !uploadingReach) {
+                // if we are close enough and not in the middle of an uploading operation...
+                BeaconReached beaconReached = new BeaconReached(current_time, searchedBeacon.getBeacon_id(),
+                        false/*, searchedBeacon.isGoal()*/); // create a new BeaconReached
+                uploadingReach = true; // uploading...
+                db.collection("activities").document(activity.getId())
+                        .collection("participations").document(userID)
+                        .collection("beaconReaches").document(beaconReached.getBeacon_id())
+                        .set(beaconReached)
+                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void unused) {
+                                // BeaconReached added to Firestore
+                                // DEBUG
+                                Log.d(TAG, "Alcanzada: " + searchedBeacon.getName());
+                                //
+                                beaconsReached.add(searchedBeacon.getBeacon_id()); // update the set with the reaches
+                                String name = searchedBeacon.getName();
+                                int number = searchedBeacon.getNumber();
+                                String message = "Has alcanzado la baliza " + name;
+                                sendBeaconNotification(message, name, number);
+                                uploadingReach = false;
                             }
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull @NotNull Exception e) {
-                            uploadingReach = false; // not uploading any more
-                            // don't update nextBeacon, so we will try it again
-                        }
-                    });
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull @NotNull Exception e) {
+                                uploadingReach = false; // not uploading any more
+                                // don't update nextBeacon, so we will try it again
+                            }
+                        });
+            }
         }
     }
 
@@ -508,17 +470,10 @@ public class LocationService extends Service {
     }
 
     // send the notification of a regular beacon
-    private void sendBeaconNotification(Beacon beacon, Activity activity) {
+    private void sendBeaconNotification(String message, String title, int number) {
 
         // 1 create the channel if needed, and set the intent for the action
         String BEACON_NOTIFICATION_CHANNEL_ID = "orientatree.beaconNotification"; // name of the channel for beacon notifications
-
-        String notification_text;
-        if(beacon.isGoal()) {
-            notification_text = "Has llegado a la meta. Actividad finalizada.";
-        } else {
-            notification_text = "Has alcanzado la baliza " + beacon.getName();
-        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = "Notificaciones de llegada a las balizas";
@@ -545,21 +500,21 @@ public class LocationService extends Service {
             NotificationCompat.Builder builder = new NotificationCompat.Builder(this, BEACON_NOTIFICATION_CHANNEL_ID)
                     .setSmallIcon(R.drawable.ic_flag)
                     .setColor(getColor(R.color.secondary_color))
-                    .setContentTitle(beacon.getName())
+                    .setContentTitle(title)
                     .setAutoCancel(true)
                     .setLights(getColor(R.color.secondary_color), 3000, 3000)
-                    .setContentText(notification_text);
+                    .setContentText(message);
 
             // 3.0 show the notification
-            notificationManager.notify(beacon.getNumber(), builder.build());
+            notificationManager.notify(number, builder.build());
 
         } else {
             // 2.1 create the notification
             NotificationCompat.Builder builder = new NotificationCompat.Builder(this, BEACON_NOTIFICATION_CHANNEL_ID)
                     .setSmallIcon(R.drawable.ic_flag)
                     .setColor(getColor(R.color.secondary_color))
-                    .setContentTitle(beacon.getName())
-                    .setContentText(notification_text)
+                    .setContentTitle(title)
+                    .setContentText(message)
                     .setAutoCancel(true)
                     .setVibrate(new long[]{1000, 1000, 1000, 1000, 1000})
                     .setLights(getColor(R.color.secondary_color), 3000, 3000)
@@ -569,7 +524,7 @@ public class LocationService extends Service {
 
             // 3.1 show the notification
             NotificationManagerCompat nManager = NotificationManagerCompat.from(this);
-            nManager.notify(beacon.getNumber(), builder.build());
+            nManager.notify(number, builder.build());
         }
     }
 

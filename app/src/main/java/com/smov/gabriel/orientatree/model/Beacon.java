@@ -16,7 +16,6 @@ public class Beacon implements Comparator<Beacon> {
     private String name;
     private String beacon_id;
     private String template_id;
-    private boolean goal;
     private String text;
     private String question;
     private String written_right_answer;
@@ -28,14 +27,14 @@ public class Beacon implements Comparator<Beacon> {
     }
 
     public Beacon(String beacon_id, GeoPoint location, int number, String name, String template_id,
-                  boolean goal, String text, String question, String written_right_answer,
+                  String text, String question, String written_right_answer,
                   int quiz_right_answer) {
         this.beacon_id = beacon_id;
         this.location = location;
         this.number = number;
         this.name = name;
         this.template_id = template_id;
-        this.goal = goal;
+        //this.goal = goal;
         this.text = text;
         this.question = question;
         this.written_right_answer = written_right_answer;
@@ -81,14 +80,6 @@ public class Beacon implements Comparator<Beacon> {
 
     public void setTemplate_id(String template_id) {
         this.template_id = template_id;
-    }
-
-    public boolean isGoal() {
-        return goal;
-    }
-
-    public void setGoal(boolean goal) {
-        this.goal = goal;
     }
 
     public String getText() {

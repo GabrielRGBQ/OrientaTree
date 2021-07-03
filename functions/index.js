@@ -5,7 +5,7 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 admin.initializeApp();
 
-// // Create and Deploy Your First Cloud Functions
+/*// // Create and Deploy Your First Cloud Functions
 // // https://firebase.google.com/docs/functions/write-firebase-functions
 //
 exports.helloWorld = functions.https.onRequest((request, response) => {
@@ -13,7 +13,6 @@ exports.helloWorld = functions.https.onRequest((request, response) => {
   response.send("Hello from Firebase!");
 });
 
-// TESTED FOR PRODUCTION
 // Creates a new Firestore document when a new user (auth) is signed up in the system
 exports.createUserDoc = functions.auth.user().onCreate((user) => {
   const userEmail = user.email;
@@ -23,19 +22,11 @@ exports.createUserDoc = functions.auth.user().onCreate((user) => {
     email: userEmail, surname: ""});
 });
 
-// TESTED FOR PRODUCTION
 // still not managed to delete profile picture, so it would have to be done manually
 exports.deleteUserDoc = functions.auth.user().onDelete((user) => {
   const userId = user.uid;
   const deleteUserDocument = admin.firestore().collection('users').doc(userId).delete();
 });
-
-// funcion para mantener consistencia entre participantes array y subcolección
-// escuchar creaciones de documentos en la subcoleccion participantes
-// cuando se cree un nuevo documento, se obtiene la actividad a la que pertenece la participacion
-// se obtiene la vieja lista de participaciones que contenia
-// se crea una nueva lista igual pero con la nueva incluida
-// se actualiza la lista en la actividad
 
 // should be working but not proved yet
 exports.updateUser = functions.firestore
@@ -87,43 +78,52 @@ exports.makeUppercase = functions.firestore.document('/messages/{documentId}')
   // writing to Firestore.
   // Setting an 'uppercase' field in Firestore document returns a Promise.
   return snap.ref.set({uppercase}, {merge: true});
-});
+});*/
 
-
-// WORKING... Needs to be refactorized and adapted to our production database
-exports.sanitizeParticipations = functions.firestore.document('/actividades/{actividadId}/participaciones/{participacionId}')
+// cuando se cree una participacion, se añade un valor al array de participaciones de la actividad
+exports.sanitizeParticipationsOnCreate = functions.firestore.document('/activities/{activityID}/participations/{participationID}')
 .onCreate((snap, context) => {
-  // Grab the value of the id of the participation that just has been written to Firestore.
-  const participacion = snap.data().participacion_id;
+  // obtener el id de la participacion que se acaba de crear
+  const participation = snap.data().participant;
 
-  // Get the activity parent of the participation
-  const actividad = admin.firestore().collection('/actividades').doc(context.params.actividadId).get();
+  // obtener la actividad padre de la participacion, cuyo array hay que actualizar
+  const activity = admin.firestore().collection('/activities').doc(context.params.activityID).get();
 
-  return actividad.then(oldActivity => {
-    const idAct = oldActivity.data().actividad_id;
-    const oldArray = oldActivity.data().participaciones;
-    oldArray.push(participacion);
-    const res = admin.firestore().collection('/actividades').doc(idAct).update({participaciones: oldArray});
+  return activity.then(oldActivity => {
+    // obtenemos el id de la actividad
+    const idAct = oldActivity.data().id;
+    // obtenemos el array de participaciones de la actividad antes de ser actualizado
+    const oldArray = oldActivity.data().participants;
+    // modificamos el array, incluyendo el id de la nueva participacion
+    oldArray.push(participation);
+    // actualizamos el array de la actividad
+    admin.firestore().collection('/activities').doc(idAct).update({participants: oldArray});
   }).catch(err => {
     console.log('Error getting document', err);
   });
 
 });
 
-// WORKING... Needs to be refactorized and adapted to our production database
-exports.sanitizeParticipationsOnDelete = functions.firestore.document('/actividades/{actividadId}/participaciones/{participacionId}')
+// cuando se elimine una participacion, se elimina tambien el objeto correspondiente del array de la actividad padre
+exports.sanitizeParticipationsOnDelete = functions.firestore.document('/activities/{activityID}/participations/{participationID}')
 .onDelete((snap, context) => {
-  const participacion = snap.data().participacion_id;
-  const actividad = admin.firestore().collection('/actividades').doc(context.params.actividadId).get();
-  return actividad.then(oldActivity => {
-    const idAct = oldActivity.data().actividad_id;
-    const oldArray = oldActivity.data().participaciones;
-    const index = oldArray.indexOf(participacion);
+  const participation = snap.data().participant;
+  const activity = admin.firestore().collection('/activities').doc(context.params.activityID).get();
+  return activity.then(oldActivity => {
+    const idAct = oldActivity.data().id;
+    const oldArray = oldActivity.data().participants;
+    const index = oldArray.indexOf(participation);
     if (index > -1) {
       oldArray.splice(index, 1);
     }
-    const res = admin.firestore().collection('/actividades').doc(idAct).update({participaciones: oldArray});
+    admin.firestore().collection('/activities').doc(idAct).update({participants: oldArray});
   }).catch(err => {
     console.log('Error getting document', err);
   });
+});
+
+// elimina el documento de un usuario si eliminamos dicho usuario de firebase Auth
+exports.deleteUserDoc = functions.auth.user().onDelete((user) => {
+  const userId = user.uid;
+  admin.firestore().collection('users').doc(userId).delete();
 });

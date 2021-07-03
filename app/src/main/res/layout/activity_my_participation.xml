@@ -105,6 +105,28 @@
                     app:layout_constraintBottom_toBottomOf="@id/myParticipationTotal"
                     app:layout_constraintStart_toStartOf="@+id/myParticipationFinish_textView" />
 
+
+                <TextView
+                    android:id="@+id/myParticipationCompleted"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:drawableLeft="@drawable/ic_trophy"
+                    android:drawablePadding="10dp"
+                    android:text="Completada"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/myParticipationTotal" />
+
+                <TextView
+                    android:id="@+id/myParticipationCompleted_textView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"
+                    app:layout_constraintBottom_toBottomOf="@id/myParticipationCompleted"
+                    app:layout_constraintStart_toStartOf="@+id/myParticipationFinish_textView" />
+
             </androidx.constraintlayout.widget.ConstraintLayout>
 
 
@@ -161,8 +183,8 @@
                     style="?attr/borderlessButtonStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="ver track"
-                    android:enabled="false"/>
+                    android:enabled="false"
+                    android:text="ver track" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/myParticipationBeacons_button"
@@ -192,9 +214,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
+                android:enabled="false"
                 android:text="Anular inscripción"
-                app:icon="@drawable/ic_log_out"
-                android:enabled="false"/>
+                app:icon="@drawable/ic_log_out" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/myParticipationDelete_button"
@@ -202,12 +224,21 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
+                android:enabled="false"
                 android:text="Eliminar de mis actividades"
                 app:icon="@drawable/ic_delete"
-                android:enabled="false" />
+                android:visibility="gone"/>
 
         </LinearLayout>
 
     </ScrollView>
+
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/myParticipation_progressIndicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:indeterminate="true"
+        android:visibility="invisible" />
 
 </LinearLayout>

@@ -45,7 +45,7 @@ public class ReachAdapter extends RecyclerView.Adapter<ReachAdapter.MyViewHolder
     public ReachAdapter(android.app.Activity reachesActivity, Context context,
                         ArrayList<BeaconReached> reaches, String templateID,
                         Activity activity, Template template,
-                        String participantID){
+                        String participantID) {
         this.context = context;
         this.reachesActivity = reachesActivity;
         this.reaches = reaches;
@@ -88,26 +88,20 @@ public class ReachAdapter extends RecyclerView.Adapter<ReachAdapter.MyViewHolder
                     public void onSuccess(DocumentSnapshot documentSnapshot) {
                         Beacon beacon = documentSnapshot.toObject(Beacon.class);
                         holder.reachTitle_textView.setText(beacon.getName());
-                        if(beacon.isGoal()) {
-                            holder.reachNumber_textView.setText("Meta");
-                            holder.reachState_textView.setText("Meta");
-                            holder.row_reach_cardView.setCardBackgroundColor(Color.parseColor("#eeeeee"));
-                        } else {
-                            holder.reachNumber_textView.setText("Baliza número " + beacon.getNumber());
-                            if(template.getType() == TemplateType.EDUCATIVA) {
-                                if (!reach.isAnswered()) {
-                                    holder.reachState_textView.setText("Pendiente");
+                        holder.reachNumber_textView.setText("Baliza número " + beacon.getNumber());
+                        if (template.getType() == TemplateType.EDUCATIVA) {
+                            if (!reach.isAnswered()) {
+                                holder.reachState_textView.setText("Pendiente");
+                            } else {
+                                holder.reachState_textView.setText("Respondida");
+                                if (reach.isAnswer_right()) {
+                                    holder.row_reach_cardView.setCardBackgroundColor(Color.parseColor("#b9f6ca"));
                                 } else {
-                                    holder.reachState_textView.setText("Respondida");
-                                    if(reach.isAnswer_right()) {
-                                        holder.row_reach_cardView.setCardBackgroundColor(Color.parseColor("#b9f6ca"));
-                                    } else {
-                                        holder.row_reach_cardView.setCardBackgroundColor(Color.parseColor("#ef9a9a"));
-                                    }
+                                    holder.row_reach_cardView.setCardBackgroundColor(Color.parseColor("#ef9a9a"));
                                 }
-                            } else if(template.getType() == TemplateType.DEPORTIVA){
-                                holder.reachState_textView.setText("Sin contenido");
                             }
+                        } else if (template.getType() == TemplateType.DEPORTIVA) {
+                            holder.reachState_textView.setText("Sin contenido");
                         }
                     }
                 });
@@ -115,7 +109,7 @@ public class ReachAdapter extends RecyclerView.Adapter<ReachAdapter.MyViewHolder
         holder.row_reach_layout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(template.getType() == TemplateType.EDUCATIVA && !reach.isGoal()) {
+                if (template.getType() == TemplateType.EDUCATIVA /*&& !reach.isGoal()*/) {
                     // if template DEPORTIVA we don't do anything
                     // same if it is goal
                     updateUIChallengeActivity(beaconID, activity);
@@ -140,7 +134,7 @@ public class ReachAdapter extends RecyclerView.Adapter<ReachAdapter.MyViewHolder
     public class MyViewHolder extends RecyclerView.ViewHolder {
 
         TextView reachState_textView, reachTitle_textView,
-            reachNumber_textView, reachTime_textView;
+                reachNumber_textView, reachTime_textView;
 
         MaterialCardView row_reach_cardView;
 

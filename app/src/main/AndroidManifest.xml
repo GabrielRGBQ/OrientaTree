@@ -34,11 +34,18 @@
             android:value="@string/google_maps_key" />
 
         <activity
+            android:name=".OrganizerMapActivity"
+            android:label="@string/title_activity_organizer_map"></activity>
+        <activity
+            android:name=".CreditsActivity"
+            android:screenOrientation="portrait" />
+        <activity
             android:name=".TrackActivity"
             android:label="@string/title_activity_track"
-            android:screenOrientation="portrait"></activity>
+            android:screenOrientation="portrait" />
         <activity
             android:name=".MyParticipationActivity"
+            android:parentActivityName=".NowActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".NowActivity"
@@ -64,36 +71,28 @@
             android:windowSoftInputMode="adjustNothing" />
         <activity
             android:name=".SelectedTemplateActivity"
-            android:parentActivityName=".FindTemplate"
+            android:parentActivityName=".FindTemplateActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".FindTemplate"
-            android:parentActivityName=".HomeActivity"
+            android:name=".FindTemplateActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".EditProfileActivity"
-            android:parentActivityName=".HomeActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".HomeActivity"
-            android:parentActivityName=".WelcomeActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".WelcomeActivity"
-            android:parentActivityName=".IdentificationActivity" />
+            android:screenOrientation="portrait" />
         <activity
             android:name=".LogInActivity"
             android:label="Iniciar sesión"
-            android:parentActivityName=".IdentificationActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".SignUpActivity"
             android:label="Registrarse"
-            android:parentActivityName=".IdentificationActivity"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".IdentificationActivity"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName=".LogInActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".MainActivity"

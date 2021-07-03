@@ -3,7 +3,12 @@
 
     <item
         android:id="@+id/participation_activity"
-        android:title="Mi participación">
-    </item>
+        android:title="Mi participación"></item>
+
+    <item
+        android:id="@+id/quit_activity"
+        android:title="Abandonar la actividad"
+        android:enabled="false"
+        android:visible="false"></item>
 
 </menu>

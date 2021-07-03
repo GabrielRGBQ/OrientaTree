@@ -23,8 +23,10 @@ import com.smov.gabriel.orientatree.adapters.ParticipantAdapter;
 import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Participation;
 import com.smov.gabriel.orientatree.model.Template;
+import com.smov.gabriel.orientatree.model.TemplateType;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class ParticipantsListActivity extends AppCompatActivity {
 
@@ -86,6 +88,8 @@ public class ParticipantsListActivity extends AppCompatActivity {
                                 Participation participation = doc.toObject(Participation.class);
                                 participations.add(participation);
                             }
+                            // sort the participants
+                            Collections.sort(participations, new Participation());
                             // show or hide the empty state with its message
                             if(participations.size() < 1) {
                                 emptyStateMessage_textView.setText("Parece que esta actividad no tiene participantes");
@@ -94,7 +98,11 @@ public class ParticipantsListActivity extends AppCompatActivity {
                                 emptyStateMessage_textView.setText("");
                                 emptyState_layout.setVisibility(View.GONE);
                             }
-                            participantsListparticipants_textView.setText("Participantes: (" + participations.size() + ")");
+                            if(template.getType() == TemplateType.DEPORTIVA) {
+                                participantsListparticipants_textView.setText("Clasificación: ");
+                            } else {
+                                participantsListparticipants_textView.setText("Participantes: (" + participations.size() + ")");
+                            }
                             participantAdapter = new ParticipantAdapter(participantsListActivity, ParticipantsListActivity.this,
                                     participations, template, activity);
                             participantsList_recyclerView.setAdapter(participantAdapter);
