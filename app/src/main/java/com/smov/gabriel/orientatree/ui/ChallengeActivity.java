@@ -22,6 +22,8 @@ import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Beacon;
 import com.smov.gabriel.orientatree.model.Template;
+import com.smov.gabriel.orientatree.ui.fragments.ChallengeQuizFragment;
+import com.smov.gabriel.orientatree.ui.fragments.ChallengeTextFragment;
 
 public class ChallengeActivity extends AppCompatActivity {
 
@@ -31,18 +33,18 @@ public class ChallengeActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
 
-    Activity activity;
-    Beacon beacon;
+    public Activity activity;
+    public Beacon beacon;
     private Template template;
-    boolean organizer = false; // flag to signal if the logged user is the organizer of the activity
+    public boolean organizer = false; // flag to signal if the logged user is the organizer of the activity
 
     // some useful IDs
     private String beaconID;
     private String templateID;
-    String activityID;
-    String userID;
+    public String activityID;
+    public String userID;
 
-    FirebaseFirestore db;
+    public FirebaseFirestore db;
 
     private FirebaseStorage storage;
     private StorageReference storageReference;

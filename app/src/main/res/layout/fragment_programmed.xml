@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.ProgrammedFragment"
+    tools:context=".ui.fragments.ProgrammedFragment"
     android:id="@+id/programmed_pull_layout">
 
     <LinearLayout
