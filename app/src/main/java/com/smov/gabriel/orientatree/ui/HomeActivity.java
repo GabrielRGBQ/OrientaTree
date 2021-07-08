@@ -1,4 +1,4 @@
-package com.smov.gabriel.orientatree;
+package com.smov.gabriel.orientatree.ui;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -34,6 +34,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.services.LocationService;
 
 import java.util.ArrayList;

@@ -34,68 +34,68 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name=".OrganizerMapActivity"
+            android:name=".ui.OrganizerMapActivity"
             android:label="@string/title_activity_organizer_map"></activity>
         <activity
-            android:name=".CreditsActivity"
+            android:name=".ui.CreditsActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".TrackActivity"
+            android:name=".ui.TrackActivity"
             android:label="@string/title_activity_track"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".MyParticipationActivity"
-            android:parentActivityName=".NowActivity"
+            android:name=".ui.MyParticipationActivity"
+            android:parentActivityName=".ui.NowActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".NowActivity"
-            android:parentActivityName=".HomeActivity"
+            android:name=".ui.NowActivity"
+            android:parentActivityName=".ui.HomeActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ReachesActivity"
+            android:name=".ui.ReachesActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ChallengeActivity"
+            android:name=".ui.ChallengeActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ParticipantsListActivity"
+            android:name=".ui.ParticipantsListActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".MapActivity"
+            android:name=".ui.MapActivity"
             android:label="@string/title_activity_map"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".FindActivityActivity"
-            android:parentActivityName=".HomeActivity"
+            android:name=".ui.FindActivityActivity"
+            android:parentActivityName=".ui.HomeActivity"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustNothing" />
         <activity
-            android:name=".SelectedTemplateActivity"
-            android:parentActivityName=".FindTemplateActivity"
+            android:name=".ui.SelectedTemplateActivity"
+            android:parentActivityName=".ui.FindTemplateActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".FindTemplateActivity"
+            android:name=".ui.FindTemplateActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".EditProfileActivity"
+            android:name=".ui.EditProfileActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".HomeActivity"
+            android:name=".ui.HomeActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".WelcomeActivity"
+            android:name=".ui.WelcomeActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".LogInActivity"
+            android:name=".ui.LogInActivity"
             android:label="Iniciar sesión"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".SignUpActivity"
+            android:name=".ui.SignUpActivity"
             android:label="Registrarse"
-            android:parentActivityName=".LogInActivity"
+            android:parentActivityName=".ui.LogInActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.MainActivity"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

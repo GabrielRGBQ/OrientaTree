@@ -1,4 +1,4 @@
-package com.smov.gabriel.orientatree;
+package com.smov.gabriel.orientatree.ui;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -6,6 +6,8 @@ import androidx.appcompat.widget.Toolbar;
 
 import android.os.Bundle;
 import android.view.MenuItem;
+
+import com.smov.gabriel.orientatree.R;
 
 public class CreditsActivity extends AppCompatActivity {
 

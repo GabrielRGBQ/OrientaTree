@@ -1,4 +1,4 @@
-package com.smov.gabriel.orientatree;
+package com.smov.gabriel.orientatree.ui;
 
 import android.os.Bundle;
 
@@ -12,12 +12,12 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.adapters.ActivityAdapter;
 import com.smov.gabriel.orientatree.model.Activity;
 

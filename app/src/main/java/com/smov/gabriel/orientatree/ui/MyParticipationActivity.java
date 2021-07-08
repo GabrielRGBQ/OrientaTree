@@ -1,4 +1,4 @@
-package com.smov.gabriel.orientatree;
+package com.smov.gabriel.orientatree.ui;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -32,12 +32,12 @@ import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
+import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.BeaconReached;
 import com.smov.gabriel.orientatree.model.Participation;
 import com.smov.gabriel.orientatree.model.ParticipationState;
 import com.smov.gabriel.orientatree.model.Template;
-import com.smov.gabriel.orientatree.services.LocationService;
 
 import org.jetbrains.annotations.NotNull;
 

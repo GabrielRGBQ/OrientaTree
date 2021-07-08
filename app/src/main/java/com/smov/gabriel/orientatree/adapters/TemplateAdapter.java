@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
-import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,7 +25,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.smov.gabriel.orientatree.R;
-import com.smov.gabriel.orientatree.SelectedTemplateActivity;
+import com.smov.gabriel.orientatree.ui.SelectedTemplateActivity;
 import com.smov.gabriel.orientatree.model.Template;
 
 import java.util.ArrayList;

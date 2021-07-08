@@ -2,7 +2,6 @@ package com.smov.gabriel.orientatree.adapters;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,7 +16,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.smov.gabriel.orientatree.ChallengeActivity;
+import com.smov.gabriel.orientatree.ui.ChallengeActivity;
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Beacon;
