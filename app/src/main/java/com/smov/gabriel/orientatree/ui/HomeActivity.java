@@ -1,4 +1,4 @@
-package com.smov.gabriel.orientatree;
+package com.smov.gabriel.orientatree.ui;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -34,7 +34,11 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.services.LocationService;
+import com.smov.gabriel.orientatree.ui.fragments.CompletedFragment;
+import com.smov.gabriel.orientatree.ui.fragments.OnGoingFragment;
+import com.smov.gabriel.orientatree.ui.fragments.ProgrammedFragment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,14 +74,14 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     private FloatingActionButton fab;
 
     // user data stored in Auth user
-    String userID, userEmail, userName;
+    public String userID, userEmail, userName;
 
     // Firebase services
-    FirebaseAuth mAuth;
-    FirebaseFirestore db;
-    FirebaseStorage storage;
-    StorageReference storageReference;
-    FirebaseUser user;
+    public FirebaseAuth mAuth;
+    public FirebaseFirestore db;
+    public FirebaseStorage storage;
+    public StorageReference storageReference;
+    public FirebaseUser user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

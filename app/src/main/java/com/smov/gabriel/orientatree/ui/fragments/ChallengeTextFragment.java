@@ -1,4 +1,4 @@
-package com.smov.gabriel.orientatree;
+package com.smov.gabriel.orientatree.ui.fragments;
 
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -21,7 +21,9 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.model.BeaconReached;
+import com.smov.gabriel.orientatree.ui.ChallengeActivity;
 
 import org.jetbrains.annotations.NotNull;
 

@@ -1,4 +1,4 @@
-package com.smov.gabriel.orientatree;
+package com.smov.gabriel.orientatree.ui;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -36,6 +36,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.adapters.TemplateAdapter;
 import com.smov.gabriel.orientatree.model.Template;
 import com.smov.gabriel.orientatree.services.LocationService;

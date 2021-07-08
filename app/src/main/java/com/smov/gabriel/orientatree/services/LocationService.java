@@ -3,7 +3,6 @@ package com.smov.gabriel.orientatree.services;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.location.Location;
@@ -19,7 +18,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import androidx.core.app.TaskStackBuilder;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -35,7 +33,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.smov.gabriel.orientatree.ChallengeActivity;
 import com.smov.gabriel.orientatree.R;
 import com.smov.gabriel.orientatree.model.Activity;
 import com.smov.gabriel.orientatree.model.Beacon;
@@ -153,7 +150,7 @@ public class LocationService extends Service {
                                 }
                                 Collections.sort(beacons, new Beacon());
                                 // DEBUG
-                                Log.d(TAG, "La actividad tiene " + beacons.size() + " balizas:\n");
+                                Log.d(TAG, "Iniciando el servicio y obteniendo los datos. La actividad tiene " + beacons.size() + " balizas:\n");
                                 for (Beacon beacon : beacons) {
                                     Log.d(TAG, beacon.getBeacon_id() + "\n");
                                 }
@@ -207,7 +204,7 @@ public class LocationService extends Service {
     private void onNewLocation(Location location) {
 
         // DEBUG
-        Log.d(TAG, "Executing New Location...\n New location: " + location.getLatitude() + " " +
+        Log.d(TAG, "Ejecutando onNewLocation...\n New location: " + location.getLatitude() + " " +
                 location.getLongitude() + "\n");
         if (initialDataSet) {
             Log.d(TAG, "Ya tenemos los datos iniciales");
@@ -235,6 +232,9 @@ public class LocationService extends Service {
 
             // check if the activity has already finished
             if (current_time.after(activity.getFinishTime())) {
+                // DEBUG
+                Log.d(TAG, "El tiempo se ha terminado. A continuacion finalizamos la actividad.");
+                //
                 // change the state and set the finish time to that of the activity, because it means that
                 // the user did not get to the end of the activity
                 db.collection("activities").document(activity.getId())
@@ -246,7 +246,7 @@ public class LocationService extends Service {
                             @Override
                             public void onSuccess(Void aVoid) {
                                 // DEBUG
-                                Log.d(TAG, "Se acabó el tiempo. Terminando la actividad...");
+                                Log.d(TAG, "Se acabó el tiempo. Actividad finalizada.");
                                 //
                                 String name = "Actividad terminada";
                                 int number = beacons.size() + 2;
@@ -258,14 +258,14 @@ public class LocationService extends Service {
             } else {
                 // there is still time, so we continue playing
                 // DEBUG
-                Log.d(TAG, "Aun queda tiempo de actividad, seguimos jugando");
+                Log.d(TAG, "Aun queda tiempo de actividad, así que seguimos jugando");
                 //
                 float distanceGoal = getDistance(lat1, template.getEnd_lat(), lng1, template.getEnd_lng());
                 if (((beacons.size() - beaconsReached.size()) < 1)
                         && distanceGoal <= LOCATION_PRECISION && !uploadingReach) {
                     // no beacons left, and reached the goal, so we finish the activity
                     // DEBUG
-                    Log.d(TAG, "No quedan balizas por alcanzar, terminar la actividad");
+                    Log.d(TAG, "No quedan balizas por alcanzar y hemos llegado a meta, terminar la actividad");
                     //
                     uploadingReach = true;
                     db.collection("activities").document(activity.getId())
@@ -278,7 +278,7 @@ public class LocationService extends Service {
                                 public void onSuccess(Void aVoid) {
                                     uploadingReach = false;
                                     // DEBUG
-                                    Log.d(TAG, "Actividad terminada. Todas las balizas alcanzadas");
+                                    Log.d(TAG, "Actividad terminada. Todas las balizas alcanzadas. Llegada a meta.");
                                     //
                                     String name = "Meta";
                                     int number = beacons.size() + 1;
@@ -326,7 +326,7 @@ public class LocationService extends Service {
 
     private void playScore(double lat1, double lng1, Date current_time) {
         // DEBUG
-        Log.d(TAG, "La actividad es Score");
+        Log.d(TAG, "Jugamos Score");
         //
         // check if there is any beacon next to our current location
         for (Beacon beacon : beacons) {
@@ -337,11 +337,11 @@ public class LocationService extends Service {
                 float dist = getDistance(lat1, lat2, lng1, lng2);
                 if (dist <= LOCATION_PRECISION && !uploadingReach) {
                     // DEBUG
-                    Log.d(TAG, "Estamos cerca de alguna baliza");
+                    Log.d(TAG, "Score: Estamos cerca de alguna baliza");
                     //
                     if ((beacons.size() - beaconsReached.size()) > 0) {
                         // DEBUG
-                        Log.d(TAG, "Aún no estamos buscando la meta, y hemos alcanzado una baliza que no es la meta");
+                        Log.d(TAG, "Score: Aún no estamos buscando la meta, y hemos alcanzado una baliza que no es la meta");
                         //
                         BeaconReached beaconReached = new BeaconReached(current_time, beacon.getBeacon_id(),
                                 false); // create a new BeaconReached
@@ -355,7 +355,7 @@ public class LocationService extends Service {
                                     public void onSuccess(Void unused) {
                                         beaconsReached.add(beacon.getBeacon_id()); // add the current beacon id to the beacons reached during the service
                                         // DEBUG
-                                        Log.d(TAG, "Añadiendo la baliza " + beacon.getBeacon_id() + " al conjunto de alcanzadas " +
+                                        Log.d(TAG, "Score: Añadiendo la baliza " + beacon.getBeacon_id() + " al conjunto de alcanzadas " +
                                                 "que ahora tiene " + beaconsReached.size() + " elementos");
                                         //
                                         uploadingReach = false; // not uploading any more
@@ -374,6 +374,10 @@ public class LocationService extends Service {
                                 });
                     }
                     break;
+                } else {
+                    // DEBUG
+                    Log.d(TAG, "Score: no estamos cerca de ninguna baliza.");
+                    //
                 }
             }
         }
@@ -381,20 +385,23 @@ public class LocationService extends Service {
 
     private void playClassical(double lat1, double lng1, Date current_time) {
         // DEBUG
-        Log.d(TAG, "La actividad es clásica");
+        Log.d(TAG, "Jugamos Clásica");
         //
         if(beaconsReached.size() < beacons.size()) {
             // get the beacons that we have to reach next
             int searchedBeaconIndex = beaconsReached.size();
             Beacon searchedBeacon = beacons.get(searchedBeaconIndex);
             // DEBUG
-            Log.d(TAG, "Ahora mismo hay " + searchedBeaconIndex + " balizas alcanzadas " +
+            Log.d(TAG, "Clásica: Ahora mismo hay " + searchedBeaconIndex + " balizas alcanzadas " +
                     "por lo tanto, la siguiente que tenemos que alcanzar es: " + searchedBeacon.getName());
             //
             double lat2 = searchedBeacon.getLocation().getLatitude();
             double lng2 = searchedBeacon.getLocation().getLongitude();
             float dist = getDistance(lat1, lat2, lng1, lng2);
             if (dist <= LOCATION_PRECISION && !uploadingReach) {
+                // DEBUG
+                Log.d(TAG, "Clásica: Hemos alcanzado: " + searchedBeacon.getName() + "Empezamos a actualizar");
+                //
                 // if we are close enough and not in the middle of an uploading operation...
                 BeaconReached beaconReached = new BeaconReached(current_time, searchedBeacon.getBeacon_id(),
                         false/*, searchedBeacon.isGoal()*/); // create a new BeaconReached
@@ -408,7 +415,7 @@ public class LocationService extends Service {
                             public void onSuccess(Void unused) {
                                 // BeaconReached added to Firestore
                                 // DEBUG
-                                Log.d(TAG, "Alcanzada: " + searchedBeacon.getName());
+                                Log.d(TAG, "Clásica: Alcanzada " + searchedBeacon.getName());
                                 //
                                 beaconsReached.add(searchedBeacon.getBeacon_id()); // update the set with the reaches
                                 String name = searchedBeacon.getName();
@@ -426,6 +433,10 @@ public class LocationService extends Service {
                             }
                         });
             }
+        } else {
+            // DEBUG
+            Log.d(TAG, "Clásica: No quedan balizas por alcanzar");
+            //
         }
     }
 
